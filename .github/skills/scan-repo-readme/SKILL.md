@@ -87,7 +87,7 @@ SECTION A — README SUMMARY (one entry per README file):
 SECTION B — AVAILABLE SKILLS (one entry per SKILL.md file):
 - Skill name (from the `name:` frontmatter field)
 - One-line description of what it does
-- Trigger phrases (from the `description:` frontmatter field — list them concisely)
+- Trigger phrases (from the `description:` frontmatter field — quote ALL of them verbatim, one per line)
 - Prerequisites (if any)
 
 WRITE THE REPORT:
@@ -108,4 +108,4 @@ Read the timestamped output file and present the findings clearly and concisely 
 ## Additional Resources
 
 - **`references/search-patterns.md`** — README filename patterns, synonym groups, relevance scoring criteria, output format spec
-- **`scripts/find-readmes.py`** — Locates all README files recursively and all SKILL.md files under `.github/skills/`; prints the output path + file list
+- **`scripts/find-readmes.py`** — Locates all README files recursively across the repository and all SKILL.md files in the repository; prints the output path + file list
