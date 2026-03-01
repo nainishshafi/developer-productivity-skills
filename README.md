@@ -20,6 +20,15 @@ Generates a rich, ground-truth Markdown context file for any source code file �
 
 ---
 
+### `scan-halucinated-tests`
+Cross-validates a test file against its real source code to detect LLM hallucinations — phantom functions, non-existent properties, wrong import paths, fabricated constants, bad mock targets, and incorrect exception types. Uses `trace-code-context` to extract authoritative ground truth from the source, a parser script to extract all references from the test, then a subagent to cross-reference the two. Results are written to `.scan-test-results/` as a timestamped Markdown report with severity-graded findings.
+
+**Trigger phrases:** "scan for hallucinated tests", "check if my tests are hallucinated", "validate tests against source", "verify test accuracy", "find fake test assertions", "audit tests for hallucinations", "test hallucination scan", "verify tests match source code"
+
+**Supported languages:** Python (AST), Java (JUnit/Mockito), C# (xUnit/NUnit/MSTest/Moq), JavaScript/TypeScript (Jest/Vitest)
+
+---
+
 ### `skill-creator`
 Scaffolds and writes new skills following established conventions. Handles both reference/knowledge skills (rich documentation) and task/action skills (step-by-step workflows with scripts). Includes a Python script that generates the folder and boilerplate files.
 
@@ -77,6 +86,12 @@ Skills in `.github/skills/` are picked up as custom instructions by Copilot Chat
     │   │   └── trace-code-context-reference.md
     │   └── scripts/
     │       └── trace-context.py
+    ├── scan-halucinated-tests/
+    │   ├── SKILL.md
+    │   ├── references/
+    │   │   └── scan-halucinated-tests-reference.md
+    │   └── scripts/
+    │       └── parse-test-refs.py
     ├── skill-creator/
     │   ├── SKILL.md
     │   ├── references/
