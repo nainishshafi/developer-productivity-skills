@@ -21,6 +21,13 @@ Scaffolds and writes new Claude Code skills following established conventions. H
 
 **Trigger phrases:** "create a new skill", "add a skill", "write a skill", "scaffold a skill", "build a skill"
 
+### `python-linter`
+Runs ruff (lint + format) and optionally mypy (type checking) on Python code. Auto-fixes what it can and reports remaining issues with file and line references.
+
+**Trigger phrases:** "lint python", "run the linter", "fix linting errors", "run ruff", "format python code", "check types", "run mypy"
+
+**Prerequisites:** `ruff` (required), `mypy` (optional)
+
 ## Usage
 
 These skills are loaded automatically by Claude Code from `.github/skills/`. Invoke them by using any of the trigger phrases above in your Claude Code session.
@@ -41,10 +48,14 @@ These skills are loaded automatically by Claude Code from `.github/skills/`. Inv
     │   └── scripts/
     │       ├── setup-ssh.sh
     │       └── sync-forks.sh
-    └── skill-creator/
+    ├── skill-creator/
+    │   ├── SKILL.md
+    │   ├── references/
+    │   │   └── skill-anatomy.md
+    │   └── scripts/
+    │       └── scaffold-skill.py
+    └── python-linter/
         ├── SKILL.md
-        ├── references/
-        │   └── skill-anatomy.md
-        └── scripts/
-            └── scaffold-skill.py
+        └── references/
+            └── python-linter-reference.md
 ```
