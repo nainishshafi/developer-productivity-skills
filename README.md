@@ -4,13 +4,6 @@ A collection of reusable AI skills stored in `.github/skills/`, compatible with 
 
 ## Skills
 
-### `scan-repo-readme`
-Efficiently locate and extract information from repository README files. Uses a lightweight subagent to perform dual-phase search (keyword + semantic) and writes results to a timestamped file under `.scan-readme-results/`. When no query is provided, returns a full summary of all README files found.
-
-**Trigger phrases:** "scan the readme", "read the repo readme", "check the project documentation", "search the readme for X", "what does the readme say about Y", "summarize the readme", "find readme", "look up X in the readme"
-
----
-
 ### `trace-code-context`
 Generates a rich, ground-truth Markdown context file for any source code file — covering defined symbols, imports, callers, callees, a Mermaid call graph, and a business-readable description. Uses a Python script for AST/parser-validated symbol extraction (ground truth) and a subagent for business context. Skips regeneration if the source file has not changed since the last run. Output is written to `.code-context/` mirroring the source file structure.
 
@@ -61,6 +54,13 @@ Syncs all your GitHub forked repositories — clones missing ones and pulls exis
 
 **Prerequisites:** `gh` CLI (authenticated), `jq`, `git`, SSH key added to GitHub
 
+---
+
+### `scan-repo-readme`
+Efficiently locate and extract information from repository README files. Uses a lightweight subagent to perform dual-phase search (keyword + semantic) and writes results to a timestamped file under `.scan-readme-results/`. When no query is provided, returns a full summary of all README files found.
+
+**Trigger phrases:** "scan the readme", "read the repo readme", "check the project documentation", "search the readme for X", "what does the readme say about Y", "summarize the readme", "find readme", "look up X in the readme"
+
 ## Usage
 
 ### Claude Code
@@ -74,12 +74,6 @@ Skills in `.github/skills/` are picked up as custom instructions by Copilot Chat
 ```
 .github/
 └── skills/
-    ├── scan-repo-readme/
-    │   ├── SKILL.md
-    │   ├── references/
-    │   │   └── search-patterns.md
-    │   └── scripts/
-    │       └── find-readmes.py
     ├── trace-code-context/
     │   ├── SKILL.md
     │   ├── references/
@@ -111,9 +105,15 @@ Skills in `.github/skills/` are picked up as custom instructions by Copilot Chat
     │   └── scripts/
     │       ├── scan-staged.py
     │       └── install-hook.py
-    └── sync-github-forks/
+    ├── sync-github-forks/
+    │   ├── SKILL.md
+    │   └── scripts/
+    │       ├── setup-ssh.sh
+    │       └── sync-forks.sh
+    └── scan-repo-readme/
         ├── SKILL.md
+        ├── references/
+        │   └── search-patterns.md
         └── scripts/
-            ├── setup-ssh.sh
-            └── sync-forks.sh
+            └── find-readmes.py
 ```
