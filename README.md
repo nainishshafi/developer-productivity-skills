@@ -5,9 +5,9 @@ A collection of Claude Code skills stored in `.github/skills/`, providing reusab
 ## Skills
 
 ### `scan-repo-readme`
-Efficiently locate and extract information from repository README files. Uses a lightweight subagent to perform dual-phase search (keyword + semantic) and writes results to a timestamped file.
+Efficiently locate and extract information from repository README files and available Claude Code skills (`SKILL.md` files). Uses a lightweight subagent to perform dual-phase search (keyword + semantic) and writes results to a timestamped file. When no query is provided, returns a full README summary alongside a skills inventory (name, description, trigger phrases).
 
-**Trigger phrases:** "scan the readme", "search the readme for X", "what does the readme say about Y", "summarize the readme"
+**Trigger phrases:** "scan the readme", "search the readme for X", "what does the readme say about Y", "summarize the readme", "what skills are available", "list all skills"
 
 ### `sync-github-forks`
 Syncs all your GitHub forked repositories — clones missing ones and pulls existing ones. Uses the `gh` CLI for authentication, no token config needed.
