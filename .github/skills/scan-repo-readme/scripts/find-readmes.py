@@ -33,6 +33,7 @@ README_NAMES = {
 # Directories to skip entirely
 SKIP_DIRS = {
     ".git",
+    ".github",
     "node_modules",
     "__pycache__",
     ".venv",
@@ -81,6 +82,8 @@ def find_readmes(root: Path) -> list[Path]:
 
 def find_skills(root: Path) -> list[Path]:
     """Find all SKILL.md files under .github/skills/."""
+    if ".github" in SKIP_DIRS:
+        return []
     skills_dir = root / ".github" / "skills"
     if not skills_dir.is_dir():
         return []
