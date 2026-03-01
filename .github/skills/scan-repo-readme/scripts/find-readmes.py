@@ -2,12 +2,12 @@
 """
 find-readmes.py
 
-Locates all README files in the current repository and prepares a timestamped
-output file path for the scan-repo-readme skill.
+Locates all README files and SKILL.md files in the current repository and
+prepares a timestamped output file path for the scan-repo-readme skill.
 
 Output (stdout):
   Line 1:  Output file path  (e.g. .scan-readme-results/readme-scan-20240315-143022.md)
-  Line 2+: Absolute path of each README file found, one per line
+  Line 2+: Absolute path of each README or SKILL.md file found, one per line
 
 Usage:
   .venv/Scripts/python .github/skills/scan-repo-readme/scripts/find-readmes.py   # Windows
@@ -79,6 +79,14 @@ def find_readmes(root: Path) -> list[Path]:
     return sorted(found)
 
 
+def find_skills(root: Path) -> list[Path]:
+    """Find all SKILL.md files under .github/skills/."""
+    skills_dir = root / ".github" / "skills"
+    if not skills_dir.is_dir():
+        return []
+    return sorted(skills_dir.glob("*/SKILL.md"))
+
+
 def main() -> None:
     root = Path.cwd()
 
@@ -96,9 +104,14 @@ def main() -> None:
     for readme in readmes:
         print(readme)
 
-    if not readmes:
+    # Find and print SKILL.md file paths
+    skills = find_skills(root)
+    for skill in skills:
+        print(skill)
+
+    if not readmes and not skills:
         # Print a warning to stderr so it doesn't pollute the stdout protocol
-        print("Warning: No README files found in the repository.", file=sys.stderr)
+        print("Warning: No README or SKILL.md files found in the repository.", file=sys.stderr)
 
 
 if __name__ == "__main__":
