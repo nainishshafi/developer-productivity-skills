@@ -81,9 +81,8 @@ Use the Write tool to create the output file directly. Do NOT return the report 
 File path: {output path from Step 1}
 Format: Markdown
   - H1: "# Repository Scan Report" with query, date, file count
-  - H2: "## README Files" (when no query)
-  - H2: relevance tier (HIGH / MEDIUM / LOW) when a query is provided
-  - H3: file path of each match
+  - H2: file path of each README
+  - H3: relevance tier (HIGH / MEDIUM / LOW) when a query is provided
   - Body: direct quotes with surrounding context
 ```
 
