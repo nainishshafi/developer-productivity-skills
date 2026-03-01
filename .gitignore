@@ -5,3 +5,4 @@
 !LICENSE
 !.github/
 !.github/**
+!.secrets.baseline

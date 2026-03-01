@@ -1,0 +1,233 @@
+rules:
+
+  # ---------------------------------------------------------------------------
+  # SQL Injection
+  # Detects string-formatted SQL queries where user-controlled data may be
+  # interpolated directly, bypassing parameterization.
+  # ---------------------------------------------------------------------------
+
+  - id: sql-injection-python-percent
+    pattern: $DB.execute("..." % $X)
+    message: >
+      SQL injection: query built with % string formatting. Use parameterized
+      queries instead: cursor.execute("SELECT ... WHERE x = ?", (value,))
+    languages: [python]
+    severity: ERROR
+
+  - id: sql-injection-python-fstring
+    pattern: $DB.execute(f"...")
+    message: >
+      SQL injection: f-string used to build SQL query. Use parameterized
+      queries instead: cursor.execute("SELECT ... WHERE x = ?", (value,))
+    languages: [python]
+    severity: ERROR
+
+  - id: sql-injection-python-format
+    pattern: $DB.execute("...".format(...))
+    message: >
+      SQL injection: .format() used to build SQL query. Use parameterized
+      queries instead: cursor.execute("SELECT ... WHERE x = ?", (value,))
+    languages: [python]
+    severity: ERROR
+
+  - id: sql-injection-go-sprintf
+    pattern-either:
+      - pattern: $DB.Query(fmt.Sprintf(...))
+      - pattern: $DB.QueryRow(fmt.Sprintf(...))
+      - pattern: $DB.Exec(fmt.Sprintf(...))
+    message: >
+      SQL injection: fmt.Sprintf used to build SQL query. Use parameterized
+      queries: db.Query("SELECT ... WHERE x = ?", value)
+    languages: [go]
+    severity: ERROR
+
+  - id: sql-injection-js-template
+    pattern-either:
+      - pattern: $DB.query(`...`)
+      - pattern: $DB.execute(`...`)
+    message: >
+      SQL injection: template literal used to build SQL query. Use
+      parameterized queries: db.query("SELECT ... WHERE x = ?", [value])
+    languages: [javascript, typescript]
+    severity: ERROR
+
+  # ---------------------------------------------------------------------------
+  # Command Injection
+  # Detects where unsanitised data may reach OS command execution.
+  # ---------------------------------------------------------------------------
+
+  - id: command-injection-python-os-system
+    patterns:
+      - pattern: os.system($CMD)
+      - pattern-not: os.system("...")
+    message: >
+      Command injection risk: os.system() called with a non-literal argument.
+      Use subprocess.run([...], shell=False) with a fixed command list instead.
+    languages: [python]
+    severity: ERROR
+
+  - id: command-injection-python-subprocess-shell
+    patterns:
+      - pattern: subprocess.run($CMD, ..., shell=True, ...)
+      - pattern-not: subprocess.run("...", ..., shell=True, ...)
+    message: >
+      Command injection risk: subprocess.run() with shell=True and a
+      non-literal command. Pass a list of arguments with shell=False instead.
+    languages: [python]
+    severity: ERROR
+
+  - id: command-injection-python-popen-shell
+    patterns:
+      - pattern: subprocess.Popen($CMD, ..., shell=True, ...)
+      - pattern-not: subprocess.Popen("...", ..., shell=True, ...)
+    message: >
+      Command injection risk: subprocess.Popen() with shell=True and a
+      non-literal command. Pass a list of arguments with shell=False instead.
+    languages: [python]
+    severity: ERROR
+
+  - id: command-injection-go-exec-sh
+    patterns:
+      - pattern: exec.Command("sh", "-c", $CMD)
+      - pattern: exec.Command("bash", "-c", $CMD)
+    message: >
+      Command injection risk: exec.Command with shell interpreter and dynamic
+      argument. Build a fixed argument list instead of passing shell strings.
+    languages: [go]
+    severity: ERROR
+
+  - id: command-injection-js-exec
+    pattern-either:
+      - pattern: exec($CMD, ...)
+      - pattern: execSync($CMD, ...)
+      - pattern: child_process.exec($CMD, ...)
+      - pattern: child_process.execSync($CMD, ...)
+    message: >
+      Command injection risk: child_process.exec() with a non-literal command.
+      Use execFile() or spawn() with a fixed argument array instead.
+    languages: [javascript, typescript]
+    severity: ERROR
+
+  # ---------------------------------------------------------------------------
+  # Path Traversal
+  # Detects file operations where the path may include user-controlled segments
+  # that escape the intended directory via ../ sequences.
+  # ---------------------------------------------------------------------------
+
+  - id: path-traversal-python-open
+    patterns:
+      - pattern: open(os.path.join($BASE, $USER_INPUT), ...)
+      - pattern-not: open(os.path.join("...", "..."), ...)
+    message: >
+      Path traversal risk: file opened at a path built from external input.
+      Validate that the resolved path stays within the intended base directory:
+      assert os.path.realpath(path).startswith(os.path.realpath(base_dir))
+    languages: [python]
+    severity: WARNING
+
+  - id: path-traversal-js-readfile
+    pattern-either:
+      - patterns:
+          - pattern: fs.readFile($PATH, ...)
+          - pattern-not: fs.readFile("...", ...)
+      - patterns:
+          - pattern: fs.readFileSync($PATH, ...)
+          - pattern-not: fs.readFileSync("...", ...)
+    message: >
+      Path traversal risk: fs.readFile() called with a non-literal path.
+      Resolve and validate the path against an allowed base directory.
+    languages: [javascript, typescript]
+    severity: WARNING
+
+  # ---------------------------------------------------------------------------
+  # Cross-Site Scripting (XSS)
+  # Detects places where unescaped data is written into the DOM or HTTP response.
+  # ---------------------------------------------------------------------------
+
+  - id: xss-js-inner-html
+    patterns:
+      - pattern: $EL.innerHTML = $DATA
+      - pattern-not: $EL.innerHTML = "..."
+    message: >
+      XSS risk: innerHTML assigned from a non-literal value. Use textContent
+      for plain text, or sanitise with DOMPurify before setting innerHTML.
+    languages: [javascript, typescript]
+    severity: ERROR
+
+  - id: xss-js-document-write
+    patterns:
+      - pattern: document.write($DATA)
+      - pattern-not: document.write("...")
+    message: >
+      XSS risk: document.write() called with a non-literal value.
+      Avoid document.write(); use DOM manipulation methods instead.
+    languages: [javascript, typescript]
+    severity: ERROR
+
+  - id: xss-python-flask-markup
+    pattern: flask.Markup($DATA)
+    message: >
+      XSS risk: flask.Markup() marks a string as safe without escaping.
+      Only use Markup() on strings you have explicitly sanitised.
+    languages: [python]
+    severity: WARNING
+
+  # ---------------------------------------------------------------------------
+  # Dangerous eval / exec
+  # ---------------------------------------------------------------------------
+
+  - id: eval-python
+    patterns:
+      - pattern: eval($X)
+      - pattern-not: eval("...")
+    message: >
+      Code injection risk: eval() called with a non-literal argument. If
+      user-controlled input reaches eval(), it enables arbitrary code execution.
+    languages: [python]
+    severity: ERROR
+
+  - id: exec-python
+    patterns:
+      - pattern: exec($X)
+      - pattern-not: exec("...")
+    message: >
+      Code injection risk: exec() called with a non-literal argument. If
+      user-controlled input reaches exec(), it enables arbitrary code execution.
+    languages: [python]
+    severity: ERROR
+
+  - id: eval-javascript
+    patterns:
+      - pattern: eval($X)
+      - pattern-not: eval("...")
+    message: >
+      Code injection risk: eval() called with a non-literal argument. This
+      enables arbitrary JS execution if the input is user-controlled.
+    languages: [javascript, typescript]
+    severity: ERROR
+
+  # ---------------------------------------------------------------------------
+  # Open Redirect
+  # ---------------------------------------------------------------------------
+
+  - id: open-redirect-python-flask
+    patterns:
+      - pattern: flask.redirect(request.args.get(...))
+      - pattern: flask.redirect(request.form.get(...))
+    message: >
+      Open redirect: redirect() target taken directly from request parameters.
+      Validate that the URL belongs to your domain before redirecting.
+    languages: [python]
+    severity: WARNING
+
+  - id: open-redirect-js-res
+    patterns:
+      - pattern: res.redirect($URL)
+      - pattern-not: res.redirect("...")
+      - pattern-not: res.redirect(301, "...")
+      - pattern-not: res.redirect(302, "...")
+    message: >
+      Open redirect risk: res.redirect() target is not a literal URL.
+      Validate the destination URL is within your allowed domain.
+    languages: [javascript, typescript]
+    severity: WARNING
