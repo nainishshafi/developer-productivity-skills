@@ -26,7 +26,7 @@ Runs ruff (lint + format) and optionally mypy (type checking) on Python code. Au
 
 **Trigger phrases:** "lint python", "run the linter", "fix linting errors", "run ruff", "format python code", "check types", "run mypy"
 
-**Prerequisites:** `ruff` (required), `mypy` (optional)
+**Prerequisites:** Python on PATH — skill creates `.venv` and installs `ruff`/`mypy` automatically
 
 ## Usage
 
