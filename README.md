@@ -81,6 +81,15 @@ Interactively guides you through architectural decisions for a new or existing p
 
 **Trigger phrases:** "plan my architecture", "design system architecture", "create an architecture document", "help me choose a tech stack", "what technologies should I use", "recommend a database for my project", "architecture planning", "tech stack recommendation", "design my API layer", "create a system design"
 
+---
+
+### `java-developer`
+Comprehensive guidelines and best practices for modern Java (LTS 17/21/25) and Spring Boot enterprise applications. Covers modern language features (records, sealed types, pattern matching, switch expressions), concurrency (Virtual Threads, CompletableFuture, carrier pinning avoidance), collection selection and performance, functional architecture, JVM tuning & low-latency GC (ZGC/Shenandoah/G1), application security (OWASP, IDOR, SSRF, injection defense), and Spring Boot 3+ production patterns (thin controllers, transactional boundaries, RFC 7807 problem details, RestClient, and slice/testcontainer testing).
+
+**Trigger phrases:** "review java code", "spring boot best practices", "optimize jvm", "write java unit test", "design java service", "java concurrency guide", "virtual threads vs reactor", "java security audit"
+
+**Supported versions:** Java 17, 21, 25 LTS; Spring Boot 3.x
+
 ## Usage
 
 ### Claude Code
@@ -143,8 +152,24 @@ Skills in `.github/skills/` are picked up as custom instructions by Copilot Chat
     │   │   └── design-pattern-detector-reference.md
     │   └── scripts/
     │       └── extract-patterns.py
-    └── architectural-planning/
+    ├── architectural-planning/
+    │   ├── SKILL.md
+    │   └── references/
+    │       └── architectural-planning-reference.md
+    └── java-developer/
         ├── SKILL.md
-        └── references/
-            └── architectural-planning-reference.md
+        ├── plain-java/
+        │   ├── collections.md
+        │   ├── concurrency.md
+        │   ├── conventions.md
+        │   ├── dry-kiss-solid.md
+        │   ├── functional-programming.md
+        │   ├── jvm-and-memory.md
+        │   ├── reactor-pattern.md
+        │   └── security.md
+        ├── design-patterns/
+        │   └── patterns.md
+        └── spring-boot/
+            ├── architecture.md
+            └── best-practices.md
 ```
