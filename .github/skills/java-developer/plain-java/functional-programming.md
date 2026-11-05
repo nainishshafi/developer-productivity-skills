@@ -67,7 +67,8 @@ public CompletableFuture<InvoiceDto> checkout(UUID orderId) {
 - **Compose with method references**: Prefer `thenApply(this::validate)` over verbose lambdas `thenApply(order -> validate(order))`.
 - **Name pipeline steps**: If a lambda exceeds two lines, extract it into a named private pure method.
 - **Fail fast with types**: Return `Optional<T>` or a domain result type (e.g., a sealed `Result<T>` interface — not in the JDK) instead of throwing checked exceptions inside functional pipelines.
-- **Collect correctly**: Use `Stream.toList()` (unmodifiable) by default; `Collectors.groupingBy` / `toMap` (supply a merge function when keys can collide).
+- **Collect & reduce correctly**: Use `Stream.toList()` (unmodifiable) by default; `Collectors.groupingBy` / `toMap` (supply a merge function when keys can collide). Use primitive streams (`mapToInt`, `mapToLong`, `mapToDouble`) for numeric reductions to avoid boxing.
+- **Stream Gatherers (Java 24+)**: Use `stream.gather(Gatherers.windowFixed(n))`, `windowSliding(n)`, `scan(...)`, or `mapConcurrent(maxConcurrency, fn)` for custom intermediate operations without collecting into intermediate lists.
 
 ### Anti-Patterns to Avoid
 - **Side effects inside `.map()` or `.filter()`**: Never update database records, mutate collections, or trigger I/O inside mapping operations.

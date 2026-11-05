@@ -103,6 +103,7 @@ try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
 
 ### What to Avoid
 - **Avoid `ForkJoinPool.commonPool()` for blocking I/O**: The default pool is sized for CPU tasks. Always supply a dedicated executor (`supplyAsync(task, ioExecutor)`).
+- **Use `*Async` variants when thread isolation matters**: Non-async callbacks (`thenApply`) run on whichever thread completes the upstream stage (or the caller thread if already complete). Use `thenApplyAsync(fn, executor)` when the callback is expensive or blocking.
 - **Avoid premature `.get()` or `.join()`**: Calling `.join()` immediately blocks the thread, destroying the async benefit. Chain transformations instead.
 - **Do not ignore errors**: Always handle failures via `.exceptionally()` or `.handle()`.
 - **Always set timeouts** on remote calls: `.orTimeout(2, SECONDS)` or `.completeOnTimeout(fallback, 2, SECONDS)`.

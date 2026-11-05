@@ -29,6 +29,6 @@ Apply patterns pragmatically without unnecessary boilerplate. Introduce a patter
   ```
   In Spring, inject all implementations as `Map<String, PaymentStrategy>` or `List<PaymentStrategy>` and select by key — no `switch` needed.
 - **Template Method**: Abstract common workflow execution in a base class while letting subclasses override specific steps. Prefer composition (passing a lambda) when only one step varies.
-- **Observer / Event-Driven**: Decouple components using domain events or reactive publishers.
+- **Observer / Event-Driven**: Decouple components using domain events (`ApplicationEventPublisher`). In Spring, handle side effects after DB commit via `@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)`.
 - **Visitor → Sealed Types**: For operations over a closed hierarchy, prefer `sealed` interfaces + pattern-matching `switch` over the classic Visitor.
 

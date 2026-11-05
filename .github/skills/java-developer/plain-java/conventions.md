@@ -21,16 +21,24 @@
 
   double area(Shape s) {
       return switch (s) {
-          case Circle(var r) -> Math.PI * r * r;
+          case Circle(var r) when r > 0 -> Math.PI * r * r;
+          case Circle _ -> 0.0;
           case Square(var side) -> side * side;
       };
   }
   ```
+- **Unnamed Variables (`_`, Java 22+)**: Use `_` for unused lambda parameters, catch blocks, or pattern variables (`catch (NumberFormatException _)`, `map.forEach((k, _) -> ...)`).
 - **Text Blocks**: Use `"""` for multi-line JSON, SQL, or template strings.
 - **`var`**: Use for local variables when the type is obvious from the right-hand side; avoid when it hides meaning.
 - **Virtual Threads (Java 21+)**: Prefer virtual threads (`Executors.newVirtualThreadPerTaskExecutor()`) for I/O-bound throughput over heavy thread pools. See [Concurrency Guide](concurrency.md) for pinning and thread models.
 
-## 2. Immutability & Defensive Design
+## 2. Core Types: Money, Time & Strings
+
+- **Money & Exact Decimals**: Always use `BigDecimal` initialized from a `String` (`new BigDecimal("10.50")`) or `BigDecimal.valueOf(double)` — never `float`/`double` or `new BigDecimal(double)`. Always pass an explicit `RoundingMode` to `divide()`, and compare values with `compareTo() == 0` (not `equals()`, which checks scale: `1.0 != 1.00`).
+- **Date & Time (`java.time`)**: Use `Instant` for timestamps, `LocalDate`/`LocalTime` for calendar values, `ZonedDateTime` for time-zone rules, and `Duration`/`Period` for spans. Never use legacy `Date`, `Calendar`, or `SimpleDateFormat`.
+- **Locale-Safe Case & Formatting**: Pass `Locale.ROOT` to `toLowerCase`/`toUpperCase`/`String.format` to avoid locale-dependent bugs (e.g., Turkish `i`).
+
+## 3. Immutability & Defensive Design
 
 - Make fields `private final` by default.
 - Return unmodifiable collections (`List.copyOf(...)`, `Map.of(...)`) to prevent accidental external mutation. See [Collections Guide](collections.md) for data structure selection and performance.
@@ -38,7 +46,7 @@
 - Use `Optional` only as a return type — not for fields, parameters, or collection elements. Never call `.get()` without a check; prefer `orElseThrow()`, `map()`, `orElse()`.
 - Validate constructor/method arguments early (`Objects.requireNonNull`, compact record constructors).
 
-## 3. Resource & Exception Management
+## 4. Resource & Exception Management
 
 - Always manage I/O streams and database connections using `try-with-resources`.
   ```java
@@ -51,16 +59,16 @@
 - Prefer unchecked domain exceptions for business errors; reserve checked exceptions for recoverable conditions the caller must handle.
 - Restore the interrupt flag when catching `InterruptedException` (`Thread.currentThread().interrupt()`).
 
-## 4. Logging
+## 5. Logging
 
 - Use SLF4J with parameterized messages: `log.info("Order {} placed", id)` — never string concatenation.
 - Log an exception once, at the boundary that handles it; pass it as the last argument to keep the stack trace.
 - Never log secrets or PII.
 
-## 5. Testing
+## 6. Testing
 
 - JUnit 5 + AssertJ (`assertThat(...)`) + Mockito. Name tests by behavior (`shouldRejectExpiredCoupon`).
 - Use `@ParameterizedTest` for input variations instead of copy-pasted tests.
 - Test behavior through public APIs; don't mock value objects or the class under test.
-- No `Thread.sleep` in tests — use Awaitility or inject a `Clock` for time-dependent logic.
+- No `Thread.sleep` in tests — use Awaitility or inject a `Clock` for time-dependent logic. See [Testing Best Practices](../testing/best-practices.md).
 

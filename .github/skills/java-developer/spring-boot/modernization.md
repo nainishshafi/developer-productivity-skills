@@ -155,6 +155,11 @@ public ProblemDetail handleNotFound(OrderNotFoundException ex) {
 }
 ```
 
+### 6. Breaking Behavior Changes in Spring Boot 3 / Hibernate 6
+- **Trailing Slash Matching Removed**: `/api/users/` no longer matches `@GetMapping("/api/users")` by default in Spring 6. Fix client URLs rather than re-enabling deprecated matching.
+- **Hibernate 6 Sequence Defaults**: `@GeneratedValue(strategy = AUTO)` now creates per-entity sequences (`<entity>_seq` with `allocationSize = 50`) instead of a single global `hibernate_sequence`. Explicitly specify `@SequenceGenerator` when migrating existing schemas.
+- **Observability Migration**: Spring Cloud Sleuth is replaced by **Micrometer Tracing** (`micrometer-tracing-bridge-otel` or `micrometer-tracing-bridge-brave`).
+
 ---
 
 ## 5. Step-by-Step Modernization Checklist
@@ -165,3 +170,4 @@ public ProblemDetail handleNotFound(OrderNotFoundException ex) {
 - [ ] **Convert Webflow Flows to REST Resources**: Audit all `flow.xml` definitions, document wizard steps as stateful domain entities, and expose REST endpoints.
 - [ ] **Externalize Session State**: Replace in-memory session dependencies with stateless tokens or distributed caches before decomposing into microservices.
 - [ ] **Enable Virtual Threads (Java 21+)**: Add `spring.threads.virtual.enabled=true` for high-throughput I/O pipelines.
+

@@ -49,7 +49,9 @@ Flux<OrderDto> activeOrders = orderRepository.findByStatus(Status.ACTIVE)
 
 ### Essential Rules
 - **Nothing happens until subscribe**: Return the `Mono`/`Flux` to the framework; never call `.block()` or `.subscribe()` inside a pipeline or WebFlux handler.
+- **Defer eager evaluation**: `Mono.just(expensiveOrCurrentTime())` evaluates immediately at assembly time. Use `Mono.fromSupplier(...)` or `Mono.defer(...)` so execution happens on subscription.
 - **Wrap unavoidable blocking calls**: `Mono.fromCallable(() -> legacyClient.call()).subscribeOn(Schedulers.boundedElastic())`.
+- **Bound backpressure**: Never use unbounded buffers on fast producers; configure `onBackpressureBuffer(maxSize)`, `onBackpressureDrop()`, or `onBackpressureLatest()` to prevent OOM.
 - **Errors & timeouts**: Use `.timeout(...)`, `.onErrorResume(...)`, `.retryWhen(Retry.backoff(...))`; never let errors drop silently.
 - **`map` vs `flatMap`**: `map` for sync transforms; `flatMap` for calls returning `Mono`/`Flux` (`concatMap` when order matters).
 - **Context, not `ThreadLocal`**: Pass request context via Reactor `Context` (threads switch mid-pipeline).

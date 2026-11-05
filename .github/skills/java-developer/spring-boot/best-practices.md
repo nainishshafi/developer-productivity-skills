@@ -29,18 +29,20 @@
 - Keep profiles explicit (`application-dev.yml`, `application-prod.yml`).
 - Never commit secrets; inject via environment variables or a secret store.
 
-## 4. HTTP Clients & Runtime
-- Use `RestClient` (Boot 3.2+) for synchronous calls, `WebClient` only in reactive apps. Avoid `RestTemplate` in new code.
-- Always configure connect/read timeouts on outbound clients.
+## 4. HTTP Clients, Resilience & Runtime
+- Use `RestClient` (Boot 3.2+) or `@HttpExchange` declarative interfaces for synchronous calls, `WebClient` only in reactive apps. Avoid `RestTemplate` in new code.
+- Always configure connect/read timeouts on outbound clients, and apply bounded retries with backoff/jitter or circuit breakers (Resilience4j / `@Retryable`) for transient failures.
+- Ensure mutating endpoints (`POST`/`PATCH`) are idempotent (e.g., via `Idempotency-Key` or unique business constraints).
+- Enable graceful shutdown (`server.shutdown=graceful`, default in Boot 3.4+) so in-flight requests finish during rolling deployments.
 - On Java 21+, enable virtual threads with `spring.threads.virtual.enabled=true` instead of tuning Tomcat thread pools.
 - Boot 3 uses `jakarta.*` packages — never mix in `javax.persistence` / `javax.validation`.
 
 ## 5. Observability
-- Include Spring Boot Actuator; expose only `health`, `info`, `metrics`/`prometheus` publicly.
-- Use Micrometer for metrics and tracing; propagate a correlation/trace ID in logs.
+- Include Spring Boot Actuator; expose only `health`, `info`, `metrics`/`prometheus` publicly (`liveness` and `readiness` probes enabled for Kubernetes).
+- Use Micrometer (`ObservationRegistry`) for metrics and distributed tracing; propagate correlation/trace IDs (`traceId`/`spanId`) in structured logs.
 
 ## 6. Testing Strategy
 - **Unit Tests**: Test service logic in isolation using JUnit 5 and Mockito (`@ExtendWith(MockitoExtension.class)`). Fast, no Spring context.
 - **Slice Tests**: Use `@WebMvcTest` for controllers and `@DataJpaTest` for database queries. Use `@MockitoBean` (Boot 3.4+; `@MockBean` on older versions).
-- **Integration Tests**: Use `@SpringBootTest` with Testcontainers (`@ServiceConnection`) against the real database engine — not H2 — sparingly for full end-to-end verification.
+- **Integration Tests**: Use `@SpringBootTest` with Testcontainers (`@ServiceConnection`) against the real database engine — not H2 — sparingly for full end-to-end verification. See [Testing Best Practices](../testing/best-practices.md).
 

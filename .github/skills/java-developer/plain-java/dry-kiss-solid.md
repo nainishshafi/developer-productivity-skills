@@ -5,10 +5,12 @@
 - Do not duplicate data contracts across services; centralize shared types or use generic specifications where appropriate.
 - *Caution*: Do not force DRY on unrelated code that merely looks similar by coincidence.
 
-## 2. KISS (Keep It Simple, Stupid)
+## 2. KISS (Keep It Simple, Stupid) & YAGNI
 - Write code for humans first. Avoid obscure bitwise tricks, excessive reflection, or over-nested streams.
 - If a simple `for-each` loop is clearer than a multi-stage stream pipeline, prefer the simple loop.
 - Avoid premature optimization. Write clean, readable code; profile before optimizing.
+- **YAGNI (You Aren't Gonna Need It)**: Don't create single-implementation interfaces (`OrderService` + `OrderServiceImpl`) unless there is a true architectural boundary, multiple implementations, or an SPI seam.
+- **Composition over Inheritance**: Favor composing small collaborator objects over deep `abstract` class hierarchies.
 
 ## 3. SOLID Principles
 

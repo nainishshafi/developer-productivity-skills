@@ -44,6 +44,8 @@ Within a feature package, keep implementation classes package-private where poss
 
 - **`@Transactional` self-invocation**: Calling a `@Transactional` method from another method in the same class bypasses the proxy — no transaction. Move it to another bean. Same applies to `@Async` and `@Cacheable`.
 - **Checked exceptions don't roll back** by default; use `rollbackFor` or throw unchecked exceptions.
-- **N+1 queries**: Default associations to `LAZY`; fetch what you need with `JOIN FETCH`, `@EntityGraph`, or DTO projections. Enable SQL logging in dev to spot it.
+- **Lost Updates (Concurrency)**: Add `@Version` to mutable JPA entities for optimistic locking so concurrent updates fail fast instead of silently overwriting each other.
+- **N+1 queries & Pagination**: Default associations to `LAZY`; fetch what you need with `JOIN FETCH`, `@EntityGraph`, or DTO projections. Never combine `JOIN FETCH` on a collection (`@OneToMany`) with `Pageable` — Hibernate loads the entire table into memory; paginate IDs first or use `@BatchSize`.
 - **Open Session in View**: Set `spring.jpa.open-in-view=false` so lazy loading can't leak into the web layer.
+- **Schema Management**: Use Flyway or Liquibase for migrations and set `spring.jpa.hibernate.ddl-auto=validate` in production (never `update` or `create-drop`).
 - **Entity `equals`/`hashCode`**: Don't use Lombok `@Data` on JPA entities; base equality on the ID (or business key) only.

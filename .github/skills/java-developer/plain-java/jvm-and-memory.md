@@ -48,13 +48,15 @@ Although Java has automatic garbage collection, memory leaks occur when objects 
 
 ---
 
-### Generational ZGC Tuning (Java 21 - JEP 439)
+### Generational ZGC Tuning (Java 21+ - JEP 439 / JEP 474)
 
 Java 21 introduces **Generational ZGC**, separating memory into young and old generations. It collects young objects frequently and concurrently without pausing application threads, resolving previous non-generational ZGC allocation stalls.
 
 ```bash
-# Enable Generational ZGC in Java 21 / 22 (Default in Java 23+)
+# Java 21 / 22: explicitly enable Generational mode
 -XX:+UseZGC -XX:+ZGenerational
+# Java 23+: Generational mode is default (non-generational removed in Java 24)
+-XX:+UseZGC
 
 # Dynamic Heap Sizing (uncommits unused memory back to OS)
 -XX:SoftMaxHeapSize=8g
@@ -64,6 +66,8 @@ Java 21 introduces **Generational ZGC**, separating memory into young and old ge
 ```
 - **Do not tune generations manually**: Generational ZGC automatically dynamically sizes Eden/Old based on learned allocation rates.
 - **When to Choose**: Microservices where sub-millisecond p99/p999 latency matters more than a 2–3% CPU throughput tradeoff.
+- **Compact Object Headers (Java 24/25 - JEP 450/519)**: `-XX:+UseCompactObjectHeaders` (experimental in 24, product in 25: `-XX:+UnlockExperimentalVMOptions` in 24 only) shrinks object headers to 64 bits, reducing heap footprint by 10–20%.
+- **AOT Cache / Project Leyden (Java 24+ - JEP 483)**: Use `-XX:AOTMode=record` / `create` and `-XX:AOTCache=app.aot` for faster JVM startup and warmup.
 
 ---
 
@@ -93,13 +97,15 @@ G1 divides the heap into equal regions (1 MB – 32 MB) dynamically designated a
 
 ### Essential Production Flags (Containers & Cloud)
 ```bash
-# Container Memory Awareness (Respects K8s/Docker cgroup limits)
+# Container Memory Awareness (Respects K8s/Docker cgroup limits; leave ~25% for Metaspace/threads/off-heap)
+# Do not combine -Xmx with MaxRAMPercentage (-Xmx takes precedence)
 -XX:MaxRAMPercentage=75.0
 -XX:InitialRAMPercentage=75.0
 
-# Automatic Diagnostics on Out-Of-Memory
+# Automatic Diagnostics on Out-Of-Memory (ExitOnOutOfMemoryError lets K8s restart unhealthy pods)
 -XX:+HeapDumpOnOutOfMemoryError
 -XX:HeapDumpPath=/var/log/java/oom.hprof
+-XX:+ExitOnOutOfMemoryError
 
 # Print Unified GC Activity (Diagnose allocation spikes and pauses)
 -Xlog:gc*,gc+phases=debug:file=/var/log/java/gc.log:time,uptime,pid:filecount=5,filesize=50M

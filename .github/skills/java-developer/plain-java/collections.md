@@ -36,8 +36,9 @@ A practical guide for choosing the right collection, ensuring thread safety, and
 ### Modern Concurrent Collections (`java.util.concurrent`)
 - **`ConcurrentHashMap`**:
   - High concurrency without locking entire map. Uses CAS for reads and bucket-level locks for writes.
+  - Disallows `null` keys and values (throws `NullPointerException`, unlike `HashMap`).
   - Never use `Collections.synchronizedMap()` in performance-critical paths.
-  - Use atomic compute methods: `map.computeIfAbsent(key, k -> load(k))`.
+  - Use atomic compute methods: `map.computeIfAbsent(key, k -> load(k))`. Keep `compute*`/`merge` functions short and side-effect free; never modify the same map inside them (can deadlock or throw).
 - **`CopyOnWriteArrayList` / `CopyOnWriteArraySet`**:
   - **When to use**: Highly read-heavy scenarios with very rare writes (e.g., event listener registries).
   - **Avoid when**: Frequent writes (every mutation clones the entire backing array, causing heavy GC pressure).
@@ -52,10 +53,8 @@ Map<String, String> config = Map.copyOf(mutableConfig);
 List<String> names = users.stream().map(User::name).toList(); // Java 16+, unmodifiable
 ```
 - `List.of` / `Map.of` / `copyOf` reject `null` elements and throw on mutation.
+- Avoid `Arrays.asList(...)` when true immutability is needed — it allows `set()`, permits `null`, and is backed by the original array.
 - `Collections.unmodifiableList(x)` is only a *view* — changes to `x` still show through. Use `List.copyOf` for a true snapshot.
-
-### `ConcurrentHashMap` Caveat
-Keep `compute*` / `merge` functions short and side-effect free; never modify the same map inside them (can deadlock or throw).
 
 ### Sequenced Collections (Java 21+)
 Use `getFirst()`, `getLast()`, `reversed()` on `List`, `Deque`, `LinkedHashSet`/`LinkedHashMap` instead of `list.get(list.size() - 1)`.
@@ -83,8 +82,9 @@ var map = HashMap.<String, Item>newHashMap(expectedCount);
 - Storing primitive numbers in generic collections (e.g., `List<Integer>`) boxes each number into a 16-24 byte heap object.
 - For high-throughput numeric workloads, use primitive arrays (`int[]`, `long[]`) or specialized primitive collections (FastUtil / Eclipse Collections).
 
-### 4. Correct `equals()` and `hashCode()` Contracts
+### 4. Correct `equals()`, `hashCode()`, and `Comparable` Contracts
 - Inconsistent `hashCode()` degrades `HashMap` and `HashSet` from $O(1)$ performance down to $O(n)$ (or $O(\log n)$ tree bins).
 - Use `record` or let IDE/Lombok generate consistent, immutable key contracts.
 - Never mutate an object's fields used in `hashCode()` while it is a key in a map/set — it becomes unreachable.
+- `TreeSet` / `TreeMap` determine equality via `compareTo` / `Comparator`, not `equals` (e.g., `new BigDecimal("1.0")` and `new BigDecimal("1.00")` collide in `TreeSet` but not `HashSet`).
 

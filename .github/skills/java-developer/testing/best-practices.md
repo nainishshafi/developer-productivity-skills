@@ -178,10 +178,12 @@ class OrderIntegrationTest {
 }
 ```
 
-### 3. Protecting Context Caching (Speed Up Test Suites)
+### 3. Protecting Context & Container Caching (Speed Up Test Suites)
 The Spring test runner caches application contexts across tests. A rebuild occurs whenever context configurations differ:
-- **Avoid `@DirtiesContext`**: It forces Spring to discard the context and spin up a fresh one. Clean up test data via DB transactions or `@BeforeEach` cleanup instead.
+- **Avoid `@DirtiesContext`**: It forces Spring to discard the context and spin up a fresh one. Clean up test data via DB transactions, `JdbcTestUtils`, or `@BeforeEach` cleanup instead.
+- **Share Testcontainers Instances**: Placing `@Testcontainers` + `@Container` on every test class boots a new Docker container per class. Define a shared `static` container in a base integration test class (or `@TestConfiguration` bean with `@ServiceConnection`) so the container starts once per test run.
 - **Standardize Mock Sets**: Group `@MockitoBean` definitions into base test classes or configurations rather than introducing unique mock combinations per test file.
+- **Prefer `MockMvcTester` (Spring 6.2 / Boot 3.4+)**: Provides AssertJ-native assertions (`assertThat(mvc.post().uri("/orders")...).hasStatus(HttpStatus.CREATED)`) without checked exceptions.
 
 ---
 
@@ -212,3 +214,4 @@ class ArchitectureTest {
 - **Over-Mocking**: If you are mocking 8 different classes to test one method, the class under test violates Single Responsibility (SRP). Refactor before testing.
 - **Hardcoded File Paths & Hostnames**: Always use dynamic ports (`RANDOM_PORT`), temp directories (`@TempDir`), or virtual file abstractions.
 - **Logic Inside Tests**: Keep tests declarative. If a test contains `if`, `switch`, or loop statements, it needs to be simplified or split into parameterized tests.
+

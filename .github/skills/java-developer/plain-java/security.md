@@ -23,10 +23,12 @@ Directives for writing secure Java code, preventing OWASP Top 10 vulnerabilities
 - **SSRF**: Never fetch user-supplied URLs directly; allowlist hosts/schemes and block internal/metadata addresses.
 - **Command Injection**: Avoid `Runtime.exec` with user input; if unavoidable, use `ProcessBuilder` with an argument list (never a shell string).
 
-## 2. Authentication & Authorization
+## 2. Authentication, Authorization & Web Boundaries
 
 - Use Spring Security (or the framework's standard mechanism); never hand-roll auth, session, or JWT validation.
 - Enforce authorization server-side on every request, including object ownership checks (prevent IDOR) — e.g., `@PreAuthorize` on service methods.
+- **Prevent Mass Assignment**: Bind requests to dedicated input DTOs/records — never directly to JPA entities or domain models.
+- **CSRF & CORS**: Only disable CSRF for purely stateless token-authenticated APIs (never for cookie/session auth). Allowlist explicit origins in CORS; never combine wildcard origins with `allowCredentials(true)`.
 - Validate all input at the boundary (Bean Validation); deny by default.
 - Return generic error messages to clients; never leak stack traces or internal details.
 
