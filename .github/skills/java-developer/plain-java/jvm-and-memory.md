@@ -37,14 +37,59 @@ Although Java has automatic garbage collection, memory leaks occur when objects 
 
 ---
 
-## 3. JVM Tuning & Garbage Collection (Java 17 / 21+)
+## 3. JVM Tuning & Garbage Collection (Java 21+)
 
-### Garbage Collector Selection
-| GC Algorithm | Primary Characteristic | Ideal Use Case | JVM Flag |
-| :--- | :--- | :--- | :--- |
-| **G1 GC** | Balanced throughput and predictable pause times. **(Default)** | General web applications and microservices. | `-XX:+UseG1GC` |
-| **Generational ZGC** (Java 21+) | **Ultra-low latency (< 1ms pauses)**, scales to terabytes. | High-throughput, latency-critical trading or streaming systems. | `-XX:+UseZGC` (Java 23+ generational by default; add `-XX:+ZGenerational` on 21–22) |
-| **Shenandoah** | Concurrent, low-pause alternative to ZGC. | Systems needing low latency without tuning overhead. | `-XX:+UseShenandoahGC` |
+### Collector Comparison
+| GC Algorithm | Typical Pauses | Max Throughput | Generational Model | Best For | JVM Flags |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **G1 GC** (Default) | 10–50 ms | Highest | Generational (Region-based) | General web apps & microservices | `-XX:+UseG1GC` |
+| **Generational ZGC** (Java 21+) | **< 1 ms** | ~95–98% of G1 | Generational (Young/Old separated) | Latency-critical, SLA-bound APIs, heaps > 8 GB | `-XX:+UseZGC -XX:+ZGenerational` |
+| **Shenandoah** | 5–15 ms | Moderate | Generational in Java 21+ | Low-pause alternative on non-x86 or mixed environments | `-XX:+UseShenandoahGC` |
+
+---
+
+### Generational ZGC Tuning (Java 21 - JEP 439)
+
+Java 21 introduces **Generational ZGC**, separating memory into young and old generations. It collects young objects frequently and concurrently without pausing application threads, resolving previous non-generational ZGC allocation stalls.
+
+```bash
+# Enable Generational ZGC in Java 21 / 22 (Default in Java 23+)
+-XX:+UseZGC -XX:+ZGenerational
+
+# Dynamic Heap Sizing (uncommits unused memory back to OS)
+-XX:SoftMaxHeapSize=8g
+
+# Allocation Burst Protection (factor to absorb traffic spikes, default 2.0)
+-XX:ZAllocationSpikeTolerance=3.0
+```
+- **Do not tune generations manually**: Generational ZGC automatically dynamically sizes Eden/Old based on learned allocation rates.
+- **When to Choose**: Microservices where sub-millisecond p99/p999 latency matters more than a 2–3% CPU throughput tradeoff.
+
+---
+
+### G1 GC Generational Tuning (Throughput & Predictability)
+
+G1 divides the heap into equal regions (1 MB – 32 MB) dynamically designated as Eden, Survivor, or Old.
+
+```bash
+# 1. Target Pause Goal (Soft target; default 200ms)
+-XX:MaxGCPauseMillis=100
+
+# 2. Young Generation Boundaries (Reserve 10-50% for young gen)
+-XX:G1NewSizePercent=10
+-XX:G1MaxNewSizePercent=50
+
+# 3. Dynamic Old-Gen Threshold (Adaptive IHOP prevents allocation failures)
+-XX:+G1UseAdaptiveIHOP
+-XX:InitiatingHeapOccupancyPercent=45
+
+# 4. Humongous Allocation Tuning
+# Objects > 50% region size bypass Young Gen directly to Old Gen, triggering early GCs.
+# If logs show frequent humongous allocations, increase region size:
+-XX:G1HeapRegionSize=16m
+```
+
+---
 
 ### Essential Production Flags (Containers & Cloud)
 ```bash
@@ -56,7 +101,7 @@ Although Java has automatic garbage collection, memory leaks occur when objects 
 -XX:+HeapDumpOnOutOfMemoryError
 -XX:HeapDumpPath=/var/log/java/oom.hprof
 
-# Print GC Activity without Third-Party Agents
+# Print Unified GC Activity (Diagnose allocation spikes and pauses)
 -Xlog:gc*,gc+phases=debug:file=/var/log/java/gc.log:time,uptime,pid:filecount=5,filesize=50M
 ```
 

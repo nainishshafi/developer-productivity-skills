@@ -17,25 +17,62 @@
 - When you want clean, readable, synchronous code without the cognitive load of reactive chains.
 - Spawning short-lived tasks using `Executors.newVirtualThreadPerTaskExecutor()`.
 
-### What to Avoid
-- **Never pool virtual threads**: Creating a pool defeats their design. Allocate them freely per task.
-- **Limit concurrency with a `Semaphore`, not a pool**: Unbounded virtual threads can overwhelm downstream resources (DB connection pools, rate-limited APIs).
-- **Avoid for CPU-heavy tasks**: Virtual threads do not make compute faster; use standard thread pools sized to available CPU cores for compute workloads.
-- **Avoid heavy `ThreadLocal` usage**: Spawning hundreds of thousands of virtual threads with large `ThreadLocal` data can quickly exhaust heap memory. Prefer `ScopedValue` (final in Java 25) for request context.
+### What to Avoid & Limitations
 
-### Carrier Thread Pinning
-When a virtual thread cannot be unmounted from its underlying OS "carrier" thread during a blocking operation, it is **pinned**. This degrades system throughput.
-- **Java 21–23**: Blocking inside `synchronized` pins. Replace `synchronized` blocks that guard blocking I/O with `ReentrantLock`:
+1. **Never Pool Virtual Threads**: Creating a pool defeats their design. Allocate them freely per task (`newVirtualThreadPerTaskExecutor()`).
+2. **Limit Downstream Concurrency with a `Semaphore`**: Unbounded virtual threads can spawn 100,000 parallel calls and crush downstream database pools or third-party APIs:
+   ```java
+   private final Semaphore dbThrottle = new Semaphore(50); // limit concurrent DB queries
+   public void queryDb() throws InterruptedException {
+       dbThrottle.acquire();
+       try { doBlockingQuery(); }
+       finally { dbThrottle.release(); }
+   }
+   ```
+3. **Avoid for CPU-Heavy Tasks**: Virtual threads do not make compute faster; use standard platform thread pools sized to available CPU cores (`Runtime.getRuntime().availableProcessors()`).
+4. **`ThreadLocal` Memory Bloat**:
+   - In platform pools, thousands of requests reuse a few dozen threads. In Java 21, spawning 100,000 virtual threads each holding a `ThreadLocal` copies data 100,000 times, causing rapid heap exhaustion.
+   - *Mitigation*: Prefer passing request context explicitly via parameters or use `ScopedValue` (preview in Java 21, final in 25).
+   - If a library leaks thread-locals, disable them when spawning:
+     ```java
+     Thread.ofVirtual().allowSetThreadLocals(false).name("worker-", 0).start(runnable);
+     ```
+
+### Carrier Thread Pinning (Java 21)
+
+When a virtual thread cannot be unmounted from its underlying OS "carrier" thread during a blocking operation, it is **pinned**. If all carrier threads become pinned (default pool size = CPU cores), thread starvation occurs and throughput collapses.
+
+#### 1. Primary Cause: `synchronized` Blocks (Java 21–23)
+In Java 21, blocking I/O (socket read/write, lock wait) inside a `synchronized` block or method holds the carrier thread:
+- **Avoid**:
   ```java
+  // Bad in Java 21: pins the carrier thread during network I/O
+  public synchronized String fetchRemoteData() {
+      return httpClient.get(url);
+  }
+  ```
+- **Fix**: Replace `synchronized` with `ReentrantLock`:
+  ```java
+  // Good: unmounts cleanly while waiting on lock or I/O
   private final ReentrantLock lock = new ReentrantLock();
-  public void execute() {
+  public String fetchRemoteData() {
       lock.lock();
-      try { blockingIoCall(); }
+      try { return httpClient.get(url); }
       finally { lock.unlock(); }
   }
   ```
-- **Java 24+**: `synchronized` no longer pins (JEP 491); no rewrite needed. Native/JNI calls still pin.
-- **Detect pinning** with the JFR event `jdk.VirtualThreadPinned` (`-Djdk.tracePinnedThreads` was removed in Java 24).
+- *Note*: JEP 491 (Java 24+) removes `synchronized` pinning; however, `synchronized` still pins on Java 21 LTS runtimes.
+
+#### 2. Native Code & JNI Pinning
+Calling native methods (`JNI`) or C-libraries via Panama FFI inside a virtual thread pins the carrier thread across all Java versions. Offload native calls to a dedicated platform thread pool.
+
+#### 3. Detecting Pinning in Java 21
+- **JVM Flag (Java 21–23)**:
+  ```bash
+  -Djdk.tracePinnedThreads=full   # Prints full stack trace on pinning
+  -Djdk.tracePinnedThreads=short  # Prints single-line warning
+  ```
+- **Java Flight Recorder (JFR)**: Inspect the `jdk.VirtualThreadPinned` event in JDK Mission Control.
 
 ### Executor Lifecycle
 `ExecutorService` is `AutoCloseable` (Java 19+); scope executors with try-with-resources so tasks complete and threads are released:
