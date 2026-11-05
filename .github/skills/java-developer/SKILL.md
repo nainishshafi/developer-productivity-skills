@@ -1,6 +1,6 @@
 ---
 name: java-developer
-description: Expert guidelines for modern Java (17/21/25 LTS), Spring Boot architectures, DRY/KISS/SOLID principles, design patterns, and enterprise best practices. Use when writing, reviewing, refactoring, or debugging Java or Spring Boot code, or when the user asks to "review java code", "spring boot best practices", "optimize jvm", "write java unit test", or "design java service".
+description: Expert guidelines for modern Java (17/21/25 LTS), Spring Boot architectures, DRY/KISS/SOLID principles, design patterns, and enterprise best practices. Use when writing, reviewing, refactoring, or debugging Java or Spring Boot code, or when the user asks to "review java code", "spring boot best practices", "optimize jvm", "write java unit test", "design java service", "migrate to spring boot 3", or "modernize legacy jsp webflow".
 version: 1.0.0
 ---
 
@@ -32,4 +32,5 @@ Load only the modules relevant to the task.
 - [Design Patterns](design-patterns/patterns.md)
 - [Spring Boot Architecture](spring-boot/architecture.md)
 - [Spring Boot Best Practices](spring-boot/best-practices.md)
+- [Modernization & Migration (JSP/Webflow to Spring Boot 3)](spring-boot/modernization.md)
 - [Testing & Quality Best Practices](testing/best-practices.md)

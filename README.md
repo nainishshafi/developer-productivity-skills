@@ -84,9 +84,9 @@ Interactively guides you through architectural decisions for a new or existing p
 ---
 
 ### `java-developer`
-Comprehensive guidelines and best practices for modern Java (LTS 17/21/25) and Spring Boot enterprise applications. Covers modern language features (records, sealed types, pattern matching, switch expressions), concurrency (Virtual Threads, CompletableFuture, carrier pinning avoidance), collection selection and performance, functional architecture, JVM tuning & low-latency GC (ZGC/Shenandoah/G1), application security (OWASP, IDOR, SSRF, injection defense), and Spring Boot 3+ production patterns (thin controllers, transactional boundaries, RFC 7807 problem details, RestClient, and slice/testcontainer testing).
+Comprehensive guidelines and best practices for modern Java (LTS 17/21/25) and Spring Boot enterprise applications. Covers modern language features (records, sealed types, pattern matching, switch expressions), concurrency (Virtual Threads, CompletableFuture, carrier pinning avoidance), collection selection and performance, functional architecture, JVM tuning & low-latency GC (ZGC/Shenandoah/G1), application security (OWASP, IDOR, SSRF, injection defense), Spring Boot 3+ production patterns (thin controllers, transactional boundaries, RFC 7807 problem details, RestClient, and slice/testcontainer testing), and legacy modernization (refactoring JSP and Spring Webflow state machines to RESTful microservices, `jakarta.*` migration, Spring Security 6, and AOT/GraalVM).
 
-**Trigger phrases:** "review java code", "spring boot best practices", "optimize jvm", "write java unit test", "design java service", "java concurrency guide", "virtual threads vs reactor", "java security audit"
+**Trigger phrases:** "review java code", "spring boot best practices", "optimize jvm", "write java unit test", "design java service", "java concurrency guide", "virtual threads vs reactor", "java security audit", "migrate to spring boot 3", "modernize legacy jsp webflow"
 
 **Supported versions:** Java 17, 21, 25 LTS; Spring Boot 3.x
 
@@ -171,7 +171,8 @@ Skills in `.github/skills/` are picked up as custom instructions by Copilot Chat
         │   └── patterns.md
         ├── spring-boot/
         │   ├── architecture.md
-        │   └── best-practices.md
+        │   ├── best-practices.md
+        │   └── modernization.md
         └── testing/
             └── best-practices.md
 ```
