@@ -32,3 +32,4 @@ Load only the modules relevant to the task.
 - [Design Patterns](design-patterns/patterns.md)
 - [Spring Boot Architecture](spring-boot/architecture.md)
 - [Spring Boot Best Practices](spring-boot/best-practices.md)
+- [Testing & Quality Best Practices](testing/best-practices.md)

@@ -169,7 +169,9 @@ Skills in `.github/skills/` are picked up as custom instructions by Copilot Chat
         │   └── security.md
         ├── design-patterns/
         │   └── patterns.md
-        └── spring-boot/
-            ├── architecture.md
+        ├── spring-boot/
+        │   ├── architecture.md
+        │   └── best-practices.md
+        └── testing/
             └── best-practices.md
 ```
