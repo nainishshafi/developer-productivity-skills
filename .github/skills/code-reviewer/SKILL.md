@@ -48,10 +48,12 @@ Evaluate every code change against these 7 dimensions:
 - Are credentials, API keys, or JWT tokens hardcoded or logged in plaintext?
 - Are authorization and authentication checks verified on every privileged operation?
 
-### 6. Performance & Resource Hygiene
+### 6. Performance, Memory & Resource Hygiene
 - Are database queries indexed and avoiding N+1 roundtrips?
-- Are open resources (files, sockets, streams, database connections) closed in `finally` / context managers?
+- Are open resources (files, sockets, streams, database connections) closed in `finally` / context managers (`with`, `try-with-resources`)?
 - Are large datasets streamed or paginated rather than held entirely in memory?
+- Are there memory leaks: closures capturing heavy outer objects, dangling event listeners, uncancelled timers, unbounded in-memory caches (`Map`/dict without eviction), or circular references?
+- Is the runtime event loop protected from blocking synchronous operations (e.g., sync I/O, heavy CPU algorithms) and unbounded async concurrency?
 
 ### 7. Readability, Naming & Style
 - Do function and variable names clearly communicate intent without misleading abbreviations?

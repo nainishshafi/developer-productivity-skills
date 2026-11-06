@@ -165,6 +165,64 @@ my-task-skill/
 
 ---
 
+### Template C — Modular Knowledge-Pack Skill (Anti-Bloat Architecture)
+
+Use for language specialists, frameworks, and deep technical engineering domains (e.g., `java-developer`, `typescript-developer`, `python-developer`).
+
+**Why this pattern is mandatory for complex skills:**
+1. **Zero Prompt Bloat:** Keeps `SKILL.md` under 45 lines. Only the entry-point index is injected initially.
+2. **Selective Context Loading:** The LLM inspects the topic matrix and reads only the specific markdown file needed for the user's task (e.g. `runtime-and-memory/memory-and-closures.md` or `testing/best-practices.md`).
+3. **Deep Technical Rigor:** Avoids shallow compromises caused by cramming memory, concurrency, typing, security, and frameworks into a single file.
+
+```yaml
+---
+name: my-developer-skill
+description: Architectural and engineering guidance for [Technology]. Helps the LLM analyze architecture, apply clean design, enforce memory/performance hygiene, and adopt testing patterns pragmatically. Use when writing, reviewing, designing, or refactoring [Technology] code.
+version: 1.0.0
+---
+
+# [Technology] Developer Skill
+
+You are an expert engineer specializing in modern [Technology], clean software architecture, memory safety, and performance.
+
+## Core Directives
+
+1. **Respect the Project's Baseline**: Check toolchain and version before introducing APIs.
+2. **Simplicity First (KISS & YAGNI)**: Favor straightforward, readable code over speculative abstractions.
+3. **Memory Safety & Resource Hygiene**: Proactively audit closures, subscriptions, caches, and stream backpressure.
+4. **Follow Existing Conventions**: Match the codebase's existing style, libraries, and test patterns.
+
+## Knowledge Modules
+
+Load only the modules relevant to the task.
+
+- [Architecture Styles & Boundaries](core/architecture-styles.md)
+- [Domain & Type Modeling](core/domain-modeling.md)
+- [Memory Safety & Closure Hygiene](runtime-and-memory/memory-and-closures.md)
+- [Event Loop & Concurrency](concurrency/concurrency.md)
+- [Security Guidelines](security/security.md)
+- [Testing & Quality Best Practices](testing/best-practices.md)
+```
+
+**Folder layout:**
+```
+my-developer-skill/
+├── SKILL.md                          # Lean index router (< 45 lines)
+├── core/
+│   ├── architecture-styles.md        # Architectural patterns & directory layouts
+│   └── domain-modeling.md            # Invariants, state modeling, DTOs
+├── runtime-and-memory/
+│   └── memory-and-closures.md        # Closures, leaks, caches, listener teardowns
+├── concurrency/
+│   └── concurrency.md                # Non-blocking async, thread safety, throttling
+├── security/
+│   └── security.md                   # Defensive programming, input sanitization
+└── testing/
+    └── best-practices.md             # Fast unit invariants, mock boundaries, fixtures
+```
+
+---
+
 ## 3. Description Writing Guide
 
 The `description` field is **the single most important field** — Claude uses it to decide when to auto-invoke your skill.

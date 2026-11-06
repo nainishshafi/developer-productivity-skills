@@ -1,77 +1,84 @@
 ---
 name: skill-creator
-description: Use when the user asks to "create a new skill", "add a skill", "write a skill", "scaffold a skill", "make a claude skill", "build a skill", or wants to create a reusable Claude Code skill from scratch. Also use when the user describes a repeatable workflow they want to package as a skill.
-version: 1.0.0
+description: Use when the user asks to "create a new skill", "add a skill", "write a skill", "scaffold a skill", "make a claude skill", "build a skill", or wants to create a reusable Claude Code skill from scratch. Handles modular knowledge-pack developer skills, task/action skills with scripts, and lightweight reference skills.
+version: 1.1.0
 ---
 
 # Skill Creator
 
-Scaffold and write new Claude Code skills following established conventions. Handles both **reference/knowledge skills** (rich documentation that Claude loads as context) and **task/action skills** (step-by-step workflows with scripts).
+Scaffold and write new Claude Code skills following established repository conventions. Supports three archetypes:
+1. **Modular Knowledge-Pack Skills** — High-depth developer skills (e.g. `java-developer`, `typescript-developer`, `python-developer`) featuring a lean router `SKILL.md` (< 45 lines) and topical markdown modules loaded selectively to keep context windows lean.
+2. **Task / Action Skills** — Step-by-step operational workflows with automated scripts (`SKILL.md` + `scripts/` + `references/`).
+3. **Lightweight Reference Skills** — Focused single-topic reference guides.
 
 ## When to Use This Skill
 
-- User wants to package a repeatable workflow as a skill
+- User wants to package a repeatable workflow or domain guide as a skill
 - User asks to "create", "add", "write", or "scaffold" a skill
+- User wants to build a language or framework developer skill
 - User describes something they want Claude to do consistently across sessions
-- User wants to share a skill across projects or with others
 
 ## Workflow
 
-### Step 1 — Classify the Skill Type
+### Step 1 — Classify the Skill Archetype
 
-Ask the user:
-1. **What should the skill do?** (one sentence)
-2. **Does it perform an action or provide knowledge?**
-   - *Action*: runs scripts, executes steps, interacts with tools → **Task skill**
-   - *Knowledge*: patterns, templates, conventions, reference material → **Reference skill**
-
-**Decision:**
-- **Reference skill** → single rich `SKILL.md` only (no scripts required)
-- **Task skill** → `SKILL.md` + `references/` + `scripts/`
+Determine the archetype:
+1. **Modular Knowledge-Pack Skill (Recommended for Languages & Frameworks)**:
+   - For language specialists, runtime engines, or multi-topic engineering domains (e.g., `go-developer`, `rust-developer`, `vue-developer`).
+   - Structure: Lean `SKILL.md` router + topic folders (`core/`, `runtime-and-memory/`, `concurrency/`, `security/`, `testing/`).
+   - Rule: Never bloat `SKILL.md` or dump everything into a monolithic reference file.
+2. **Task / Action Skill**:
+   - Executes shell/python scripts, runs automated linters/scaffolding, or mutates repository code.
+   - Structure: `SKILL.md` workflow + `scripts/` + `references/`.
+3. **Lightweight Reference Skill**:
+   - Small, single-topic cheatsheet or conventions doc without multiple sub-domains.
 
 ### Step 2 — Gather Details
 
 Collect from the user:
-- **Skill name** — kebab-case, lowercase (e.g., `lint-python`, `deploy-staging`)
+- **Skill name** — kebab-case, lowercase (e.g., `rust-developer`, `sync-github-forks`)
 - **Trigger phrases** — what will the user say to invoke it? (list 5–8 examples)
-- **Target location** — `.github/skills/` (this project) or `~/.claude/skills/` (all projects)
-- **For reference skills**: topic areas, frameworks, code patterns to cover
-- **For task skills**: step-by-step actions, prerequisites, scripts needed (bash or python?)
+- **Target location** — `.github/skills/` (this repository) or `~/.claude/skills/` (global)
+- **For modular skills**: domain folders to generate (architecture, memory/runtime, concurrency, security, testing)
+- **For task skills**: step-by-step actions, prerequisites, automation scripts needed
 
 ### Step 3 — Scaffold the Folder
 
-Run the scaffold script to create the directory structure and boilerplate:
+Run the scaffold script using Node.js (available in this environment) or Python:
 
 ```bash
-[ -d .venv ] || python -m venv .venv
-PYTHON=$(if [ -f .venv/Scripts/python ]; then echo .venv/Scripts/python; else echo .venv/bin/python; fi)
-$PYTHON .github/skills/skill-creator/scripts/scaffold-skill.py <skill-name> [base-path]
+# Using Node.js (Recommended in this environment):
+node .github/skills/skill-creator/scripts/scaffold-skill.js <skill-name> [base-path] --modular
+
+# Or using Python (if Python runtime is installed):
+python .github/skills/skill-creator/scripts/scaffold-skill.py <skill-name> [base-path] --modular
 ```
 
 - Default `base-path` is `.github/skills/`
-- Script outputs created file paths to stdout (one per line)
-- If the skill folder already exists, the script exits with a warning — do not overwrite
+- Script outputs created file paths to stdout
+- If the skill directory already exists, the script halts safely without overwriting
 
 ### Step 4 — Populate the Files
 
-Use `references/skill-anatomy.md` as your writing guide.
+Use `references/skill-anatomy.md` as your architectural guide.
 
-**For a reference skill**, write a rich `SKILL.md` with these sections:
-1. **When to Use This Skill** — bullet list of scenarios
-2. **Core Concepts** — fundamental ideas with explanations
-3. **Implementation Patterns** — named patterns with code examples (3–10+ patterns)
-4. **Best Practices** — do's and don'ts
-5. **Common Pitfalls** — what to avoid and why
-6. **Resources** — links and further reading
+**For a Modular Knowledge-Pack Skill:**
+1. Keep `SKILL.md` as a clean router (< 45 lines) containing:
+   - Metadata frontmatter
+   - 4–6 Core Directives
+   - `## Knowledge Modules` with markdown links to each sub-module: *"Load only the modules relevant to the task."*
+2. Write deep, single-responsibility topic documents under their respective subdirectories:
+   - `core/architecture.md` (Domain modeling, architecture styles, error design)
+   - `runtime-and-memory/memory-and-closures.md` (Closure traps, leak prevention, caches, GC/lifecycles)
+   - `concurrency/concurrency.md` (Non-blocking event loop, threading, throttling, backpressure)
+   - `security/security.md` (Defensive typing, sanitization, injection prevention)
+   - `testing/best-practices.md` (Testing pyramid, mock isolation, testcontainers)
 
-**For a task skill**, write:
-- `SKILL.md` — frontmatter + step-by-step workflow (reference `references/` and `scripts/` by path)
-- `references/<skill-name>-reference.md` — supporting documentation, patterns, and specs
-- `scripts/<script>.py` or `scripts/<script>.sh` — executable logic with error handling
-
-Confirm all created files with the user before finishing.
+**For a Task Skill:**
+- `SKILL.md` — workflow steps referencing scripts
+- `scripts/<script>.py` or `.sh` — executable logic with error handling
 
 ## Additional Resources
 
-- **`references/skill-anatomy.md`** — Complete frontmatter field reference, skill type templates, description writing guide, script conventions, naming rules
-- **`scripts/scaffold-skill.py`** — Creates folder structure and boilerplate files for a new skill
+- **`references/skill-anatomy.md`** — Frontmatter specification, archetype templates, anti-bloat guidelines, and naming rules
+- **`scripts/scaffold-skill.py`** — Boilerplate scaffolding utility supporting both standard and `--modular` modes

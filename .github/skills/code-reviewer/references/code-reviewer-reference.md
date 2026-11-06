@@ -29,24 +29,27 @@ A senior code reviewer approaches code with a specific lens:
 
 ### Python Reviews
 - **Typing:** Are return types annotated? Are `Optional[T]` or `T | None` used where `None` can be returned?
-- **Collections:** Are dict lookups using `.get()` with defaults or catching `KeyError`?
-- **Async:** Is `asyncio.sleep()` called instead of blocking `time.sleep()`?
-- **Resource Cleanup:** Are file handles and database sessions managed in `with` blocks?
-- **Mutable Defaults:** Are there functions with `def append_item(item, target=[])`? (Flag as P0 bug).
+- **Collections & Caching:** Are dict lookups using `.get()` or catching `KeyError`? Are `@functools.lru_cache` calls bounded with an explicit `maxsize`?
+- **Async & Event Loop:** Is `asyncio.sleep()` called instead of blocking `time.sleep()`? Are CPU-bound or sync operations offloaded with `asyncio.to_thread()`?
+- **Resource Cleanup:** Are file handles, sockets, and database sessions managed in `with` / `async with` blocks?
+- **Closures & Scope:** Are default arguments immutable (no `target=[]` or `target={}`)? Are loop variables in closures bound at definition time (`lambda i=i: i`)?
+- **Memory & References:** Are circular references avoided or decoupled via `weakref`? Are generators (`yield`) used for large dataset iteration?
 
 ### TypeScript / JavaScript Reviews
 - **Strict Typing:** Is `any` used? (Flag as P1). Is `as Type` force-casting without validation?
 - **Equality:** Is `===` used instead of `==`?
-- **Async:** Are promises awaited or chained? Are there unhandled floating promises?
+- **Async & Concurrency:** Are promises awaited or chained? Are there unhandled floating promises? Is `Promise.all` bounded using concurrency throttling (`p-limit`)?
 - **Nullish Coalescing:** Is `??` used where falsy values like `0` or `""` are legitimate?
-- **Memory:** Are event listeners and timeouts cleaned up on component unmount / process exit?
+- **Closure & Scope Hygiene:** Do callbacks or event handlers accidentally retain large outer objects or request contexts?
+- **Memory & Resource Hygiene:** Are event listeners, intervals, and observers cleaned up (using `AbortSignal`, `.off()`, or `clearInterval`)? Are caches bounded (LRU) rather than unbounded `Map`/`Set`? Are large files streamed rather than buffered in RAM?
 
 ### Java Reviews
 - **Null Safety:** Are `Optional<T>` methods used properly without blind `.get()` calls?
 - **Immutability:** Are DTOs using Java Records (`record User(...)`)?
-- **Streams:** Are stream operations side-effect free?
+- **Streams & Memory:** Are stream operations side-effect free? Are large result sets streamed / paginated rather than collected into large heap lists?
+- **Memory Leaks:** Are static collections bounded? Are `ThreadLocal` variables cleared in `finally` blocks? Are non-static inner classes avoiding unintended outer reference retention?
 - **Concurrency:** Are threads pinned on carrier threads in Virtual Threads (e.g. `synchronized` blocks doing I/O)?
-- **Transactions:** Are `@Transactional` methods public and called from outside the class instance?
+- **Transactions & Resources:** Are `@Transactional` methods public and called from outside the class instance? Are all `AutoCloseable` resources managed in `try-with-resources`?
 
 ---
 
