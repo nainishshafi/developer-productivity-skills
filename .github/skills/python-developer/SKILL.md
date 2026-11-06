@@ -23,6 +23,7 @@ Load only the modules relevant to the task.
 
 - [Architectural Styles & Layouts](core/architecture-styles.md)
 - [Domain Modeling & Immutability](core/domain-modeling.md)
+- [Pydantic v2 Architecture & Validation](core/pydantic-and-validation.md)
 - [Error Architecture & Resilience](core/error-architecture.md)
 - [Memory Safety, Garbage Collection & Optimization](runtime-and-memory/memory-and-gc.md)
 - [Closures, Scope Hygiene & Function Traps](runtime-and-memory/closures-and-scope.md)

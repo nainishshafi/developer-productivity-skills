@@ -23,6 +23,9 @@ Load only the modules relevant to the task.
 
 - [Component Architecture & Composition](core/component-architecture.md)
 - [State Architecture & Decision Matrix](core/state-architecture.md)
+- [Global Stores with Zustand](state-management/global-stores-zustand.md)
+- [Server State & Cache Stores (TanStack Query)](state-management/server-state-tanstack-query.md)
+- [Redux Toolkit & Context Boundaries](state-management/redux-toolkit-and-context.md)
 - [Memory Safety, Closures & Lifecycle Teardown](runtime-and-memory/memory-and-closures.md)
 - [Rendering Performance & Virtualization](runtime-and-memory/rendering-performance.md)
 - [Server Components (RSC) & Next.js](server-components/rsc-and-nextjs.md)

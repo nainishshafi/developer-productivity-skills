@@ -23,6 +23,8 @@ Load only the modules relevant to the task.
 
 - [Architectural Styles & Layouts](core/architecture-styles.md)
 - [Domain Modeling & Type Discipline](core/type-modeling.md)
+- [Runtime Validation & Schemas (Zod / Valibot)](core/validation-and-schemas.md)
+- [Data Persistence & ORMs (Drizzle / Prisma)](frameworks/persistence-and-orms.md)
 - [Error Architecture & Resilience](core/error-architecture.md)
 - [Memory Safety, Closures & Resource Hygiene](runtime-and-memory/memory-and-closures.md)
 - [Event Loop Health, Offloading & Streams](runtime-and-memory/event-loop-and-streams.md)
