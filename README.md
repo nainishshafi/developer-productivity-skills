@@ -141,6 +141,15 @@ Conducts rigorous, senior-level code reviews across languages (Python, TypeScrip
 
 ---
 
+### `algorithmic-complexity-analyzer`
+Rigorous, language-independent algorithmic complexity analysis (Big-O time and space complexity). Audits source code for asymptotic bounds ($O(1)$, $O(\log n)$, $O(n)$, $O(n \log n)$, $O(n^2)$, $O(2^n)$), detects hidden quadratic/exponential anti-patterns (nested linear scans, array shifting in queues, string concatenation allocations, recursion stack depth traps), and proposes optimized algorithmic strategies (hash mapping, two-pointer, sliding window, binary search, dynamic programming).
+
+**Trigger phrases:** "check time complexity", "analyze big o", "check algorithmic logic", "optimize loop performance", "audit algorithmic complexity", "check for o(n) vs o(1)", "find hidden quadratic loops"
+
+**Supported languages:** Language-independent (Python, TypeScript, JavaScript, Java, Go, C++, Rust, C#)
+
+---
+
 ### `troubleshoot-and-fix`
 Universal, language-independent diagnostic and repair framework for debugging runtime crashes, exceptions, logic errors, and flakiness. Refers to language-specific developer skills (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`) for runtime idioms. When direct in-project reproduction is blocked by heavy dependencies, cloud credentials, or monolithic setup, it systematically extracts the problematic logic, generates realistic mock fixtures, and executes an isolated reproduction testbed to verify the fix before porting it back.
 
@@ -379,16 +388,33 @@ mcp/
     │       └── code-reviewer-reference.md
     ├── python-developer/
     │   ├── SKILL.md
-    │   └── references/
-    │       └── python-developer-reference.md
+    │   ├── core/
+    │   ├── runtime-and-memory/
+    │   ├── concurrency/
+    │   ├── security/
+    │   └── testing/
     ├── typescript-developer/
     │   ├── SKILL.md
-    │   └── references/
-    │       └── typescript-developer-reference.md
+    │   ├── core/
+    │   ├── runtime-and-memory/
+    │   ├── concurrency/
+    │   ├── frameworks/
+    │   ├── security/
+    │   └── testing/
     ├── react-developer/
     │   ├── SKILL.md
-    │   └── references/
-    │       └── react-developer-reference.md
+    │   ├── core/
+    │   ├── state-management/
+    │   ├── runtime-and-memory/
+    │   ├── server-components/
+    │   └── testing/
+    ├── algorithmic-complexity-analyzer/
+    │   ├── SKILL.md
+    │   ├── core/
+    │   ├── anti-patterns/
+    │   ├── data-structures/
+    │   ├── optimization-patterns/
+    │   └── audit-workflow/
     ├── troubleshoot-and-fix/
     │   ├── SKILL.md
     │   ├── references/
