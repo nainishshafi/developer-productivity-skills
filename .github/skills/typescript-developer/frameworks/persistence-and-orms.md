@@ -95,3 +95,4 @@ export async function transferBalance(senderId: string, receiverId: string, amou
   });
 }
 ```
+

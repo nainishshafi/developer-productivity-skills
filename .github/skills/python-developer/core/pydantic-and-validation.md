@@ -166,3 +166,4 @@ settings = AppSettings()
 | `@root_validator` | `@model_validator(mode='after')` |
 | `class Config:` | `model_config = ConfigDict(...)` |
 | `BaseSettings` in `pydantic` | `from pydantic_settings import BaseSettings` |
+

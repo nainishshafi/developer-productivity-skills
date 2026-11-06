@@ -89,3 +89,4 @@ export const UserSchema = v.object({
 
 export type User = v.InferOutput<typeof UserSchema>;
 ```
+
