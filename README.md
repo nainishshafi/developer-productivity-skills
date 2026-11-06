@@ -110,6 +110,31 @@ Executes JavaScript and TypeScript code snippets, evaluates expressions, runs sc
 
 ---
 
+### `llm-as-judge`
+Built-in evaluation capability for Copilot/Claude to evaluate and compare LLM responses directly within the agent's reasoning process without external APIs or dependencies. Supports single-agent rubric evaluation, pairwise comparison, hallucination detection, grounding verification, and multi-agent sequential consensus evaluation.
+
+**Trigger phrases:** "judge this response", "compare these responses", "evaluate response quality", "check for hallucinations", "score this output", "rate this response", "which response is better", "evaluate with rubrics"
+
+---
+
+### `save-memory`
+Persists high-signal, non-bloated project memory into the `project-memory` MCP server. Strictly partitions memory into three categories: `ledger` (permanent architecture decisions and constraints), `sidecar` (transient active WIP context), and `journal` (session summary paired with mandatory learnings from mistakes and errors encountered or avoided). Strips raw code, logs, and stack traces to preserve context window bandwidth.
+
+**Trigger phrases:** "save memory", "record memory", "save to ledger", "save to sidecar", "record mistake", "save learning", "remember this decision", "log anti-pattern", "persist task context"
+
+**Prerequisites:** `project-memory` MCP server configured
+
+---
+
+### `load-memory`
+Retrieves concise project memories from the `project-memory` MCP server without context-polluting vectors or raw logs. Supports category filtering (`ledger`, `sidecar`, `journal`), balanced session snapshots, and hybrid search with 40% semantic cosine similarity + 60% lexical overlap to locate relevant historical context and past mistakes to avoid before starting tasks.
+
+**Trigger phrases:** "load memory", "check project memory", "what was I working on", "retrieve ledger", "search memory", "check past mistakes", "what did we learn", "load project context", "recall decisions"
+
+**Prerequisites:** `project-memory` MCP server configured
+
+---
+
 ## Model Context Protocol (MCP) Servers
 
 Reusable MCP servers located in `mcp/` providing protocol-compliant tool integrations for AI assistants.
@@ -121,12 +146,35 @@ A high-performance MCP server for executing JavaScript and TypeScript code snipp
 - **Location:** `mcp/nodejs-executor/`
 - **TypeScript Support:** Native type-stripping execution on Node.js 22+
 
+### `project-memory`
+A high-performance MCP server providing persistent project memory backed by Node.js native SQLite (`node:sqlite`), **40% semantic hybrid search**, anti-bloat guards, and strict 3-category memory partitioning (`ledger`, `sidecar`, `journal`).
+
+- **Tools:** `save_memory`, `load_memory`, `search_memory`, `delete_memory`, `clear_sidecar`
+- **Location:** `mcp/project-memory/`
+- **Search:** Hybrid $(0.40 \times \text{Semantic Cosine} + 0.60 \times \text{Lexical Overlap})$ across 256-dimensional subword embeddings
+- **Storage:** Local SQLite database in `.project-memory/memory.db` with zero external native compilation dependencies
+
 ## Usage
 
-### Claude Code
-Skills are loaded automatically from `.github/skills/`. Invoke them by using any trigger phrase above in your Claude Code session.
+### Claude Code & Antigravity
+Skills are loaded automatically from `.github/skills/`. Invoke them by using any trigger phrase above in your session.
 
-MCP servers can be registered via `claude mcp add nodejs-executor node <path-to-repo>/mcp/nodejs-executor/dist/index.js` or `.mcp.json`.
+MCP servers can be registered in your MCP configuration (`.mcp.json` or `claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "nodejs-executor": {
+      "command": "node",
+      "args": ["<path-to-repo>/mcp/nodejs-executor/dist/index.js"]
+    },
+    "project-memory": {
+      "command": "node",
+      "args": ["--experimental-sqlite", "<path-to-repo>/mcp/project-memory/dist/index.js"]
+    }
+  }
+}
+```
 
 ### GitHub Copilot
 Skills in `.github/skills/` are picked up as custom instructions by Copilot Chat. Use the same trigger phrases in Copilot Chat, or reference a skill by name (e.g. `@workspace /python-linter`).
@@ -135,32 +183,54 @@ Skills in `.github/skills/` are picked up as custom instructions by Copilot Chat
 
 ```
 mcp/
-└── nodejs-executor/
+├── nodejs-executor/
+│   ├── src/
+│   │   ├── process/
+│   │   │   ├── runner.ts
+│   │   │   └── terminator.ts
+│   │   ├── security/
+│   │   │   ├── permissions.ts
+│   │   │   ├── sanitizer.ts
+│   │   │   └── validator.ts
+│   │   ├── tools/
+│   │   │   ├── evaluate-expr.ts
+│   │   │   ├── execute-code.ts
+│   │   │   ├── execute-file.ts
+│   │   │   ├── package-script.ts
+│   │   │   └── runtime-info.ts
+│   │   ├── executor.ts
+│   │   ├── index.ts
+│   │   ├── server.ts
+│   │   └── types.ts
+│   ├── tests/
+│   │   ├── executor.test.ts
+│   │   └── mcp-client.test.ts
+│   ├── examples/
+│   │   └── demo.ts
+│   ├── scripts/
+│   │   └── invoke.mjs
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── README.md
+└── project-memory/
     ├── src/
-    │   ├── process/
-    │   │   ├── runner.ts
-    │   │   └── terminator.ts
-    │   ├── security/
-    │   │   ├── permissions.ts
-    │   │   ├── sanitizer.ts
-    │   │   └── validator.ts
+    │   ├── db/
+    │   │   └── database.ts
+    │   ├── search/
+    │   │   └── semantic.ts
     │   ├── tools/
-    │   │   ├── evaluate-expr.ts
-    │   │   ├── execute-code.ts
-    │   │   ├── execute-file.ts
-    │   │   ├── package-script.ts
-    │   │   └── runtime-info.ts
-    │   ├── executor.ts
+    │   │   ├── load-memory.ts
+    │   │   ├── manage-memory.ts
+    │   │   ├── save-memory.ts
+    │   │   └── search-memory.ts
+    │   ├── utils/
+    │   │   └── sanitizer.ts
     │   ├── index.ts
     │   ├── server.ts
     │   └── types.ts
     ├── tests/
-    │   ├── executor.test.ts
-    │   └── mcp-client.test.ts
-    ├── examples/
-    │   └── demo.ts
-    ├── scripts/
-    │   └── invoke.mjs
+    │   ├── mcp-client.test.ts
+    │   └── memory.test.ts
     ├── package.json
     ├── tsconfig.json
     └── README.md
@@ -229,6 +299,18 @@ mcp/
     │   ├── SKILL.md
     │   └── references/
     │       └── nodejs-executor-reference.md
+    ├── llm-as-judge/
+    │   ├── SKILL.md
+    │   ├── README.md
+    │   ├── CHANGELOG.md
+    │   └── references/
+    │       ├── evaluation-frameworks.md
+    │       ├── judge-templates.md
+    │       └── use-cases.md
+    ├── save-memory/
+    │   └── SKILL.md
+    ├── load-memory/
+    │   └── SKILL.md
     └── java-developer/
         ├── SKILL.md
         ├── plain-java/
