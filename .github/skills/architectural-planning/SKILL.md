@@ -6,20 +6,20 @@ description: Use when the user asks to "plan my architecture", "design system ar
   "recommend a database for my project", "design my API layer", "create a system design",
   "architecture planning", "tech stack recommendation", or wants interactive guidance
   to design and document a software system's architecture with technology recommendations.
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Architectural Planning
 
 Interactively guide the user through architectural decisions for a new or existing software project. Asks structured questions to understand requirements, recommends compatible technologies for each layer, and generates a comprehensive architecture document with Mermaid diagrams, component breakdowns, and a recommended project directory layout.
 
-**Approach:** Step-by-step interactive questionnaire using AskUserQuestion, with technology-specific suggestions informed by the compatibility matrices in `references/architectural-planning-reference.md`. The final output is a single Markdown document with embedded Mermaid architecture and deployment diagrams.
+**Approach:** Step-by-step interactive questionnaire using your environment's question tool (`ask_question` in Antigravity, `AskUserQuestion` in Claude Code, or structured multiple-choice prompts in Copilot Chat), with technology-specific suggestions informed by the compatibility matrices in `references/architectural-planning-reference.md`. When evaluating competing architecture trade-offs, pair with [`llm-as-judge`](file:///.github/skills/llm-as-judge/SKILL.md). Once a stack is selected, delegate implementation conventions to the matching language specialist skill ([`java-developer`](file:///.github/skills/java-developer/SKILL.md), [`typescript-developer`](file:///.github/skills/typescript-developer/SKILL.md), [`python-developer`](file:///.github/skills/python-developer/SKILL.md), [`react-developer`](file:///.github/skills/react-developer/SKILL.md), [`csharp-developer`](file:///.github/skills/csharp-developer/SKILL.md)).
 
 ## Prerequisites
 
 - No tools or dependencies required
 - Works for any project type (greenfield or existing)
-- Requires interactive session (AskUserQuestion must be available)
+- Interactive session (`ask_question` / `AskUserQuestion` or conversational choice)
 
 ## Workflow
 
@@ -61,15 +61,14 @@ Use AskUserQuestion:
 > Which backend technology stack do you prefer?
 
 Options (include "Best for" from the reference):
-1. **Java / Spring Boot** — Enterprise-grade, strong typing, huge ecosystem. Best for: large teams, microservices, enterprise integrations.
-2. **Node.js / Express** — Fast iteration, JavaScript everywhere, massive npm ecosystem. Best for: startups, real-time apps, full-stack JS teams.
-3. **Python / Django** — Batteries included, rapid prototyping, excellent admin panel. Best for: MVPs, admin-heavy apps, ML/data projects.
-4. **Python / FastAPI** — Modern async Python, auto-generated OpenAPI docs, high performance. Best for: APIs, microservices, ML model serving.
+1. **Java / Spring Boot 3+ (Java 21/25 LTS)** — Enterprise-grade, virtual threads, strong typing, huge ecosystem. Best for: large teams, microservices, enterprise integrations (see `java-developer`).
+2. **TypeScript / Node.js 22+ (Fastify / NestJS / Express)** — Fast iteration, unified TS stack, massive npm ecosystem. Best for: startups, real-time apps, full-stack TS teams (see `typescript-developer`).
+3. **Python 3.12+ / FastAPI or Django** — Modern async APIs (FastAPI) or batteries-included web/ORM (Django). Best for: APIs, ML/AI pipelines, data-heavy services (see `python-developer`).
+4. **C# 12/13 / .NET 8/9 ASP.NET Core** — High-performance cross-platform runtime, Minimal APIs, built-in DI and Polly resilience. Best for: high-throughput enterprise APIs and cloud-native services (see `csharp-developer`).
 
 Present the remaining options if the user selects "Other" or based on scale:
-- **Go** — High performance, built-in concurrency, small binaries. Best for: microservices, infrastructure tools, high-throughput APIs.
-- **.NET / ASP.NET Core** — Enterprise framework, excellent tooling, cross-platform. Best for: enterprise apps, Windows ecosystem.
-- **Rust / Actix-web** — Maximum performance and safety. Best for: performance-critical services, systems programming.
+- **Go** — High performance, built-in concurrency, small static binaries. Best for: microservices, infrastructure tools, high-throughput networking.
+- **Rust / Axum or Actix-web** — Maximum performance and memory safety without GC. Best for: latency-critical systems programming.
 
 Store as `backend_stack`.
 

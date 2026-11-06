@@ -5,14 +5,14 @@ description: Use when the user asks to "trace code context", "analyze this file"
   "what calls this file", "what does this file call", "document this code file",
   "create a mermaid diagram for this code", "explain what this module does",
   or wants a ground-truth context document for a source file.
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Trace Code Context
 
 Generate a rich, ground-truth Markdown context file for any source code file — covering callers, callees, a Mermaid call graph, and a business-readable description. Skips regeneration if the source file hasn't changed since the last run.
 
-**Extraction approach:** A Python script independently validates symbols and imports using AST or structured parsers (ground truth), then a subagent reads the source for business context and uses the script's output as the authoritative symbol list.
+**Extraction approach:** `scripts/trace-context.py` independently validates symbols and imports using AST or structured parsers (ground truth), then the agent (or a delegated subagent) reads the source for business context and uses the script's output as the authoritative symbol list.
 
 ## Prerequisites
 
@@ -23,8 +23,12 @@ Generate a rich, ground-truth Markdown context file for any source code file —
 
 ### Skill Step 1 — Run trace-context.py
 
-Run this exact Bash command with the user-specified file path:
+**Windows (PowerShell):**
+```powershell
+python .github/skills/trace-code-context/scripts/trace-context.py "<file-path>"
+```
 
+**Unix / macOS (Bash):**
 ```bash
 [ -d .venv ] || python -m venv .venv
 PYTHON=$(if [ -f .venv/Scripts/python ]; then echo .venv/Scripts/python; else echo .venv/bin/python; fi)
@@ -34,7 +38,7 @@ $PYTHON .github/skills/trace-code-context/scripts/trace-context.py "<file-path>"
 To force regeneration even when context is already up to date, add `--force`:
 
 ```bash
-$PYTHON .github/skills/trace-code-context/scripts/trace-context.py --force "<file-path>"
+python .github/skills/trace-code-context/scripts/trace-context.py --force "<file-path>"
 ```
 
 Replace `<file-path>` with the actual path provided by the user (e.g., `src/api/auth.py`).
@@ -60,22 +64,17 @@ The script prints a single JSON object to stdout:
 - `repo_root` — absolute path to the repository root; use as the base for all Read/Write/Grep operations
 - `output_path` — where the context file will be written, relative to `repo_root`
 - `source_path` — normalized relative path to the source file, relative to `repo_root`
-- `language` — detected language (`python`, `java`, `javascript`, `typescript`, `go`, etc.)
+- `language` — detected language (`python`, `java`, `javascript`, `typescript`, `go`, `csharp`, etc.)
 - `symbols` — AST/parser-validated list of defined functions, classes, and methods
 - `imports` — AST/parser-validated list of imports and dependencies
-- `parse_method` — how symbols were extracted (`ast`, `java-regex`, `js-regex`, `go-regex`, `ctags`, `regex-fallback`)
+- `parse_method` — how symbols were extracted (`ast`, `java-regex`, `js-regex`, `go-regex`, `csharp-regex`, `ctags`, `regex-fallback`)
 - `repo_source_files` — complete list of source files across all project folders (for caller grep scope)
 
 **If `stale: false`** → skip to Skill Step 3. Report "Context is up to date" and present the existing file at `{repo_root}/{output_path}`.
 
-### Skill Step 2 — Launch Subagent
+### Skill Step 2 — Generate Context Document
 
-Use the Agent tool with:
-- **subagent_type**: `"general-purpose"`
-- **model**: `"haiku"`
-- **description**: `"Trace code context for <source_path>"`
-
-Construct the prompt using the JSON output from Step 1:
+Perform the context generation directly in-context (fastest for a single file) or delegate to a subagent (`invoke_subagent` in Antigravity or `Agent` in Claude Code) using the JSON output from Step 1:
 
 ````
 You are a code context generator. Your task is to produce a detailed context document for a source file.
@@ -117,11 +116,11 @@ _(If the list exceeds 100 files, use Grep with `path` set to `{repo_root}` and a
    Caller grep patterns by language:
    - Python: `import {module_name}`, `from {module_name} import`
    - Java: `import {package}.{ClassName}`, `new {ClassName}(`, `{ClassName}.`
+   - C#: `using {Namespace};`, `new {ClassName}(`, `{ClassName}.`, `I{ClassName}`
    - JS/TS: `require('{module}')`, `from '{module}'`, `import {Symbol}`
    - Go: `"{package_path}"`, `{package}.{Symbol}`
 
-4. **Write the output** using the Write tool to `{repo_root}/{output_path}`.
-   Create parent directories first using Bash: `mkdir -p "$(dirname "{repo_root}/{output_path}")"`.
+4. **Write the output** using the Write tool to `{repo_root}/{output_path}` (parent directories are created automatically).
 
 ## Output Format
 

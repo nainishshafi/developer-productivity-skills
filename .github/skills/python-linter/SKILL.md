@@ -1,37 +1,36 @@
 ---
 name: python-linter
 description: Use when the user asks to "lint python", "run the linter", "fix linting errors", "check python code style", "run ruff", "format python code", "fix imports", "check types", "run mypy", or wants to find and fix Python code quality issues using ruff and mypy.
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Python Linter
 
-Run ruff (lint + format) and optionally mypy (type checking) on Python code. Auto-fixes what it can and reports what needs manual attention.
+Run `ruff` (lint + format) and optionally `mypy` (type checking) on Python code. Auto-fixes safe lint issues and reports remaining violations that require manual attention.
 
 ## Prerequisites
 
-- Python project with `.py` files
+- Python project with `.py` files (`uv` or `.venv` supported)
 
 ## Workflow
 
-### Step 1 — Set Up `.venv`
+### Step 1 — Resolve Environment (`uv` or `.venv`)
 
-Always use `.venv` — create it if it doesn't exist:
+If the project uses `uv` (`uv.lock` present or `uv` on PATH), run `uv run ruff` and `uv run mypy` directly. Otherwise, use `.venv`:
 
+**Windows (PowerShell):**
+```powershell
+if (-not (Test-Path .venv)) { python -m venv .venv }
+$PYTHON = if (Test-Path .venv\Scripts\python.exe) { ".venv\Scripts\python.exe" } else { "python" }
+& $PYTHON -m ruff --version *> $null; if ($LASTEXITCODE -ne 0) { & $PYTHON -m pip install ruff }
+& $PYTHON -m mypy --version *> $null; if ($LASTEXITCODE -ne 0) { & $PYTHON -m pip install mypy }
+```
+
+**Unix / macOS (Bash):**
 ```bash
 [ -d .venv ] || python -m venv .venv
 PYTHON=$(if [ -f .venv/Scripts/python ]; then echo .venv/Scripts/python; else echo .venv/bin/python; fi)
-```
-
-Install ruff into the venv if not already present:
-
-```bash
 $PYTHON -m ruff --version 2>/dev/null || $PYTHON -m pip install ruff
-```
-
-Optionally install mypy for type checking:
-
-```bash
 $PYTHON -m mypy --version 2>/dev/null || $PYTHON -m pip install mypy
 ```
 

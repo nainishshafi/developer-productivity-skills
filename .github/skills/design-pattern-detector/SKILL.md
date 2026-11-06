@@ -6,14 +6,14 @@ description: Use when the user asks to "detect design patterns", "find patterns 
   "check for god file", "check for strategy pattern", "scan for design patterns", "what patterns does this code use",
   "find anti-patterns", "pattern audit", or wants to identify design patterns and
   anti-patterns in a source file or across the entire repository.
-version: 1.1.0
+version: 1.2.0
 ---
 
 # Design Pattern Detector
 
-Analyze source files to detect common design patterns (Singleton, Factory, Observer, Strategy, Builder, Decorator, Repository, Command, Template Method, Facade) and anti-patterns (God Object / God File, Long Method, Feature Envy). Uses structural extraction for deterministic signal detection and a subagent for contextual reasoning. Language-agnostic with best accuracy for Python (AST), Java, JS/TS, Go, and C# (regex).
+Analyze source files to detect common design patterns (Singleton, Factory, Observer, Strategy, Builder, Decorator, Repository, Command, Template Method, Facade) and anti-patterns (God Object / God File, Long Method, Feature Envy). Uses deterministic structural extraction for signal detection combined with contextual source analysis. Language-agnostic with specialized support for Python (AST), Java, JS/TS, Go, and C# (structural regex).
 
-**Extraction approach:** A Python script deterministically extracts class structure, method signatures, fields, metrics, and boolean structural signals (ground truth), then a subagent reads the source for business context and uses the signals to classify patterns with confidence scores.
+**Extraction approach:** `scripts/extract-patterns.py` deterministically extracts class structure, method signatures, fields, metrics, and 13 boolean structural signals (ground truth), then the agent (or a delegated subagent for repo-wide batch scans) reads the source for business context and classifies patterns with confidence scores.
 
 ## Prerequisites
 
@@ -25,8 +25,12 @@ Analyze source files to detect common design patterns (Singleton, Factory, Obser
 
 ### Skill Step 1 — Run extract-patterns.py
 
-Run this exact Bash command with the user-specified file path:
+**Windows (PowerShell):**
+```powershell
+python .github/skills/design-pattern-detector/scripts/extract-patterns.py "<file-path>"
+```
 
+**Unix / macOS (Bash):**
 ```bash
 [ -d .venv ] || python -m venv .venv
 PYTHON=$(if [ -f .venv/Scripts/python ]; then echo .venv/Scripts/python; else echo .venv/bin/python; fi)
@@ -36,7 +40,7 @@ $PYTHON .github/skills/design-pattern-detector/scripts/extract-patterns.py "<fil
 To force regeneration even when analysis is already up to date, add `--force`:
 
 ```bash
-$PYTHON .github/skills/design-pattern-detector/scripts/extract-patterns.py --force "<file-path>"
+python .github/skills/design-pattern-detector/scripts/extract-patterns.py --force "<file-path>"
 ```
 
 Replace `<file-path>` with the actual path provided by the user.
@@ -84,7 +88,10 @@ The script prints a single JSON object to stdout:
     "has_build_method": false,
     "has_crud_methods": false,
     "has_delegation_pattern": true,
-    "has_same_type_wrapping": false
+    "has_same_type_wrapping": false,
+    "has_execute_undo": false,
+    "has_abstract_template_steps": false,
+    "has_facade_pattern": false
   }
 }
 ```
@@ -99,18 +106,13 @@ The script prints a single JSON object to stdout:
 - `classes` — extracted class definitions with bases, methods (name, params, modifiers, line, loc), and fields (name, type, modifiers)
 - `functions` — top-level functions with same shape
 - `metrics` — code metrics (class/method/function counts, LOC stats)
-- `structural_signals` — 10 boolean flags indicating potential pattern markers
+- `structural_signals` — 13 boolean flags indicating potential pattern markers
 
 **If `stale: false`** → skip to Skill Step 3. Report "Analysis is up to date" and present the existing file at `{repo_root}/{output_path}`.
 
-### Skill Step 2 — Launch Subagent
+### Skill Step 2 — Analyze Source & Generate Pattern Report
 
-Use the Agent tool with:
-- **subagent_type**: `"general-purpose"`
-- **model**: `"haiku"`
-- **description**: `"Detect design patterns in <source_path>"`
-
-Construct the prompt using the JSON output from Step 1:
+For a single file, either perform the analysis directly in-context (fastest) or delegate to a lightweight subagent (`invoke_subagent` in Antigravity or `Agent` in Claude Code) using the JSON output from Step 1:
 
 ````
 You are a design pattern analyzer. Your task is to identify design patterns and anti-patterns in a source file, using deterministic structural signals as the primary evidence and your own reading for contextual reasoning.
@@ -153,8 +155,7 @@ You are a design pattern analyzer. Your task is to identify design patterns and 
 
 4. **Check for anti-patterns** using the metrics and your source reading.
 
-5. **Write the output** using the Write tool to `{repo_root}/{output_path}`.
-   Create parent directories first using Bash: `mkdir -p "$(dirname "{repo_root}/{output_path}")"`.
+5. **Write the output** using the Write tool to `{repo_root}/{output_path}` (parent directories are created automatically by the file write tool).
 
 ## Pattern Definitions
 
@@ -212,13 +213,19 @@ You are a design pattern analyzer. Your task is to identify design patterns and 
 - MEDIUM: class inherits from ABC/abstract base + mix of abstract and concrete methods
 - LOW: class named `Abstract*` or `Base*` + defines some concrete template logic
 
+### Facade
+- Signals: `has_facade_pattern`
+- HIGH: class composes 3+ distinct subsystem fields/dependencies and exposes simplified orchestration methods without heavy domain state
+- MEDIUM: class coordinates 2+ subsystems or is named `*Facade` with delegating methods
+- LOW: thin wrapper around multiple helper modules
+
 ## Anti-Pattern Definitions
 
-### God Object
-- Metrics: total_methods > 15 OR total fields > 10
-- HIGH: > 20 methods AND > 10 fields
+### God Object / God File
+- Metrics: `total_methods > 15` OR `total fields > 10` OR `total_loc > 600` (with `total_classes > 5` or `total_functions > 20`)
+- HIGH: > 20 methods AND > 10 fields (or file > 800 LOC mixing unrelated domains)
 - MEDIUM: > 15 methods OR > 10 fields
-- Also flag if you observe multiple unrelated responsibilities
+- Also flag if you observe multiple unrelated responsibilities in a single class or file
 
 ### Long Method
 - Metrics: max_method_loc > 50

@@ -1,5 +1,16 @@
 # Changelog — llm-as-judge Skill
 
+## Version 1.4.0 — Critique-First Ordering, Bias Mitigation & Anchored Scales
+
+### Core Enhancements
+- **Critique-First Schema Invariant**: Updated all evaluation patterns and JSON templates so evidence extraction and criterion critiques always precede numerical scores and verdicts, preventing autoregressive post-hoc rationalization.
+- **Cognitive Bias Mitigation Protocol**: Added explicit countermeasures for Position Bias (bi-directional pairwise checks), Verbosity/Length Bias, Cosmetic Formatting Bias, Scale Compression, and Halo/Horn drift.
+- **Standard Anchored 1–5 Scoring Scale**: Defined concrete behavioral anchors (`5=Exemplary` to `1=Broken`) and automatic `[CRITICAL]` blocker gate rules.
+- **Subagent & Sequential Multi-Agent Panels**: Standardized the 3-judge consensus lenses (`First-Principles`, `Pragmatic Systems`, `Adversarial Verifier`) across both Subagent Panel Mode and Sequential Turn Mode.
+- **Documentation & Reference Cleanup**: Fixed broken reference links (`references/evaluation-frameworks.md`), unified pattern/template numbering (`1`–`8`), aligned trigger phrases with repository catalog, and removed duplicate headings in `references/use-cases.md`.
+
+---
+
 ## Version 1.3.0 — Improved Sub-Agent Prompts
 
 ### Prompt Enhancements

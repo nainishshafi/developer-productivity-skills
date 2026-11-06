@@ -1,12 +1,12 @@
 ---
 name: scan-repo-readme
 description: This skill should be used when the user asks to "scan the readme", "read the repo readme", "check the project documentation", "search the readme for X", "what does the readme say about Y", "summarize the readme", "find readme", "look up X in the readme", or wants to find relevant information from repository documentation files using keyword and semantic search.
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Scan Repo README
 
-Efficiently locate and extract information from repository README files using a haiku-model agent with minimal context. The agent performs dual-phase search (keyword + semantic), writes results to a timestamped file, and the main agent reads and presents the findings.
+Efficiently locate and extract information from repository README files using dual-phase search (keyword + semantic), writing results to a timestamped report file and presenting concise findings to the user.
 
 > **⚠️ IMPORTANT — always use `--root-only` by default.**  
 > Running `find-readmes.py` without `--root-only` performs a full recursive walk and returns every nested README (including `.venv`, vendor packages, and large example trees), producing noisy, slow, and unreliable results.  
@@ -48,9 +48,6 @@ $PYTHON = if (Test-Path .venv\Scripts\python.exe) { ".venv\Scripts\python" } els
 
 # Include .github/skills SKILL.md files in the listing
 # & $PYTHON .github/skills/scan-repo-readme/scripts/find-readmes.py --root-only --include-skills
-
-# Integrated keyword+semantic scanner (writes timestamped Markdown report)
-& $PYTHON .github/skills/scan-repo-readme/scripts/run_scan_design_patterns.py --root-only
 ```
 
 **Unix/macOS (Bash):**
@@ -67,9 +64,6 @@ $PYTHON .github/skills/scan-repo-readme/scripts/find-readmes.py --root-only
 
 # Include SKILL.md files
 # $PYTHON .github/skills/scan-repo-readme/scripts/find-readmes.py --root-only --include-skills
-
-# Integrated keyword+semantic scanner
-$PYTHON .github/skills/scan-repo-readme/scripts/run_scan_design_patterns.py --root-only
 ```
 
 The script prints to stdout:
@@ -78,16 +72,14 @@ The script prints to stdout:
 
 If Bash is unavailable, use Glob with patterns `**/README.md`, `**/readme.md`, `**/README.rst`, `**/README.txt`, `**/README` and build the output path manually from the current timestamp.
 
-### Step 2 — Launch Haiku Subagent (required)
+### Step 2 — Perform Dual-Phase Search (Direct or Subagent)
 
-Invoke a dedicated subagent to perform the dual-phase scan and write the report. The skill requires a subagent run (no local Python fallback) so the subagent must be granted write access to the repository workspace.
+If `--root-only` returned a small set of README files (1–3 files), perform the dual-phase scan directly in-context or delegate to a subagent (`invoke_subagent` in Antigravity or `Agent` in Claude Code). For large multi-README audits, delegate to a subagent to keep the main context window clean.
 
-Agent parameters (example):
-
-- `subagent_type`: "general-purpose"
-- `model`: "haiku"  (agent may fall back to the session model if unavailable)
-- `description`: "Scan README files"
-- `write`: true  # the subagent must be able to create the timestamped output file
+Agent parameters (when using a subagent):
+- `subagent_type`: `"general-purpose"` (or `"research"` / `"self"`)
+- `model`: `"haiku"` / `"flash"` / `"inherit"`
+- `description`: `"Scan README files"`
 
 Provide the subagent with a compact prompt containing only the file list, the output path, and the user query (no conversation history). Example prompt payload:
 
@@ -133,4 +125,3 @@ Read the timestamped output file and present the findings clearly and concisely 
 
 - **`references/search-patterns.md`** — README filename patterns, synonym groups, relevance scoring criteria, output format spec
 - **`scripts/find-readmes.py`** — Locate README files and print the output path + file list. Supports `--root-only` and opt-in `--include-skills`.
-- **`scripts/run_scan_design_patterns.py`** — Integrated scanner for the `design patterns` query that performs keyword+semantic scanning and writes a timestamped Markdown report. Supports `--root-only` and `--out`.

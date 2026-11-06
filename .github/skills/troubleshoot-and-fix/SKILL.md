@@ -1,7 +1,7 @@
 ---
 name: troubleshoot-and-fix
-description: Universal, language-independent framework for diagnosing, troubleshooting, and fixing software bugs, exceptions, regressions, and performance issues. Refers to language-specific developer skills (python-developer, typescript-developer, react-developer, java-developer) for runtime idioms and conventions. When a bug cannot be reproduced directly in the main project environment (e.g. missing dependencies, cloud credentials, heavy setup, or complex coupling), it systematically extracts the problematic logic, generates realistic mock data, and executes an isolated reproduction harness to verify the fix before porting it back. Use when asked to "troubleshoot and fix", "debug this error", "fix this bug", "solve runtime exception", "diagnose issue", "reproduce and fix bug", or "debug failing code".
-version: 1.0.0
+description: Universal, language-independent framework for diagnosing, troubleshooting, and fixing software bugs, exceptions, regressions, and performance issues. Refers to language-specific developer skills (python-developer, typescript-developer, react-developer, java-developer, csharp-developer) for runtime idioms and conventions. When a bug cannot be reproduced directly in the main project environment (e.g. missing dependencies, cloud credentials, heavy setup, or complex coupling), it systematically extracts the problematic logic, generates realistic mock data, and executes an isolated reproduction harness (via nodejs-executor MCP or standalone scratch scripts) to verify the fix before porting it back. Use when asked to "troubleshoot and fix", "debug this error", "fix this bug", "solve runtime exception", "diagnose issue", "reproduce and fix bug", or "debug failing code".
+version: 1.1.0
 ---
 
 # Troubleshoot and Fix Skill
@@ -20,7 +20,8 @@ This skill defines the **diagnostic and verification process**, but delegates la
 | **TypeScript / Node.js** | [`typescript-developer`](file:///.github/skills/typescript-developer/SKILL.md) | ESM/CommonJS quirks, TS strictness, async/await promises, Prisma/Drizzle ORM boundaries, Vitest/Jest. |
 | **React** (18 & 19, RSC) | [`react-developer`](file:///.github/skills/react-developer/SKILL.md) | Hook dependency arrays, stale closures, infinite re-render loops, Server vs Client Component boundaries. |
 | **Java / Spring Boot** | [`java-developer`](file:///.github/skills/java-developer/SKILL.md) | JVM threading, null safety, Spring dependency injection cycles, transaction boundaries, JUnit 5. |
-| **Other (Go, Rust, C#, etc.)** | Standard toolchain | Identify language version, package manager, and native test runner via discovery. |
+| **C# / .NET** (8 & 9) | [`csharp-developer`](file:///.github/skills/csharp-developer/SKILL.md) | DI lifetime validation (captive dependencies), async/await deadlocks, EF Core tracking/split queries, Span memory safety, xUnit. |
+| **Other (Go, Rust, C++, etc.)** | Standard toolchain | Identify language version, package manager, and native test runner via discovery. |
 
 ---
 
@@ -108,20 +109,36 @@ Create synthetic data fixtures covering both the baseline and the failure trigge
 - **Mock Dependencies**: Stub out external services (mock HTTP responses, fake storage, deterministic clock/timer).
 
 #### Step 3: Scaffold and Execute the Standalone Harness
+
+**Option A — In-Memory Sandbox Execution via `nodejs-executor` MCP (Fastest for JS/TS):**
+When connected to the `nodejs-executor` MCP server, execute the extracted logic and mock fixtures directly in `strict` sandbox mode without creating temporary files:
+```json
+{
+  "name": "execute_code",
+  "arguments": {
+    "language": "typescript",
+    "sandboxMode": "strict",
+    "code": "import assert from 'node:assert/strict';\n// Extracted logic + mock fixtures here"
+  }
+}
+```
+
+**Option B — Standalone Scratch Harness Script (All Languages):**
 Use the included helper script or create a standalone script:
 
 ```bash
 # Initialize isolated harness (Node.js or Python)
-node .github/skills/troubleshoot-and-fix/scripts/isolate-runner.js init --name <issue-slug> --lang <ts|js|python|java>
+node .github/skills/troubleshoot-and-fix/scripts/isolate-runner.js init --name <issue-slug> --lang <ts|js|python|java|csharp>
 # or
-python .github/skills/troubleshoot-and-fix/scripts/isolate-runner.py init --name <issue-slug> --lang <python|ts|js|java>
+python .github/skills/troubleshoot-and-fix/scripts/isolate-runner.py init --name <issue-slug> --lang <python|ts|js|java|csharp>
 ```
 
 Execute the standalone file directly:
 - **Python**: `python scratch/repro/repro_<issue>.py`
-- **TypeScript**: `npx tsx scratch/repro/repro_<issue>.ts` (or `node --loader ts-node`)
+- **TypeScript**: `node --experimental-strip-types scratch/repro/repro_<issue>.ts` (or `npx tsx scratch/repro/repro_<issue>.ts`)
 - **JavaScript**: `node scratch/repro/repro_<issue>.js`
 - **Java**: `java scratch/repro/Repro_<issue>.java`
+- **C#**: `dotnet script scratch/repro/Repro_<issue>.cs` (or `dotnet test`)
 
 > [!IMPORTANT]
 > **Confirm Failure First**: The harness must fail with the *exact same error or incorrect output* as observed in production. Never modify the logic until reproduction is confirmed.
@@ -140,7 +157,7 @@ Execute the standalone file directly:
 Once proven in isolation, port the verified solution back to the source codebase:
 
 1. **Respect Existing Code Conventions**:
-   - Refer to the respective developer skill ([`python-developer`](file:///.github/skills/python-developer/SKILL.md), [`typescript-developer`](file:///.github/skills/typescript-developer/SKILL.md), [`react-developer`](file:///.github/skills/react-developer/SKILL.md), [`java-developer`](file:///.github/skills/java-developer/SKILL.md)) to ensure the ported fix matches project idiomatic patterns (e.g. error types, immutability, async style).
+   - Refer to the respective developer skill ([`python-developer`](file:///.github/skills/python-developer/SKILL.md), [`typescript-developer`](file:///.github/skills/typescript-developer/SKILL.md), [`react-developer`](file:///.github/skills/react-developer/SKILL.md), [`java-developer`](file:///.github/skills/java-developer/SKILL.md), [`csharp-developer`](file:///.github/skills/csharp-developer/SKILL.md)) to ensure the ported fix matches project idiomatic patterns (e.g. error types, immutability, async style).
 2. **Apply Minimal Diff**:
    - Modify only what is necessary to solve the defect. Avoid unnecessary refactoring or style churning in the fix commit.
 3. **Verify with Ground Truth**:

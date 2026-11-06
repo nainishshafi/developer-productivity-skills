@@ -6,8 +6,6 @@ Real-world scenarios for using agent-native LLM-as-Judge evaluation through Copi
 
 ## Use Case 1 — RAG Quality Assurance
 
-## Use Case 1 — RAG Quality Assurance
-
 **Scenario:** A support bot uses RAG (retrieval-augmented generation) to answer customer questions. You want to verify responses are grounded in retrieved facts and not hallucinating.
 
 **Conversation:**
@@ -101,8 +99,6 @@ Recommendation: Use Grok-3 for production efficiency, but Sonnet for quick proto
 ```
 
 ---
-
-## Use Case 3 — Evaluate Multiple Response Candidates---
 
 ## Use Case 3 — Evaluate Multiple Response Candidates
 

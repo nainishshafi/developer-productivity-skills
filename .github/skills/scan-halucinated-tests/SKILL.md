@@ -7,7 +7,7 @@ description: Use when the user asks to "scan for hallucinated tests", "check if 
   or "check javascript tests for hallucinations". Also use when the user wants to
   cross-check a test file against real source code to detect phantom symbols,
   wrong imports, bad mock targets, or fabricated constants — in any supported language.
-version: 1.2.0
+version: 1.3.0
 ---
 
 # Scan Hallucinated Tests
@@ -16,7 +16,7 @@ Cross-validate a test file against the real source code it tests. Detects phanto
 
 **Supported languages:** Python (`.py`), Java (`.java`), C# (`.cs`), JavaScript/TypeScript (`.js`, `.jsx`, `.ts`, `.tsx`)
 
-**Analysis approach:** A multi-language parser (`parse-test-refs.py`) extracts every external reference the test file makes using AST for Python and regex for Java/C#/JS. The `trace-code-context` skill's script provides the authoritative list of what *actually* exists in the source. A haiku subagent cross-references both to produce a scored hallucination report.
+**Analysis approach:** A multi-language parser (`parse-test-refs.py`) extracts every external reference the test file makes using AST for Python and structural regex for Java/C#/JS/TS. The `trace-code-context` skill's script provides the authoritative list of what *actually* exists in the source. The agent (or a delegated subagent) cross-references both to produce a scored hallucination report.
 
 ## Prerequisites
 
@@ -51,8 +51,14 @@ If the inferred path does not exist on disk, tell the user and ask for `<source-
 
 ### Skill Step 2 — Run trace-context.py on the Source File
 
-Set up the `.venv` and run `trace-context.py` with `--force` to guarantee fresh ground truth:
+Run `trace-context.py` with `--force` to guarantee fresh ground truth:
 
+**Windows (PowerShell):**
+```powershell
+python .github/skills/trace-code-context/scripts/trace-context.py --force "<source-file>"
+```
+
+**Unix / macOS (Bash):**
 ```bash
 [ -d .venv ] || python -m venv .venv
 PYTHON=$(if [ -f .venv/Scripts/python ]; then echo .venv/Scripts/python; else echo .venv/bin/python; fi)
@@ -83,6 +89,12 @@ Capture: `repo_root`, `source_path`, `output_path`, `language`, `symbols`, `impo
 
 The script auto-detects the language from the file extension.
 
+**Windows (PowerShell):**
+```powershell
+python .github/skills/scan-halucinated-tests/scripts/parse-test-refs.py "<test-file>"
+```
+
+**Unix / macOS (Bash):**
 ```bash
 $PYTHON .github/skills/scan-halucinated-tests/scripts/parse-test-refs.py "<test-file>"
 ```
@@ -127,19 +139,16 @@ The script prints a single JSON object to stdout. The shape is uniform across al
 
 **Stop and report to the user if:** `parse_error` is non-null, or the script exits with code 1 (display stderr).
 
-### Skill Step 4 — Launch Haiku Subagent for Cross-Reference Analysis
+### Skill Step 4 — Cross-Reference & Generate Report
 
-Use the Agent tool with:
-- **subagent_type**: `"general-purpose"`
-- **model**: `"haiku"`
-- **description**: `"Scan hallucinated tests for <test-file>"`
+Perform the cross-reference analysis directly in-context (fastest for a single test file) or delegate to a subagent (`invoke_subagent` in Antigravity or `Agent` in Claude Code).
 
 Compute the output file timestamp (current date-time in `YYYYMMDD-HHMMSS` format). The output path is:
 ```
 .scan-test-results/scan-<timestamp>.md
 ```
 
-Construct the following prompt using the JSON values from Steps 2 and 3, replacing all `{...}` placeholders with real values before sending:
+Use the JSON values from Steps 2 and 3 to audit the test file against the source ground truth:
 
 ````
 You are a test hallucination auditor. Cross-reference what a test file *claims* exists against what *actually* exists in the source code, then write a scored hallucination report.
@@ -317,12 +326,7 @@ You are a test hallucination auditor. Cross-reference what a test file *claims* 
    - **MEDIUM** — May pass silently but tests wrong behavior (attribute on Mock, wrong kwarg on variadic fn)
    - **LOW** — Cannot confirm from static analysis; note as potential issue
 
-6. **Create the output directory:**
-   ```bash
-   mkdir -p "{repo_root}/.scan-test-results"
-   ```
-
-7. **Write the report** using the Write tool to `{repo_root}/.scan-test-results/scan-{timestamp}.md`:
+6. **Write the report** using the Write tool to `{repo_root}/.scan-test-results/scan-{timestamp}.md` (parent directories are created automatically):
 
 ```markdown
 # Hallucination Scan Report

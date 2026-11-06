@@ -1,77 +1,48 @@
-# Evaluation Approaches
+# Evaluation Frameworks & Pattern Selection Matrix
 
-Agent-native evaluation strategies using Claude as the built-in judge. No external APIs or script execution.
-
----
-
-## Agent-Native Direct Evaluation
-
-**How it works:** The agent evaluates responses using its internal reasoning within the conversation context.
-
-**Strengths:**
-- No external services or API calls
-- Immediate results
-- Full transparency (reasoning visible)
-- Easy to customize
-- No configuration needed
-
-**Best for:**
-- Quick evaluations in conversations
-- Interactive refinement
-- Custom criteria
-- On-demand assessment
+Reference guide for choosing the right agent-native LLM-as-Judge evaluation strategy within Claude Code, Antigravity, or GitHub Copilot.
 
 ---
 
-## Pattern 1: Single Response Scoring
+## Decision Matrix: Choosing an Evaluation Pattern
 
-Direct scoring without external calls.
-
-**Example:**
-```
-You: "Rate this 1-5: {response}"
-Agent: [Internal reasoning] Score: 4/5
-```
-
----
-
-## Pattern 2: Comparison Without Script
-
-Head-to-head evaluation within agent context.
-
-**Example:**
-```
-You: "Compare A and B"
-Agent: [Internal reasoning] Winner: A
-```
+| Evaluation Goal | Recommended Pattern | Primary Output | Bias Risk to Watch |
+|---|---|---|---|
+| **Grade a single output with high explainability** | **Pattern 1: Atomic Rubric Evaluation** | Binary/ternary (`YES`/`PARTIAL`/`NO`) table + percentage score | Vague rubric questions |
+| **Pick the better of two candidate outputs** | **Pattern 2: Bi-Directional Pairwise Comparison** | Per-criterion winner + position-swap check | Position bias & verbosity bias |
+| **Verify RAG responses or factual claims** | **Pattern 3: Claim-Level Grounding Audit** | Atomic claim classification (`SUPPORTED`/`CONTRADICTED`/`UNSUPPORTED`) | Missing source context |
+| **Audit strict format, length, or negative rules** | **Pattern 4: Instruction Compliance Check** | Constraint pass/fail matrix | Overlooking negative constraints |
+| **Review generated code or technical specs** | **Pattern 5: Multi-Dimensional Anchored Scoring** | 1–5 anchored scores + `[CRITICAL]`/`[MAJOR]`/`[MINOR]` defects | Halo effect from clean formatting |
+| **High-stakes architecture or PR arbitration** | **Pattern 6: Multi-Agent Consensus Panel** | 3-judge synthesis + confidence level (`HIGH`/`MEDIUM`/`LOW`) | Correlated model blind spots |
 
 ---
 
-## Pattern 3: Hallucination Check
+## Pointwise vs. Pairwise Evaluation
 
-Context-based fact verification within agent.
+### Pointwise Evaluation (Patterns 1, 3, 4, 5)
+- **Mechanism**: Grades a single candidate against an absolute rubric or ground-truth context.
+- **Best When**: Enforcing deterministic CI/quality gates (e.g., in `agent-orchestrator`), auditing RAG faithfulness, or checking instruction compliance.
+- **Calibration Rule**: Always use binary/ternary rubrics or anchored 1–5 definitions so scores remain stable across sessions.
 
-**Example:**
-```
-You: "Check facts:
-Context: Earth orbits Sun
-Response: Earth orbits Sun, Moon orbits Mars"
-Agent: [Reasoning] Hallucination found: Mars claim
-```
+### Pairwise Evaluation (Pattern 2)
+- **Mechanism**: Compares Candidate A and Candidate B head-to-head across shared criteria.
+- **Best When**: Selecting between two competing implementations, refactoring options, or architectural designs.
+- **Calibration Rule**: Always verify position invariance ($(A, B)$ vs $(B, A)$) and penalize verbose padding.
 
 ---
 
-## When to Use Agent-Native Evaluation
+## Critique-First Schema Invariant
 
-| Scenario | Approach |
-|----------|----------|
-| Quick comparison | Agent native |
-| Real-time feedback | Agent native |
-| Custom evaluation | Agent native |
-| Transparent reasoning | Agent native |
-| Interactive refinement | Agent native |
+Because LLMs generate tokens autoregressively from left to right, **never place `"score"` or `"verdict"` keys at the top of a JSON schema**.
 
-**All evaluation happens within the agent. No scripts, APIs, or external services needed.**
+- **Anti-Pattern (Score-First)**:
+  ```json
+  { "score": 8, "verdict": "PASS", "reasoning": "..." }
+  ```
+  *Failure Mode*: The model commits to `8` on the first token and rationalizes that number in `"reasoning"`.
 
-
-
+- **Best Practice (Critique-First)**:
+  ```json
+  { "evidence_and_critique": "...", "rubric_breakdown": [...], "score": 0.85, "verdict": "PASS" }
+  ```
+  *Benefit*: The model completes its analytical chain-of-thought before emitting the score and verdict tokens.

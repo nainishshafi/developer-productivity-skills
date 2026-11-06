@@ -1,19 +1,19 @@
 ---
 name: github-security-scanner-hook
 description: Use when the user asks to "scan for security vulnerabilities", "check for secrets in code", "set up a pre-commit security hook", "install security scanning", "scan staged files for secrets", "check for hardcoded credentials", "run a security scan before commit", "detect leaked API keys", "add a git commit hook for security", "security check before push", "scan for SQL injection", "check for XSS vulnerabilities", "detect injection flaws", "check for command injection", "audit subprocess security", or wants to prevent committing security issues to git.
-version: 1.1.0
+version: 1.2.0
 ---
 
 # GitHub Security Scanner Hook
 
 Scan staged files for secrets and code-level security vulnerabilities before every git commit.
-Works with any language or file type — `detect-secrets` finds hardcoded credentials and API keys; `semgrep` finds injection flaws, command injection, shell execution risks, XSS, path traversal, destructive filesystem operations, and OWASP Top 10 patterns across Python, JavaScript/TypeScript, Go, Ruby, Java, and more.
+Works with any language or file type — `detect-secrets` finds hardcoded credentials and API keys; `semgrep` finds injection flaws, command injection, shell execution risks, XSS, path traversal, destructive filesystem operations, and OWASP Top 10 patterns across Python, JavaScript/TypeScript, Go, Ruby, Java, C#, and more.
 Can run as a one-off manual scan or install as an automated git pre-commit hook.
 
 ## Prerequisites
 
 - Python 3.8+ available on PATH (to create the `.venv`)
-- Git repository (any language — Python, JS, Go, Ruby, Java, etc.)
+- Git repository (any language — Python, JS/TS, Go, Ruby, Java, C#, etc.)
 - Staged files to scan, or `--full-repo` to scan everything
 - Internet access on first run only (to pip-install `detect-secrets` and `semgrep`)
 - Write access to `.git/hooks/` (for hook installation only)
@@ -22,16 +22,20 @@ Can run as a one-off manual scan or install as an automated git pre-commit hook.
 
 ### Step 1 — Set Up `.venv` and Install Tools
 
-Always use `.venv` — create it if it does not exist, then resolve the correct interpreter:
+Always use `.venv` — create it if it does not exist, then install `detect-secrets` and `semgrep`:
 
+**Windows (PowerShell):**
+```powershell
+if (-not (Test-Path .venv)) { python -m venv .venv }
+$PYTHON = if (Test-Path .venv\Scripts\python.exe) { ".venv\Scripts\python.exe" } else { "python" }
+& $PYTHON -m pip show detect-secrets *> $null; if ($LASTEXITCODE -ne 0) { & $PYTHON -m pip install detect-secrets }
+& $PYTHON -m pip show semgrep *> $null; if ($LASTEXITCODE -ne 0) { & $PYTHON -m pip install semgrep }
+```
+
+**Unix / macOS (Bash):**
 ```bash
 [ -d .venv ] || python -m venv .venv
 PYTHON=$(if [ -f .venv/Scripts/python ]; then echo .venv/Scripts/python; else echo .venv/bin/python; fi)
-```
-
-Install `detect-secrets` and `semgrep` into the venv if not already present:
-
-```bash
 $PYTHON -m pip show detect-secrets > /dev/null 2>&1 || $PYTHON -m pip install detect-secrets
 $PYTHON -m pip show semgrep > /dev/null 2>&1 || $PYTHON -m pip install semgrep
 ```
@@ -98,7 +102,7 @@ For each HIGH or MEDIUM finding the user wants to fix:
 1. Open the flagged file at the reported line number
 2. **For hardcoded credentials:** Replace with an environment variable (`os.environ["KEY_NAME"]`) or a secrets manager call
 3. **For private keys:** Remove the key, revoke it immediately (assume it is compromised), generate a new one, and add the key file pattern to `.gitignore`
-4. **For weak cryptography (bandit):** Replace insecure functions — e.g., `hashlib.md5` → `hashlib.sha256`, `random.token_hex` → `secrets.token_hex`
+4. **For code vulnerabilities & weak cryptography (semgrep):** Fix injection vectors (use parameterized queries, `subprocess.run([...], shell=False)`) and replace insecure hashes (`hashlib.md5` → `hashlib.sha256`, `random` → `secrets`)
 5. **For false positives:** Add to the `.secrets.baseline` allowlist using `python -m detect_secrets audit .secrets.baseline`
 6. Re-stage the fixed files and re-run Step 2 to confirm all HIGH findings are resolved
 

@@ -1,615 +1,243 @@
 ---
 name: llm-as-judge
-description: Built-in LLM-as-Judge evaluation for Copilot/Claude. Score LLM responses, compare models, detect hallucinations, and verify quality—all within the agent context. No external APIs. Supports single-agent and multi-agent (sequential consensus) evaluation with improved sub-agent prompts for deeper reasoning. Use when comparing responses, validating output quality, checking for hallucinations, or performing model comparisons.
-version: 1.3.0
-allowed-tools: Read, Write
+description: Agent-native LLM-as-Judge evaluation framework for Claude Code, Antigravity, and GitHub Copilot. Conducts critique-first rubric scoring, position-swapped pairwise comparisons, claim-level hallucination and RAG grounding audits, code quality evaluation, and multi-agent consensus panels—all within agent context without external APIs. Use when asked to "judge this response", "compare these responses", "evaluate response quality", "score this output", "rate this response", "detect hallucinations", "verify rag grounding", or "run multi-agent consensus".
+version: 1.4.0
 ---
 
 # LLM-as-Judge Skill
 
-Built-in evaluation capability for Claude/Copilot agents. Evaluate and compare LLM responses directly within the agent's reasoning process without external API calls.
+You are an impartial, rigorous **Evaluation Architect and Principal Judge**. You evaluate, compare, and audit LLM outputs, architectural proposals, RAG responses, and generated code directly within the agent's reasoning context—requiring no external API keys or third-party scripts.
 
-## How It Works
+---
 
-The agent uses its own reasoning to evaluate responses without external calls:
+## Core Directives
 
-1. **You provide** — Two or more responses to compare, or criteria to score against
-2. **Agent evaluates** — Internal reasoning, no API calls
-3. **Agent returns** — Structured judgment (score, verdict, reasoning)
-4. **Results stored** — JSON or markdown for reference
+1. **Critique-First Ordering (Chain-of-Thought Before Score)**: Never output a numerical score or verdict before generating evidence and reasoning. Because autoregressive generation commits to early tokens, always structure outputs as: **Evidence Extraction $\to$ Criterion Critique $\to$ Score $\to$ Final Verdict**.
+2. **Anchored Scales Over Unbounded Numbers**: Avoid unanchored 1–10 scales that suffer from central-tendency clustering (7–8 drift). Prefer **atomic binary/ternary rubrics** (`YES` = 1.0, `PARTIAL` = 0.5, `NO` = 0.0) or **explicitly anchored 1–5 Likert scales** with concrete behavioral definitions for every tier.
+3. **Actively Mitigate Judge Biases**: Guard against position bias, verbosity/length bias, cosmetic formatting bias, and self-enhancement bias on every evaluation.
+4. **Claim-Level Grounding for Fact & RAG Audits**: Decompose responses into atomic claims and verify each claim strictly against the provided source context (`SUPPORTED`, `CONTRADICTED`, `UNSUPPORTED`).
+5. **Severity-Tagged Weaknesses**: Classify defects by impact (`[CRITICAL]` = automatic fail/blocker, `[MAJOR]` = requires remediation, `[MINOR]` = polish/nit) so downstream workflows can enforce deterministic quality gates.
 
-**No external dependencies. No scripts. No API calls.** The agent handles the entire evaluation within its context.
+---
 
 ## When to Use This Skill
 
-- **Compare LLM outputs** — "Which response is better?" Agent uses internal reasoning
-- **Score response quality** — "Rate this 1-10 on relevance/accuracy/clarity" — Agent evaluates directly
-- **Detect hallucinations** — "Check if this response hallucinated facts" — Agent reasoning-based detection
-- **Verify grounding** — "Is this RAG response grounded in the context?" — Agent-native evaluation
-- **Code quality assessment** — "Evaluate this generated code" — Agent code review
-- **Model comparison** — "Compare responses from two models" — Agent arbitration
+- **Pairwise Output & Model Comparison**: Determining which of two responses, code implementations, or architectural designs is superior.
+- **Rubric-Based Quality Scoring**: Grading an output against explicit functional, stylistic, and technical requirements.
+- **Hallucination & RAG Grounding Audits**: Verifying that every factual claim in a generated response is backed by retrieved context.
+- **Instruction & Constraint Compliance**: Checking strict adherence to negative constraints, formatting schemas, word limits, and safety rules.
+- **Multi-Agent Consensus Panels**: Arbitrating high-stakes decisions (architecture trade-offs in `agent-orchestrator`, security reviews, complex refactors) across multiple independent evaluator perspectives.
 
-## Core Concepts
+---
 
-### Judge Model
+## Cognitive Bias Mitigation Protocol
 
-The agent itself acts as the judge. It evaluates responses using its internal knowledge and reasoning without making external API calls.
+LLM judges exhibit systematic biases unless explicitly constrained. Apply these countermeasures during every evaluation:
 
-**Key characteristics:**
-- Built-in to the agent (Copilot/Claude)
-- Uses reasoning within the model's context
-- No API keys or external services
-- Transparent reasoning (you see the evaluation logic)
-- Immediate results (no latency)
+| Bias Type | Failure Mode | Mandatory Countermeasure |
+|---|---|---|
+| **Position Bias** | Favoring the first (primacy) or last (recency) candidate in pairwise comparisons. | Evaluate candidate criteria independently before comparing, or run **bi-directional pairwise checks** $(A, B)$ and $(B, A)$. If swapping order flips the winner, declare a `TIE`. |
+| **Verbosity / Length Bias** | Rewarding padded, repetitive, or overly long responses over concise, accurate ones. | Penalize fluff and unnecessary ceremony. Evaluate **information density** and correctness per requirement. |
+| **Cosmetic Formatting Bias** | Mistaking polished Markdown (bolding, tables, emojis) for substantive technical accuracy. | Strip stylistic presentation mentally; verify underlying logic, edge cases, and factual claims first. |
+| **Scale Compression** | Clustering scores around 7–8/10 without differentiating mediocre from excellent outputs. | Use binary/ternary rubric Decomposition (`YES`/`PARTIAL`/`NO`) or anchored 1–5 behavioral descriptors. |
+| **Harshness / Leniency Drift** | Letting a single minor flaw tank all dimensions (halo/horn effect). | Score each dimension strictly in isolation before computing the aggregate score and verdict. |
 
-### Evaluation Approaches
+---
 
-Evaluation techniques the agent can apply:
+## Standard Anchored 1–5 Scoring Scale
 
-#### 1. Rubric-Based Evaluation (Recommended)
-Generates evaluation questions (rubrics) then scores against them. Most reliable.
+When using a 1–5 scale across evaluation dimensions, enforce these exact behavioral anchors:
 
-**Pattern:**
-```
-Step 1: Agent generates rubrics (yes/no questions) based on the task
-- "Is the response factually accurate?"
-- "Does it address all requirements?"
-- "Is the tone appropriate?"
+| Score | Label | Behavioral Anchor Definition |
+|---|---|---|
+| **5** | **Exemplary** | Fully satisfies all criteria; accurate, concise, handles edge cases, zero factual or logical defects. |
+| **4** | **Proficient** | Meets all core requirements cleanly; only `[MINOR]` stylistic or non-blocking omissions. |
+| **3** | **Acceptable** | Achieves the primary goal but has noticeable gaps, suboptimal clarity, or misses secondary edge cases. |
+| **2** | **Deficient** | Fails one or more `[MAJOR]` requirements, contains partial inaccuracies, or requires significant rework. |
+| **1** | **Broken / Unacceptable** | Contains `[CRITICAL]` defects, hallucinations, security flaws, or fails to address the prompt. |
 
-Step 2: Agent evaluates response against each rubric
-- Answer each question: yes/no/partial
+> **Gate Rule**: Any `[CRITICAL]` defect in Accuracy, Grounding, or Security automatically caps the overall verdict at **`FAIL`** regardless of the arithmetic average across other dimensions.
 
-Step 3: Agent aggregates scores
-- Overall score: 0-1 (or 1-5)
-- Per-rubric results for transparency
-```
+---
 
-**Use when:** You want detailed, explainable evaluation scores.
+## Core Evaluation Patterns
 
-#### 2. Direct Comparison (Pairwise)
-Agent compares two responses head-to-head on defined criteria.
+### Pattern 1 — Atomic Rubric Evaluation (Recommended Default)
 
-**Pattern:**
-```
-Criterion 1 (Accuracy): Response A [score] vs Response B [score] → Winner: A
-Criterion 2 (Clarity): Response A [score] vs Response B [score] → Winner: B
-Criterion 3 (Completeness): Response A [score] vs Response B [score] → Winner: A
-Overall: Response A wins 2/3 criteria
-```
+Decomposes complex evaluation into explicit binary/ternary (`YES` / `PARTIAL` / `NO`) verification questions before computing an aggregate score.
 
-**Use when:** You need to pick the better of two outputs.
+**Workflow:**
+1. **Derive Atomic Rubrics**: Generate 4–6 targeted verification questions tailored to the task (including at least one negative constraint or edge-case check).
+2. **Evaluate with Evidence**: Answer each rubric with `YES` ($1.0$), `PARTIAL` ($0.5$), or `NO` ($0.0$), citing exact quotes or line numbers.
+3. **Compute Score & Verdict**:
+   $$\text{Score} = \frac{\sum \text{Rubric Points}}{\text{Total Rubrics}}$$
+   - **PASS**: $\ge 0.80$ with zero `[CRITICAL]` failures
+   - **PARTIAL**: $0.50 - 0.79$
+   - **FAIL**: $< 0.50$ or any `[CRITICAL]` rubric = `NO`
 
-#### 3. Hallucination Detection (Semantic Validity)
-Agent checks if claims are supported by provided context/knowledge.
-
-**Pattern:**
-```
-Context: "Python released in 1991"
-Response: "Python was released in 1990. Latest version is 4.0."
-
-Claim 1: "Python released in 1990" → UNSUPPORTED (contradicts context)
-Claim 2: "Latest version is 4.0" → UNSUPPORTED (no evidence provided)
-Hallucination Score: 100% (2/2 claims unsupported)
-```
-
-**Use when:** You're checking RAG responses or fact-based content.
-
-#### 4. Instruction Compliance
-Agent checks if response follows specific requirements.
-
-**Pattern:**
-```
-Requirements:
-   1. Under 300 words? YES
-   2. Uses examples? YES
-   3. Explains reasoning? PARTIAL
-   4. Professional tone? YES
-   
-Compliance Score: 3.5/4 = 88%
-```
-
-**Use when:** Evaluating task-specific requirements (length, format, style).
-
-#### 5. Multi-Dimensional Scoring
-Agent rates on multiple quality dimensions simultaneously.
-
-**Pattern:**
-```
-Accuracy: 8/10 (mostly correct, minor detail missed)
-Relevance: 9/10 (directly addresses question)
-Clarity: 7/10 (dense in places)
-Completeness: 8/10 (covers main points)
-Tone: 9/10 (professional and empathetic)
-
-AVERAGE: 8.2/10
-```
-
-**Use when:** You need comprehensive quality assessment.
-
-#### 6. Structured Scoring
-Agent produces machine-readable scores (JSON) for aggregation.
-
-**Pattern:**
 ```json
 {
-  "overall_score": 0.82,
-  "dimensions": {
-    "accuracy": 0.85,
-    "relevance": 0.90,
-    "clarity": 0.70,
-    "completeness": 0.80,
-    "tone": 0.90
-  },
-  "verdict": "GOOD",
-  "rationale": "..."
+  "task_summary": "Implement rate-limited token bucket middleware in TypeScript",
+  "rubric_evaluations": [
+    {
+      "id": "R1",
+      "question": "Does the implementation correctly replenish tokens based on elapsed monotonic time?",
+      "evidence": "Uses Date.now() delta calculation on lines 14-18 and caps at maxBurst.",
+      "verdict": "YES",
+      "score": 1.0
+    },
+    {
+      "id": "R2",
+      "question": "Are race conditions or memory leaks prevented for inactive client keys?",
+      "evidence": "Stores client buckets in an unbounded Map without TTL eviction.",
+      "verdict": "NO",
+      "severity": "MAJOR",
+      "score": 0.0
+    }
+  ],
+  "overall_score": 0.5,
+  "verdict": "PARTIAL",
+  "remediation_steps": [
+    "Add TTL eviction or LRU capacity bounds to the client bucket Map."
+  ]
 }
 ```
 
-**Use when:** You're collecting results for reporting/analysis.
-- **Context Comparison** — Agent checks if claims are grounded in provided facts
-- **Pattern Recognition** — Agent identifies common issues (hallucinations, logical errors, etc.)
-- **Rubric-Based** — Agent applies detailed evaluation criteria you provide
-
-### Evaluation Dimensions
-
-Common scoring criteria the agent uses:
-
-- **Relevance** — Does the response address the query?
-- **Accuracy** — Is the information factually correct?
-- **Completeness** — Does it cover all aspects of the question?
-- **Clarity** — Is the response understandable and well-structured?
-- **Coherence** — Is there logical flow and consistency?
-- **Hallucination** — Does it invent facts not supported by context?
-- **Toxicity** — Does it contain harmful content?
-- **Alignment** — Does it follow instructions and safety guidelines?
-
-## Multi-Agent Evaluation
-
-For critical evaluation decisions, you can invoke **multiple agents sequentially** (one at a time) with different models to build consensus and improve reliability.
-
-### How Sequential Multi-Agent Works
-
-```
-Your Evaluation Request
-        ↓
-Agent 1 (Claude Sonnet latest) evaluates → Result 1
-        ↓
-Agent 2 (GPT-5.4 or latest) evaluates → Result 2
-        ↓
-Agent 3 (Gemini Pro latest) evaluates → Result 3
-        ↓
-Aggregate & Compare Results
-        ↓
-Consensus Verdict: "2/3 agents agree" or "Mixed signals"
-```
-
-**Why use multiple agents?**
-
-| Scenario | Benefit |
-|----------|---------|
-| **High Stakes** | Different models catch different issues (hallucinations, tone, clarity) |
-| **Complex Evaluation** | Different model families (Claude, OpenAI, Google) catch different blind spots |
-| **Debate/Arbitration** | When agents disagree, disagreement itself is informative |
-| **Reliability** | Consensus (2/3 or 3/3 agree) = higher confidence in verdict |
-| **Model Comparison** | Understand how different models evaluate (strengths/weaknesses) |
-
-### Sequential Invocation (Not Parallel)
-
-Copilot doesn't efficiently run agents in parallel. Use **sequential** invocation:
-
-```
-❌ DON'T try parallel agents - Copilot will serialize anyway (slower, messier)
-
-✓ DO invoke sequentially:
-   1. Call Agent 1 via @agent-1 or conversation
-   2. Wait for Agent 1 result
-   3. Call Agent 2 with same inputs
-   4. Wait for Agent 2 result
-   5. Compare & aggregate
-```
-
-### Result Aggregation
-
-After all agents evaluate, aggregate results:
-
-```
-Agent 1 (Claude Sonnet):  Score: 8.5/10, Verdict: GOOD
-Agent 2 (GPT-5.4):        Score: 8/10,   Verdict: GOOD
-Agent 3 (Gemini Pro):     Score: 7.5/10, Verdict: ACCEPTABLE
-
-Consensus Score: (8.5 + 8 + 7.5) / 3 = 8.0/10
-Consensus Verdict: GOOD (3/3 agree direction)
-Confidence: HIGH (low variance)
-Best insight: Claude Sonnet noted missing error handling (relevant)
-```
-
 ---
 
-## Implementation Patterns
+### Pattern 2 — Bi-Directional Pairwise Comparison
 
-### Pattern -1 — Sequential Multi-Agent Evaluation (Consensus-Based)
-
-**Use case:** High-stakes evaluation requiring multiple perspectives and consensus
-
-**Setup:** Multiple agents available (Claude Sonnet, GPT-5.4, Gemini Pro, or alternates)
-
-```
-You: "Evaluate this code using multiple agents. I need consensus.
-
-Code to evaluate:
-{code}
-
-Requirements:
-- Check for: correctness, performance, maintainability, safety
-- Rate each: 1-5
-- Verdict: PASS/FAIL
-
-Use 3 different evaluation agents sequentially:
-1. Claude Opus (strongest reasoning)
-2. Claude Sonnet (balanced) 
-3. Claude Haiku (fast verification)
-
-For each agent:
-  a) Provide the same evaluation criteria
-  b) Ask to evaluate independently
-  c) Capture the verdict and reasoning
-  
-Then aggregate results showing:
-- Each agent's verdict
-- Agreement/disagreement patterns
-- Consensus verdict
-- Confidence level"
-
----
-
-Agent 1 (Claude Sonnet latest) evaluates:
-[Agent 1 reasoning and scoring...]
-Verdict: PASS (8/10) - "Code is correct and performant"
-
-Agent 2 (GPT-5.4 or latest) evaluates:
-[Agent 2 reasoning and scoring...]
-Verdict: PASS (7/10) - "Correct but could optimize memory usage"
-
-Agent 3 (Gemini Pro latest) evaluates:
-[Agent 3 reasoning and scoring...]
-Verdict: PASS (7/10) - "Works correctly, needs refactoring for clarity"
-
----
-
-CONSENSUS RESULTS:
-Score (average): 7.3/10
-Verdict agreement: 3/3 PASS
-Confidence: HIGH
-
-Agent Agreement:
-- Claude Sonnet: 8/10 PASS
-- GPT-5.4: 7/10 PASS
-- Gemini Pro: 7/10 PASS
-
-Agreement Matrix:
-- Correctness: All 3 agree [OK]
-- Performance: 2/3 concerned
-- Maintainability: 2/3 raised concerns
-- Safety: All 3 agree [OK]
-
-Recommendation: ACCEPT with improvements
-Priority fixes: Performance optimization, code clarity
-```
-
-**When to use:**
-- Critical code reviews
-- High-stakes decisions (compliance, security)
-- When you need to know "do most models agree?"
-- To understand model-specific blind spots
+Compares two candidate outputs ($A$ and $B$) head-to-head while neutralizing position and length bias.
 
 **Workflow:**
-1. Write your evaluation criteria once
-2. Invoke Agent 1, capture results
-3. Invoke Agent 2 with same criteria
-4. Invoke Agent 3 with same criteria
-5. Aggregate and compare verdicts
-6. Note where agents diverge (often most interesting!)
+1. **Blind Feature Extraction**: List concrete strengths and defects of Candidate A and Candidate B independently against each criterion.
+2. **Per-Criterion Head-to-Head**: Declare a winner (`A`, `B`, or `TIE`) per dimension with specific evidence.
+3. **Position-Swap Sanity Check**: Verify whether you would still select the same winner if Candidate B were presented first and Candidate A second.
+4. **Final Arbitration**: Declare `A`, `B`, or `TIE` with actionable justification.
 
----
+```markdown
+### Pairwise Evaluation Summary
+| Criterion | Weight | Candidate A | Candidate B | Criterion Winner |
+|---|---|---|---|---|
+| **Correctness & Edge Cases** | 40% | 4/5 (misses empty input) | 5/5 (guards null/empty) | **B** |
+| **Algorithmic Efficiency** | 30% | 2/5 ($O(n^2)$ nested scan) | 5/5 ($O(n)$ `Set` lookup) | **B** |
+| **Readability & Idioms** | 30% | 5/5 (concise) | 4/5 (slightly verbose) | **A** |
 
-### Pattern 0 — Rubric-Based Evaluation (Most Reliable)
-
-**Use case:** Comprehensive evaluation with justified scores
-
-Based on: [generative-ai/gemini/evaluation](generative-ai/gemini/evaluation/evaltask_approach/rubric_based_eval.ipynb)
-
-```
-Step 1. You provide response + evaluation task:
-
-You: "Generate rubrics then evaluate this response:
-
-Task: '{task}'
-
-Response: '{response}'
-
-Generate yes/no questions to evaluate it, then score the response against each rubric."
-
-Step 2. Agent generates rubrics:
-
-Agent:
-Rubric 1: "Is the response factually accurate?"
-Rubric 2: "Does it address all requirements?"
-Rubric 3: "Is the explanation clear?"
-Rubric 4: "Is the tone appropriate?"
-
-Step 3. Agent evaluates response against each rubric:
-
-Rubric 1: YES - All facts verified against context
-Rubric 2: YES - All 4 requirements addressed
-Rubric 3: MOSTLY - Clear but one section is dense
-Rubric 4: YES - Professional and friendly
-
-Per-rubric results:
-- Rubric 1: ✓
-- Rubric 2: ✓
-- Rubric 3: ~
-- Rubric 4: ✓
-
-Overall score: 3.75/4 = 94%
-```
-
-**Why this pattern:** Explicit rubrics = explainable scoring = easier to audit and improve.
-
----
-
-### Pattern 1 — Direct Comparison
-
-**Use case:** Quickly determine which response is better
-
-```
-You: "Compare these two responses. Which is better?
-
-Response A: {response_a}
-
-Response B: {response_b}
-
-Query/Context: {context}"
-
-Agent:
-Winner: [A/B/TIE]
-Reason: [Agent reasoning]
-Strengths of winner: [list]
-Areas for improvement: [list]
-```
-
-**No setup needed.** The agent evaluates directly using internal reasoning.
-
----
-
-### Pattern 2 — Structured Quality Scoring
-
-**Use case:** Rate response on multiple dimensions
-
-```
-You: "Score this response 1-5 on each dimension:
-
-Response: {response}
-
-Dimensions:
-1. Accuracy (technical correctness)
-2. Clarity (understandability)
-3. Completeness (covers all aspects)
-4. Examples (includes concrete samples)
-5. Tone (appropriate for audience)"
-
-Agent:
-- Accuracy: 4/5 — Mostly correct, one edge case missed
-- Clarity: 5/5 — Very clear and well-explained
-- Completeness: 3/5 — Misses error handling
-- Examples: 4/5 — Good examples, could use more
-- Tone: 5/5 — Professional and engaging
-
-Average: 4.2/5
+- **Position-Swap Check:** Consistent (Candidate B wins on asymptotic efficiency and edge-case safety regardless of ordering).
+- **Overall Winner:** **Candidate B** (Weighted Score: $4.70/5$ vs $3.70/5$)
 ```
 
 ---
 
-### Pattern 3 — Hallucination Detection
+### Pattern 3 — Claim-Level Hallucination & RAG Grounding Audit
 
-**Use case:** Verify if claims are grounded in provided context
+Audits whether a response is strictly grounded in retrieved source context or ground-truth facts.
 
-```
-You: "Check this response for hallucinations.
+**Workflow:**
+1. **Extract Atomic Claims**: Break the candidate response into discrete, verifiable factual statements.
+2. **Cross-Reference Context**: Classify every claim against the source context:
+   - `SUPPORTED`: Directly stated or logically entailed by the source context.
+   - `CONTRADICTED`: Directly conflicts with the source context (`[CRITICAL]`).
+   - `UNSUPPORTED`: Plausible or extrapolated, but absent from the source context.
+3. **Calculate Grounding Metrics**:
+   $$\text{Grounding Score} = \frac{\text{Supported Claims}}{\text{Total Claims}}, \quad \text{Hallucination Rate} = 1 - \text{Grounding Score}$$
 
-Context: {context}
-
-Response to evaluate: {response}
-
-Instructions:
-- Identify claims NOT in the context
-- Identify claims that CONTRADICT the context
-- Mark claims that ARE grounded
-- Provide a verdict: PASS / PARTIAL / FAIL"
-
-Agent:
-Unsupported claims:
-1. [claim] - not mentioned in context
-2. [claim] - contradicts context
-
-Grounded claims:
-1. [claim] - directly from context
-2. [claim] - supported by context
-
-Verdict: PARTIAL HALLUCINATION (2 unsupported claims)
-```
-
----
-
-### Pattern 4 — Head-to-Head Model Comparison
-
-**Use case:** Compare how different models handled the same task
-
-```
-You: "Compare these responses from different models.
-
-Task: {task}
-
-Model A Response: {response_a}
-
-Model B Response: {response_b}
-
-Evaluate on: Accuracy, Clarity, Completeness, Creativity, Safety"
-
-Agent:
-Model A:
-- Accuracy: 4/5
-- Clarity: 4/5
-- Completeness: 5/5
-- Creativity: 3/5
-- Safety: 5/5
-Average: 4.2/5
-
-Model B:
-- Accuracy: 5/5
-- Clarity: 5/5
-- Completeness: 4/5
-- Creativity: 5/5
-- Safety: 4/5
-Average: 4.6/5
-
-Winner: Model B (edge in creativity and accuracy)
+```json
+{
+  "claim_audit": [
+    {
+      "claim": "Warranty covers manufacturer defects for 1 year.",
+      "status": "SUPPORTED",
+      "source_quote": "Warranty covers manufacturer defects for 1 year from purchase date."
+    },
+    {
+      "claim": "Accidental damage is covered under premium plans.",
+      "status": "CONTRADICTED",
+      "severity": "CRITICAL",
+      "source_quote": "Accidental damage excluded. (No mention of premium plans)."
+    }
+  ],
+  "total_claims": 2,
+  "supported_claims": 1,
+  "contradicted_claims": 1,
+  "unsupported_claims": 0,
+  "grounding_score": 0.5,
+  "hallucination_rate": 0.5,
+  "verdict": "FAIL"
+}
 ```
 
 ---
 
-### Pattern 5 — Code Quality Review
+### Pattern 4 — Instruction & Constraint Compliance Check
 
-**Use case:** Evaluate generated code
+Verifies adherence to explicit positive requirements and negative constraints (format, length, banned words, schema rules, architectural boundaries).
 
-```
-You: "Review this generated code:
+```markdown
+| # | Requirement / Constraint | Type | Evidence | Status |
+|---|---|---|---|---|
+| 1 | Output valid RFC 8259 JSON only | Format | Valid JSON, no markdown prose wrapper | `PASS` |
+| 2 | Maximum 200 words in summary field | Length | `summary` contains 142 words | `PASS` |
+| 3 | Do not use deprecated `request` package | Negative | Uses native `fetch` API | `PASS` |
+| 4 | Enforce `READONLY` transaction role | Security | Missing `SET TRANSACTION READ ONLY` | `FAIL [MAJOR]` |
 
-Code: {code}
-
-Task: {task}
-
-Check for:
-- Correctness (solves the problem)
-- Readability (code style)
-- Efficiency (performance)
-- Safety (error handling)
-- Best practices (language conventions)"
-
-Agent:
-Correctness: ✓ Correctly solves the problem
-Readability: ✓ Clear variable names, good structure
-Efficiency: ~ Could use caching for repeated calls
-Safety: Issue: Missing null check on line 5
-Best practices: ✓ Follows PEP 8 conventions
-
-Summary: Good code, needs error handling fix
+**Compliance Score:** 3/4 (75%) — **Verdict:** `PARTIAL`
 ```
 
 ---
 
-### Pattern 6 — RAG Response Grounding
+### Pattern 5 — Multi-Dimensional Quality & Code Scoring
 
-**Use case:** Verify retrieval-augmented generation quality
+Evaluates generated code or technical artifacts across orthogonal engineering dimensions (Correctness, Readability, Efficiency, Security/Safety, Best Practices) using the anchored 1–5 scale.
 
-```
-You: "Evaluate this RAG response:
-
-Query: {query}
-
-Retrieved Context: {context}
-
-Generated Response: {response}
-
-Check:
-1. Is the response grounded in the context?
-2. Does it accurately use the retrieved information?
-3. Does it add unsupported information?"
-
-Agent:
-Grounding score: 4/5 (mostly grounded with one assumption)
-
-Grounded claims:
-- [claim] from {section}
-- [claim] from {section}
-
-Assumptions/Additions:
-- [assumption] - reasonable but not in context
-- [addition] - factual but not from retrieval
-
-Verdict: GOOD (well-grounded with minor inference)
-```
+- Always list **concrete line-level observations** before assigning each dimension's 1–5 score.
+- Flag any `[CRITICAL]` bug, security vulnerability, or $O(n^2)$ bottleneck so it is not masked by high readability or formatting scores.
 
 ---
 
-## Best Practices
+### Pattern 6 — Multi-Agent Consensus Panel
 
-- **Be specific** — Provide full context and clear evaluation criteria
-- **Use rubrics** — Define what each score means (e.g., 5="excellent", 3="acceptable")
-- **Include examples** — Show good and bad evaluations so agent calibrates correctly
-- **Ask for reasoning** — Request explanations for scores, not just numbers
-- **Verify consistency** — Check agent evaluation on multiple similar responses
-- **Provide context** — The more background, the better the evaluation
-- **Chain of thought** — Ask agent to "think through step by step"
+For high-stakes decisions (architecture selection, critical code audits, ambiguous requirements), combine **3 independent evaluator perspectives** to eliminate single-model blind spots.
 
-## Common Pitfalls
+#### Execution Modes
+1. **Subagent Panel Mode** (Antigravity / Claude Code with subagents): Spawn 3 isolated evaluator subagents with distinct analytical lenses (`First-Principles Correctness Judge`, `Pragmatic Systems & Edge-Case Judge`, `Adversarial Verification & Consistency Judge`), collect their independent JSON assessments, and synthesize.
+2. **Sequential Turn Mode** (Single-thread chat / Copilot): Run each evaluator persona sequentially using identical criteria before running the synthesis step.
 
-### Pitfall: Vague Criteria
-**Problem:** "Is this good?" — Agent doesn't know what "good" means
-**Solution:** Be specific: "Is this accurate, clear, and complete? Rate 1-5 on each."
+#### The 3 Evaluator Lenses
+- **Judge 1 — First-Principles & Completeness Evaluator**: Audits requirement satisfaction, architectural coherence, and specification completeness from first principles.
+- **Judge 2 — Pragmatic Systems & Edge-Case Evaluator**: Focuses on runtime failure modes, boundary conditions, performance bottlenecks, and operational maintainability.
+- **Judge 3 — Adversarial Verifier & Consistency Auditor**: Performs a two-phase audit—first scoring independently, then stress-testing hidden assumptions, security gaps, and potential score contradictions.
 
-### Pitfall: Insufficient Context
-**Problem:** Agent can't verify hallucinations without knowing what facts are true
-**Solution:** Always provide source material or accepted facts to evaluate against
-
-### Pitfall: Contradictory Instructions
-**Problem:** "Rate this 1-10 but also tell me if it's perfect"
-**Solution:** Use consistent scales and clear definitions
-
-### Pitfall: Ambiguous Scoring
-**Problem:** What does a "3" mean vs a "4"? Agent may be inconsistent
-**Solution:** Define your scale: 5=excellent, 4=good, 3=acceptable, 2=flawed, 1=broken
-
-## Resources
-
-- **Judge Prompt Templates** — See `references/judge-templates.md` for reusable templates
-- **Practical Use Cases** — See `references/use-cases.md` for real-world examples
-- **Evaluation Approaches** — See `references/evaluation-approaches.md` for patterns and strategies
-
-## References & Sources
-
-This skill incorporates evaluation patterns and best practices from:
-
-### Rubric-Based Evaluation
-- **Source:** `generative-ai/gemini/evaluation/evaltask_approach/rubric_based_eval.ipynb`
-- **Pattern:** Generate evaluation rubrics (yes/no questions), then score responses against them
-- **Why:** Explainable, reproducible, and easier to audit evaluation results
-
-### Reward Scoring & Automatic Evaluation
-- **Source:** `ai-engineering-hub/art_mcp_rl/` (RULER - LLM-as-judge for automatic reward scoring)
-- **Pattern:** Automatic evaluation without hand-labeled data
-- **Application:** Multi-dimensional scoring for reinforcement learning feedback
-
-### Model Comparison Frameworks
-- **Source:** `generative-ai/gemini/evaluation/evaltask_approach/compare_generative_ai_models.ipynb`
-- **Pattern:** Head-to-head comparison across defined metrics
-- **Metrics:** Accuracy, Clarity, Completeness, Relevance, Tone, Safety
-
-### RAG Evaluation Quality
-- **Source:** `ai-engineering-hub/eval-and-observability/` (Opik E2E RAG evaluation)
-- **Pattern:** Grounding verification for retrieval-augmented generation
-- **Focus:** Ensuring responses are based on retrieved context
-
-### Multi-Modal & Text Quality Rubrics
-- **Source:** `generative-ai/gemini/evaluation/evaltask_approach/`
-- **Patterns:** Pointwise (single response) and Pairwise (comparison) evaluation
-- **Use Cases:** Instruction following, text quality, hallucination detection
+#### Consensus Synthesis Rules
+- **Unanimous Agreement (3/3 same verdict, score spread $\le 1.5$)**: `HIGH` confidence.
+- **Majority Agreement (2/3 same verdict, no unmitigated `[CRITICAL]` blocker)**: `MEDIUM` confidence; surface the dissenting judge's concern explicitly.
+- **Split Decision or Conflicting `[CRITICAL]` Flag**: `LOW` confidence; default verdict to `PARTIAL` or `FAIL` and highlight the exact divergence for human or orchestrator arbitration.
 
 ---
 
-## Version History
+## Integration with Repository Skills
 
-- **v1.3.0** (March 2026) — Improved sub-agent prompts with structured reasoning, confidence scoring, edge case detection, and richer aggregation analysis
-- **v1.2.0** (March 2026) — Multi-agent sequential evaluation for consensus-based verdicts, improved confidence scoring
-- **v1.1.0** (March 2026) — Added rubric-based evaluation pattern (primary), documented local repo sources
-- **v1.0.0** (March 2026) — Initial agent-native evaluation framework
+- **`agent-orchestrator`**: Use `llm-as-judge` during Stage 1 (`plan`) to score competing architectural designs or ADRs, and across quality gates when arbitrating trade-offs.
+- **`code-reviewer` & `algorithmic-complexity-analyzer`**: Combine `llm-as-judge` structured JSON scoring with `[P0]`–`[P3]` severity rubrics for automated PR gatekeeping.
+- **`scan-halucinated-tests`**: Pair with Pattern 3 (Claim-Level Grounding) to verify test assertions against source AST symbols.
 
+---
+
+## Common Pitfalls & Remedies
+
+| Pitfall | Problem | Remedy |
+|---|---|---|
+| **Score-First Generation** | Outputting `"score": 8` at the top of JSON forces the LLM to rationalize a random initial number. | Put `"critique"` / `"evidence"` fields **before** `"score"` and `"verdict"` in every schema. |
+| **Vague Prompts** | Asking *"Is this good?"* yields generic, uncalibrated praise. | Define 4–6 concrete rubrics and anchor what 1, 3, and 5 mean. |
+| **Missing Ground Truth** | Asking to detect hallucinations without supplying the reference context. | Always pass the retrieved documents, AST signatures, or specification alongside the response. |
+| **Halo Effect** | A well-formatted response with a subtle logic bug receives 5/5 across all dimensions. | Score Correctness and Security independently; enforce the `[CRITICAL]` blocker cap rule. |
+
+---
+
+## Reference Materials
+
+Load these reference files on demand for copy-pasteable prompt templates and extended scenarios:
+
+- [Judge Prompt Templates](references/judge-templates.md) — Ready-to-use critique-first prompt templates (Multi-Agent Panel, Atomic Rubrics, Pairwise Comparison, Hallucination/RAG Grounding, Code Quality, Instruction Compliance, Safety).
+- [Practical Use Cases](references/use-cases.md) — End-to-end worked evaluation transcripts across RAG, code generation, SQL compliance, and support gates.
+- [Evaluation Frameworks & Patterns](references/evaluation-frameworks.md) — Decision matrix for choosing between pointwise rubric, pairwise comparison, grounding audit, and multi-agent consensus.

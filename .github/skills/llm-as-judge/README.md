@@ -219,7 +219,7 @@ A: Yes, provide multiple items in conversation. The agent handles sequential eva
 A: Agent-native evaluation is as good as Claude's reasoning. For critical decisions, always verify important evaluations.
 
 **Q: What is multi-agent evaluation?**  
-A: Invoke 3+ agents sequentially (Opus, Sonnet, Haiku) to evaluate the same input. Each agent evaluates independently. Results are compared for consensus and confidence scoring. See Template -1 in `references/judge-templates.md`.
+A: Invoke 3 evaluators using distinct lenses (`First-Principles`, `Pragmatic Systems`, `Adversarial Verifier`) via subagent panels or sequential turns to evaluate the same input independently. Results are synthesized for consensus and confidence scoring. See Template 7 in `references/judge-templates.md`.
 
 **Q: When should I use multi-agent?**  
 A: For high-stakes decisions (code review, compliance), disagreements worth investigating, or when you need audit trail. For quick evaluations, single-agent is faster.
@@ -262,6 +262,7 @@ A: No API calls are made, so there are no rate limits. Agent operates within reg
 
 ## Version History
 
+- **v1.4.0** (November 2026) — Critique-first output ordering, cognitive bias mitigation protocol, anchored 1–5 scales, and unified template numbering
 - **v1.3.0** (March 2026) — Improved sub-agent prompts with structured reasoning, confidence scoring, and richer aggregation analysis
 - **v1.2.0** (March 2026) — Multi-agent sequential evaluation for consensus-based verdicts
 - **v1.1.0** (March 2026) — Added rubric-based evaluation (primary), documented local repo sources

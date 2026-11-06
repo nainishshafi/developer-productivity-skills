@@ -3,7 +3,7 @@
  * isolate-runner.js — Scaffold an isolated reproduction testbed for troubleshooting.
  *
  * Usage:
- *   node isolate-runner.js init --name <issue_name> --lang <ts|js|python|java> [--dir <output_dir>]
+ *   node isolate-runner.js init --name <issue_name> --lang <ts|js|python|java|csharp> [--dir <output_dir>]
  */
 
 const fs = require('node:fs');
@@ -187,6 +187,33 @@ public class Repro_${cleanName} {
         }
     }
 }
+`,
+
+  csharp: (name, cleanName, date, filename) => `// Isolated Reproduction Testbed: ${name}
+// Created: ${date}
+// Run with: dotnet script ${filename} (or include in an xUnit test project)
+
+using System;
+
+public static class Repro_${cleanName}
+{
+    public static int Calculate(int? value)
+    {
+        // TODO: Paste extracted logic here
+        throw new NotImplementedException("Reproduction logic not yet implemented");
+    }
+
+    public static void Main()
+    {
+        Console.WriteLine("Running isolated C# reproduction testbed...");
+
+        int res1 = Calculate(100);
+        Console.WriteLine($"✔ Happy path: {res1}");
+
+        int res2 = Calculate(null);
+        Console.WriteLine($"✔ Edge case handled: {res2}");
+    }
+}
 `
 };
 
@@ -194,7 +221,9 @@ const EXTENSIONS = {
   ts: 'ts',
   js: 'js',
   python: 'py',
-  java: 'java'
+  java: 'java',
+  csharp: 'cs',
+  cs: 'cs'
 };
 
 function parseArgs() {
@@ -221,18 +250,22 @@ function main() {
   const { command, name, lang, dir } = parseArgs();
 
   if (command !== 'init' || !name || !lang) {
-    console.log('Usage: node isolate-runner.js init --name <issue_name> --lang <ts|js|python|java> [--dir <output_dir>]');
+    console.log('Usage: node isolate-runner.js init --name <issue_name> --lang <ts|js|python|java|csharp> [--dir <output_dir>]');
     process.exit(1);
   }
 
-  if (!TEMPLATES[lang]) {
+  const normalizedLang = lang === 'cs' ? 'csharp' : lang;
+
+  if (!TEMPLATES[normalizedLang]) {
     console.error(`Error: Unsupported language '${lang}'. Choose from: ${Object.keys(TEMPLATES).join(', ')}`);
     process.exit(1);
   }
 
   const cleanName = sanitizeName(name);
-  const ext = EXTENSIONS[lang];
-  const filename = lang === 'java' ? `Repro_${cleanName.replace(/-/g, '_')}.java` : `repro_${cleanName}.${ext}`;
+  const ext = EXTENSIONS[normalizedLang];
+  const filename = (normalizedLang === 'java' || normalizedLang === 'csharp')
+    ? `Repro_${cleanName.replace(/-/g, '_')}.${ext}`
+    : `repro_${cleanName}.${ext}`;
   const targetDir = path.resolve(process.cwd(), dir);
   const targetFile = path.join(targetDir, filename);
 
@@ -244,7 +277,7 @@ function main() {
   }
 
   const date = new Date().toISOString().replace('T', ' ').slice(0, 19);
-  const content = TEMPLATES[lang](name, cleanName.replace(/-/g, '_'), date, filename);
+  const content = TEMPLATES[normalizedLang](name, cleanName.replace(/-/g, '_'), date, filename);
 
   fs.writeFileSync(targetFile, content, 'utf8');
   console.log(`Created isolated reproduction harness: ${targetFile}`);

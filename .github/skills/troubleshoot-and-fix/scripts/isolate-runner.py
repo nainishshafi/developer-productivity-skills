@@ -197,6 +197,32 @@ public class Repro_{clean_name} {{
         }}
     }}
 }}
+''',
+    "csharp": '''// Isolated Reproduction Testbed: {name}
+// Created: {date}
+// Run with: dotnet script {filename} (or include in an xUnit test project)
+
+using System;
+
+public static class Repro_{clean_name}
+{{
+    public static int Calculate(int? value)
+    {{
+        // TODO: Paste extracted logic here
+        throw new NotImplementedException("Reproduction logic not yet implemented");
+    }}
+
+    public static void Main()
+    {{
+        Console.WriteLine("Running isolated C# reproduction testbed...");
+
+        int res1 = Calculate(100);
+        Console.WriteLine($"✔ Happy path: {{res1}}");
+
+        int res2 = Calculate(null);
+        Console.WriteLine($"✔ Edge case handled: {{res2}}");
+    }}
+}}
 '''
 }
 
@@ -205,6 +231,7 @@ EXTENSIONS = {
     "ts": "ts",
     "js": "js",
     "java": "java",
+    "csharp": "cs",
 }
 
 
@@ -213,7 +240,7 @@ def sanitize_name(name: str) -> str:
 
 
 def init_harness(name: str, lang: str, out_dir: str) -> str:
-    lang = lang.lower()
+    lang = "csharp" if lang.lower() == "cs" else lang.lower()
     if lang not in TEMPLATES:
         print(f"Error: Unsupported language '{lang}'. Choose from: {', '.join(TEMPLATES.keys())}", file=sys.stderr)
         sys.exit(1)
@@ -223,8 +250,8 @@ def init_harness(name: str, lang: str, out_dir: str) -> str:
     target_dir = Path(out_dir)
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    if lang == "java":
-        filename = f"Repro_{clean_name}.java"
+    if lang in ("java", "csharp"):
+        filename = f"Repro_{clean_name}.{ext}"
     else:
         filename = f"repro_{clean_name}.{ext}"
 
@@ -251,7 +278,7 @@ def main():
 
     init_parser = subparsers.add_parser("init", help="Initialize a new isolated reproduction harness")
     init_parser.add_argument("--name", required=True, help="Short name/slug for the issue (e.g. auth-null-pointer)")
-    init_parser.add_argument("--lang", required=True, choices=["python", "ts", "js", "java"], help="Target language")
+    init_parser.add_argument("--lang", required=True, choices=["python", "ts", "js", "java", "csharp", "cs"], help="Target language")
     init_parser.add_argument("--dir", default="scratch/repro", help="Directory where harness will be saved (default: scratch/repro)")
 
     args = parser.parse_args()
