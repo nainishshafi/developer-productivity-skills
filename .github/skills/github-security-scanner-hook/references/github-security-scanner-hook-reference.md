@@ -140,6 +140,7 @@ Semgrep detects injection patterns across many languages by understanding code s
 | Command injection | Python, JS, Go | `os.system(user_input)`, `exec(user_input)`, `spawn(cmd, { shell: true })` |
 | Destructive file deletion | JS/TS, Python | Recursive `fs.rm()`, `rmdir` on unconstrained paths |
 | Environment secret leaks | JS/TS | Passing unscrubbed `process.env` to subprocesses |
+| Hardcoded user paths / PII | Generic (all files) | `C:\Users\<user>\` or `/home/<user>/` paths committed to repo |
 | Path traversal | Python, JS, Go, Java | Unsanitised user input in file paths |
 | Server-side template injection | Python (Jinja2/Mako), JS | `render_template_string(user_input)` |
 
@@ -208,6 +209,22 @@ query = build_query(user_id)  # nosemgrep: python.django.security.injection.tain
 tests/
 docs/examples/
 *.test.js
+```
+
+### 3.8 Personal Environment & Path Exposure (semgrep generic)
+
+#### `hardcoded-local-user-path`
+Detects hardcoded user home or profile directories (e.g., `C:\Users\<user>\` or `/home/<user>/`) committed into source code, documentation, scripts, or configurations.
+```json
+// BAD — leaks developer username and breaks portability
+{
+  "args": ["c:/Users/johndoe/projects/app/dist/index.js"]
+}
+
+// GOOD — use relative paths or environment placeholders
+{
+  "args": ["/path/to/app/dist/index.js"]
+}
 ```
 
 ---

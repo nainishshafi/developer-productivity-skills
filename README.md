@@ -39,7 +39,7 @@ Runs ruff (lint + format) and optionally mypy (type checking) on Python code. Au
 ---
 
 ### `github-security-scanner-hook`
-Scans staged files for secrets and code-level security vulnerabilities before every git commit. Language-agnostic — works with Python, JavaScript/TypeScript, Go, and more. Uses `detect-secrets` for credential/key detection and `semgrep` with 23 bundled rules for command injection, shell execution risks, destructive filesystem deletions, environment secret leakage, XSS, path traversal, and other OWASP patterns. Can install a git pre-commit hook to automate scanning on every commit.
+Scans staged files for secrets and code-level security vulnerabilities before every git commit. Language-agnostic — works with Python, JavaScript/TypeScript, Go, and more. Uses `detect-secrets` for credential/key detection and `semgrep` with 24 bundled rules for command injection, shell execution risks, destructive filesystem deletions, environment secret leakage, hardcoded personal user paths, XSS, path traversal, and other OWASP patterns. Can install a git pre-commit hook to automate scanning on every commit.
 
 **Trigger phrases:** "scan for security vulnerabilities", "check for secrets in code", "set up a pre-commit security hook", "scan staged files for secrets", "check for hardcoded credentials", "detect leaked API keys", "scan for SQL injection", "check for XSS vulnerabilities", "check for command injection", "audit subprocess security"
 

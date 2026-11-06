@@ -271,3 +271,23 @@ rules:
       Validate the destination URL is within your allowed domain.
     languages: [javascript, typescript]
     severity: WARNING
+
+  # ---------------------------------------------------------------------------
+  # Information Exposure & Personal Environment Leakage
+  # ---------------------------------------------------------------------------
+
+  - id: hardcoded-local-user-path
+    pattern-regex: '(?i)(?:[a-zA-Z]:[\\/]|(?<=[ "\'\\/`]))(?:Users|home)[\\/][a-zA-Z0-9_.-]+[\\/]'
+    paths:
+      exclude:
+        - "**/tests/**"
+        - "**/test/**"
+        - "**/.venv/**"
+        - "**/node_modules/**"
+        - "**/.git/**"
+    message: >
+      Hardcoded local user directory path detected. Local paths (e.g. /home/<user>/ or
+      C:\Users\<user>\) leak personal identity and environment structure, and break portability.
+      Use relative paths, environment variables (HOME, USERPROFILE), or placeholder paths instead.
+    languages: [generic]
+    severity: WARNING

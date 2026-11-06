@@ -125,7 +125,7 @@ Add the server to your `claude_desktop_config.json`:
     "nodejs-executor": {
       "command": "node",
       "args": [
-        "c:/Users/naini/developer-productivity-skills/mcp/nodejs-executor/dist/index.js"
+        "/path/to/developer-productivity-skills/mcp/nodejs-executor/dist/index.js"
       ]
     }
   }
