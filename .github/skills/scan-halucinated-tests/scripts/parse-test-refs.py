@@ -72,6 +72,91 @@ def deduplicate_by(items: list[dict], key: str) -> list[dict]:
     return result
 
 
+def mask_comments_and_strings(source: str) -> str:
+    """
+    Replace contents of string literals ("...", '...', `...`) and comments
+    (//..., /*...*/) with spaces, preserving all newlines and exact character offsets.
+    """
+    chars = list(source)
+    n = len(chars)
+    i = 0
+    while i < n:
+        # Line comments: //...
+        if i + 1 < n and chars[i] == '/' and chars[i + 1] == '/':
+            chars[i] = ' '
+            chars[i + 1] = ' '
+            i += 2
+            while i < n and chars[i] != '\n':
+                chars[i] = ' '
+                i += 1
+            continue
+        # Block comments: /*...*/
+        if i + 1 < n and chars[i] == '/' and chars[i + 1] == '*':
+            chars[i] = ' '
+            chars[i + 1] = ' '
+            i += 2
+            while i + 1 < n and not (chars[i] == '*' and chars[i + 1] == '/'):
+                if chars[i] != '\n':
+                    chars[i] = ' '
+                i += 1
+            if i < n:
+                chars[i] = ' '
+            if i + 1 < n:
+                chars[i + 1] = ' '
+                i += 2
+            continue
+        # Regex literals in JS: /.../
+        if chars[i] == '/' and i + 1 < n and chars[i + 1] not in ('/', '*'):
+            # look back for preceding non-whitespace char
+            prev_idx = i - 1
+            while prev_idx >= 0 and chars[prev_idx] in (' ', '\t', '\r', '\n'):
+                prev_idx -= 1
+            if prev_idx >= 0 and chars[prev_idx] in ('(', ',', '=', ':', '[', '!', '&', '|', '?', '{', ';'):
+                chars[i] = ' '
+                i += 1
+                while i < n:
+                    if chars[i] == '\\' and i + 1 < n:
+                        chars[i] = ' '
+                        if chars[i + 1] != '\n':
+                            chars[i + 1] = ' '
+                        i += 2
+                        continue
+                    if chars[i] == '/':
+                        chars[i] = ' '
+                        i += 1
+                        while i < n and chars[i].isalpha():
+                            chars[i] = ' '
+                            i += 1
+                        break
+                    if chars[i] != '\n':
+                        chars[i] = ' '
+                    i += 1
+                continue
+
+        # String literals: '...', "...", `...`
+        if chars[i] in ('"', "'", '`'):
+            quote = chars[i]
+            chars[i] = ' '
+            i += 1
+            while i < n:
+                if chars[i] == '\\' and i + 1 < n:
+                    chars[i] = ' '
+                    if chars[i + 1] != '\n':
+                        chars[i + 1] = ' '
+                    i += 2
+                    continue
+                if chars[i] == quote:
+                    chars[i] = ' '
+                    i += 1
+                    break
+                if chars[i] != '\n':
+                    chars[i] = ' '
+                i += 1
+            continue
+        i += 1
+    return "".join(chars)
+
+
 def _empty_result() -> dict:
     return {
         "imports": [],
@@ -125,14 +210,22 @@ def infer_source_path(test_path: Path, language: str) -> str:
             source_stem = stem
         source_name = source_stem + suffix
 
-        if parent_str in ("tests", "test", ""):
-            return f"src/{source_name}" if parent_str else source_name
-        elif parent_str.startswith(("tests/", "test/")):
-            sub = parent_str.split("/", 1)[1]
-            parts = sub.split("/")
-            filtered = [p for p in parts if p.lower() not in _PY_TEST_CATEGORY_DIRS]
-            base = "/".join(filtered)
-            return f"src/{base}/{source_name}" if base else f"src/{source_name}"
+        parts = parent_str.split("/") if parent_str else []
+        test_dir_idx = -1
+        for idx, p in enumerate(parts):
+            if p.lower() in ("tests", "test"):
+                test_dir_idx = idx
+                break
+
+        if test_dir_idx != -1:
+            prefix = parts[:test_dir_idx]
+            rest = [p for p in parts[test_dir_idx + 1:] if p.lower() not in _PY_TEST_CATEGORY_DIRS]
+            if prefix and prefix[-1] == "src":
+                new_parts = prefix + rest
+            else:
+                new_parts = prefix + ["src"] + rest
+            base = "/".join(new_parts)
+            return f"{base}/{source_name}" if base else source_name
         else:
             return f"{parent_str}/{source_name}" if parent_str else source_name
 
@@ -190,7 +283,6 @@ def infer_source_path(test_path: Path, language: str) -> str:
 
     elif language == "javascript":
         # Strip .test or .spec infix: auth.test.ts → auth.ts, auth.spec.js → auth.js
-        # Also handles: __tests__/auth.ts → src/auth.ts
         for infix in (".test", ".spec"):
             if infix in stem:
                 source_stem = stem.replace(infix, "")
@@ -199,23 +291,24 @@ def infer_source_path(test_path: Path, language: str) -> str:
             source_stem = stem
         source_name = source_stem + suffix
 
-        # __tests__/ directory → src/
-        if "__tests__" in parent_str:
-            cleaned = parent_str.replace("__tests__/", "").replace("/__tests__", "").replace("__tests__", "")
-            cleaned = cleaned.strip("/")
-            if cleaned:
-                return f"src/{cleaned}/{source_name}"
-            return f"src/{source_name}"
-        if parent_str in ("tests", "test", "__tests__"):
-            return f"src/{source_name}"
-        if parent_str.startswith(("tests/", "test/")):
-            sub = parent_str.split("/", 1)[1]
-            parts = sub.split("/")
-            filtered = [p for p in parts if p.lower() not in _JS_TEST_CATEGORY_DIRS]
-            base = "/".join(filtered)
-            return f"src/{base}/{source_name}" if base else f"src/{source_name}"
-        # Same dir or src/X: keep the directory, just change filename
-        return f"{parent_str}/{source_name}" if parent_str else source_name
+        parts = parent_str.split("/") if parent_str else []
+        test_dir_idx = -1
+        for idx, p in enumerate(parts):
+            if p.lower() in ("tests", "test", "__tests__"):
+                test_dir_idx = idx
+                break
+
+        if test_dir_idx != -1:
+            prefix = parts[:test_dir_idx]
+            rest = [p for p in parts[test_dir_idx + 1:] if p.lower() not in _JS_TEST_CATEGORY_DIRS]
+            if prefix and prefix[-1] == "src":
+                new_parts = prefix + rest
+            else:
+                new_parts = prefix + ["src"] + rest
+            base = "/".join(new_parts)
+            return f"{base}/{source_name}" if base else source_name
+        else:
+            return f"{parent_str}/{source_name}" if parent_str else source_name
 
     return str(test_path)  # fallback: unchanged
 
@@ -457,7 +550,7 @@ _JAVA_ASSERT_THROWS = re.compile(r"\bassertThrows\s*\(\s*([A-Z][A-Za-z0-9_]*)\.c
 # @Test(expected = ExceptionClass.class)
 _JAVA_TEST_EXPECTED = re.compile(r"expected\s*=\s*([A-Z][A-Za-z0-9_]*)\.class")
 # Constants: UPPER_CASE or UPPER_CASE_2 (min 3 chars to avoid single abbreviations)
-_JAVA_CONST      = re.compile(r"\b([A-Z][A-Z0-9_]{2,})\b")
+_JAVA_CONST      = re.compile(r"(?<![\w.$])\b([A-Z][A-Z0-9_]{2,})\b")
 # Annotations to skip for symbol_calls (test framework annotations)
 _JAVA_SKIP_CLASSES = frozenset({
     "Test", "Before", "After", "BeforeEach", "AfterEach", "BeforeAll", "AfterAll",
@@ -478,6 +571,7 @@ _JAVA_SKIP_CLASSES = frozenset({
 
 def parse_java(source: str, _test_path: Path) -> tuple[dict, str | None]:
     res = _empty_result()
+    masked = mask_comments_and_strings(source)
 
     # Imports
     for m in _JAVA_IMPORT.finditer(source):
@@ -542,7 +636,7 @@ def parse_java(source: str, _test_path: Path) -> tuple[dict, str | None]:
     res["mock_targets"] = deduplicate_by(res["mock_targets"], "target")
 
     # new ClassName(
-    for m in _JAVA_NEW.finditer(source):
+    for m in _JAVA_NEW.finditer(masked):
         cls = m.group(1)
         if cls not in _JAVA_SKIP_CLASSES:
             res["symbol_calls"].append({
@@ -552,7 +646,7 @@ def parse_java(source: str, _test_path: Path) -> tuple[dict, str | None]:
             })
 
     # ClassName.method(
-    for m in _JAVA_STATIC_CALL.finditer(source):
+    for m in _JAVA_STATIC_CALL.finditer(masked):
         cls, method = m.group(1), m.group(2)
         if cls not in _JAVA_SKIP_CLASSES:
             res["symbol_calls"].append({
@@ -580,7 +674,7 @@ def parse_java(source: str, _test_path: Path) -> tuple[dict, str | None]:
 
     # Constants (UPPER_CASE)
     imported_names = {e["names"][0] for e in res["imports"]}
-    for m in _JAVA_CONST.finditer(source):
+    for m in _JAVA_CONST.finditer(masked):
         name = m.group(1)
         if name not in imported_names and name not in _JAVA_SKIP_CLASSES:
             res["constant_refs"].append({
@@ -613,7 +707,7 @@ _CS_TYPE_CALL = re.compile(r"\b([A-Z][A-Za-z0-9_]+)\.([A-Za-z][A-Za-z0-9_]*)\s*\
 # Named arguments: methodName(paramName: value)
 _CS_NAMED_ARG = re.compile(r"\b(\w+)\s*\((?:[^()]*\b([a-z][A-Za-z0-9_]*)\s*:[^,)]+)+\)")
 # Constants: UPPER_CASE (min 3 chars)
-_CS_CONST = re.compile(r"\b([A-Z][A-Z0-9_]{2,})\b")
+_CS_CONST = re.compile(r"(?<![\w.$])\b([A-Z][A-Z0-9_]{2,})\b")
 
 _CS_SKIP_TYPES = frozenset({
     "Fact", "Theory", "Test", "TestMethod", "TestCase", "SetUp", "TearDown",
@@ -631,6 +725,7 @@ _CS_SKIP_TYPES = frozenset({
 
 def parse_csharp(source: str, _test_path: Path) -> tuple[dict, str | None]:
     res = _empty_result()
+    masked = mask_comments_and_strings(source)
 
     # Using statements
     for m in _CS_USING.finditer(source):
@@ -683,7 +778,7 @@ def parse_csharp(source: str, _test_path: Path) -> tuple[dict, str | None]:
     res["exception_refs"] = deduplicate_by(res["exception_refs"], "name")
 
     # new TypeName(
-    for m in _CS_NEW.finditer(source):
+    for m in _CS_NEW.finditer(masked):
         raw = m.group(1).strip()
         type_name = re.sub(r"\s*<.*", "", raw).strip()
         if type_name and type_name not in _CS_SKIP_TYPES:
@@ -694,7 +789,7 @@ def parse_csharp(source: str, _test_path: Path) -> tuple[dict, str | None]:
             })
 
     # Type.Method(
-    for m in _CS_TYPE_CALL.finditer(source):
+    for m in _CS_TYPE_CALL.finditer(masked):
         cls, method = m.group(1), m.group(2)
         if cls not in _CS_SKIP_TYPES:
             res["symbol_calls"].append({
@@ -717,7 +812,7 @@ def parse_csharp(source: str, _test_path: Path) -> tuple[dict, str | None]:
 
     # Constants
     imported_names = {e["names"][0] for e in res["imports"]}
-    for m in _CS_CONST.finditer(source):
+    for m in _CS_CONST.finditer(masked):
         name = m.group(1)
         if name not in imported_names and name not in _CS_SKIP_TYPES:
             res["constant_refs"].append({
@@ -754,7 +849,7 @@ _JS_NEW            = re.compile(r"\bnew\s+([A-Z][A-Za-z0-9_]*)\s*\(")
 # Regular function calls: funcName(  (lower camelCase)
 _JS_FUNC_CALL      = re.compile(r"\b([a-z][A-Za-z0-9_]*)\s*\(")
 # Constants: UPPER_CASE
-_JS_CONST          = re.compile(r"\b([A-Z][A-Z0-9_]{2,})\b")
+_JS_CONST          = re.compile(r"(?<![\w.$])\b([A-Z][A-Z0-9_]{2,})\b")
 
 _JS_SKIP_FUNCS = frozenset({
     "describe", "it", "test", "expect", "beforeEach", "afterEach",
@@ -764,6 +859,10 @@ _JS_SKIP_FUNCS = frozenset({
     "jest", "vi", "mock", "fn", "spyOn", "clearAllMocks", "resetAllMocks",
     "restoreAllMocks", "useFakeTimers", "useRealTimers", "runAllTimers",
     "runAllTicks", "advanceTimersByTime", "clearAllTimers",
+    # node test / assert / common test assertions
+    "assert", "ok", "equal", "strictEqual", "deepEqual", "notEqual",
+    "notStrictEqual", "match", "doesNotMatch", "throws", "rejects",
+    "fileURLToPath",
     # console
     "log", "error", "warn", "info",
     # JS builtins
@@ -778,7 +877,8 @@ _JS_SKIP_CLASSES = frozenset({
     "Array", "Object", "String", "Number", "Boolean", "Promise",
     "Error", "TypeError", "RangeError", "ReferenceError", "SyntaxError",
     "Map", "Set", "WeakMap", "WeakSet", "Date", "RegExp", "Symbol",
-    "Function", "Proxy", "Reflect", "JSON", "Math",
+    "Function", "Proxy", "Reflect", "JSON", "Math", "Buffer", "URL",
+    "URLSearchParams", "Intl", "Atomics", "WebAssembly",
     "describe", "it", "test",
 })
 
@@ -786,6 +886,7 @@ _JS_SKIP_CLASSES = frozenset({
 def parse_javascript(source: str, _test_path: Path) -> tuple[dict, str | None]:
     res = _empty_result()
     imported_names: set[str] = set()
+    masked = mask_comments_and_strings(source)
 
     # Named imports: import { A, B } from './module'
     for m in _JS_IMPORT_NAMED.finditer(source):
@@ -881,7 +982,7 @@ def parse_javascript(source: str, _test_path: Path) -> tuple[dict, str | None]:
     res["exception_refs"] = deduplicate_by(res["exception_refs"], "name")
 
     # new ClassName(
-    for m in _JS_NEW.finditer(source):
+    for m in _JS_NEW.finditer(masked):
         cls = m.group(1)
         if cls not in _JS_SKIP_CLASSES:
             res["symbol_calls"].append({
@@ -891,7 +992,7 @@ def parse_javascript(source: str, _test_path: Path) -> tuple[dict, str | None]:
             })
 
     # funcName( — lower camelCase
-    for m in _JS_FUNC_CALL.finditer(source):
+    for m in _JS_FUNC_CALL.finditer(masked):
         name = m.group(1)
         if name not in _JS_SKIP_FUNCS and name in imported_names:
             res["symbol_calls"].append({
@@ -903,9 +1004,9 @@ def parse_javascript(source: str, _test_path: Path) -> tuple[dict, str | None]:
     res["symbol_calls"] = deduplicate_by(res["symbol_calls"], "name")
 
     # Constants
-    for m in _JS_CONST.finditer(source):
+    for m in _JS_CONST.finditer(masked):
         name = m.group(1)
-        if name not in imported_names:
+        if name not in imported_names and name not in _JS_SKIP_CLASSES:
             res["constant_refs"].append({
                 "name": name,
                 "line": _line_of(source, m.start()),

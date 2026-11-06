@@ -1,13 +1,13 @@
 ---
 name: github-security-scanner-hook
-description: Use when the user asks to "scan for security vulnerabilities", "check for secrets in code", "set up a pre-commit security hook", "install security scanning", "scan staged files for secrets", "check for hardcoded credentials", "run a security scan before commit", "detect leaked API keys", "add a git commit hook for security", "security check before push", "scan for SQL injection", "check for XSS vulnerabilities", "detect injection flaws", or wants to prevent committing security issues to git.
-version: 1.0.0
+description: Use when the user asks to "scan for security vulnerabilities", "check for secrets in code", "set up a pre-commit security hook", "install security scanning", "scan staged files for secrets", "check for hardcoded credentials", "run a security scan before commit", "detect leaked API keys", "add a git commit hook for security", "security check before push", "scan for SQL injection", "check for XSS vulnerabilities", "detect injection flaws", "check for command injection", "audit subprocess security", or wants to prevent committing security issues to git.
+version: 1.1.0
 ---
 
 # GitHub Security Scanner Hook
 
 Scan staged files for secrets and code-level security vulnerabilities before every git commit.
-Works with any language or file type — `detect-secrets` finds hardcoded credentials and API keys; `semgrep` finds injection flaws, XSS, path traversal, and OWASP Top 10 patterns across Python, JavaScript, Go, Ruby, Java, and more.
+Works with any language or file type — `detect-secrets` finds hardcoded credentials and API keys; `semgrep` finds injection flaws, command injection, shell execution risks, XSS, path traversal, destructive filesystem operations, and OWASP Top 10 patterns across Python, JavaScript/TypeScript, Go, Ruby, Java, and more.
 Can run as a one-off manual scan or install as an automated git pre-commit hook.
 
 ## Prerequisites

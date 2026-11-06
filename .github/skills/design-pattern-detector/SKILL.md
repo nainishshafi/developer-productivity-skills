@@ -2,16 +2,16 @@
 name: design-pattern-detector
 description: Use when the user asks to "detect design patterns", "find patterns in
   this file", "analyze code for patterns", "check for anti-patterns", "pattern analysis",
-  "is this a singleton", "detect god object", "find factory pattern", "check for
-  strategy pattern", "scan for design patterns", "what patterns does this code use",
+  "is this a singleton", "detect god object", "find factory pattern", "detect facade",
+  "check for god file", "check for strategy pattern", "scan for design patterns", "what patterns does this code use",
   "find anti-patterns", "pattern audit", or wants to identify design patterns and
   anti-patterns in a source file or across the entire repository.
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Design Pattern Detector
 
-Analyze source files to detect common design patterns (Singleton, Factory, Observer, Strategy, Builder, Decorator, Repository) and anti-patterns (God Object, Long Method, Feature Envy). Uses structural extraction for deterministic signal detection and a subagent for contextual reasoning. Language-agnostic with best accuracy for Python (AST), Java, JS/TS, Go, and C# (regex).
+Analyze source files to detect common design patterns (Singleton, Factory, Observer, Strategy, Builder, Decorator, Repository, Command, Template Method, Facade) and anti-patterns (God Object / God File, Long Method, Feature Envy). Uses structural extraction for deterministic signal detection and a subagent for contextual reasoning. Language-agnostic with best accuracy for Python (AST), Java, JS/TS, Go, and C# (regex).
 
 **Extraction approach:** A Python script deterministically extracts class structure, method signatures, fields, metrics, and boolean structural signals (ground truth), then a subagent reads the source for business context and uses the signals to classify patterns with confidence scores.
 

@@ -262,10 +262,11 @@ expect(result.status).toBe(STATUS_ACTIVE);
 | `tests/test_<name>.py` | `src/<name>.py` |
 | `tests/unit/test_<name>.py` | `src/<name>.py` |
 | `tests/api/test_<name>.py` | `src/api/<name>.py` |
+| `packages/foo/tests/test_<name>.py` | `packages/foo/src/<name>.py` |
 | `test_<name>.py` (root) | `<name>.py` |
 | `<name>_test.py` | `<name>.py` |
 
-Strip `test_` prefix or `_test` suffix. Replace `tests/` with `src/`. Drop test-category subdirs: `unit`, `integration`, `functional`, `e2e`, `acceptance`.
+Strip `test_` prefix or `_test` suffix. Replace `tests/` or `test/` (including within nested packages/monorepos) with `src/`. Drop test-category subdirs: `unit`, `integration`, `functional`, `e2e`, `acceptance`.
 
 ### Java
 
@@ -298,8 +299,9 @@ Strip `Tests` or `Test` suffix. Remove `.Tests` from parent directory name.
 | `__tests__/auth.ts` | `src/auth.ts` |
 | `src/__tests__/auth.js` | `src/auth.js` |
 | `tests/auth.test.ts` | `src/auth.ts` |
+| `mcp/nodejs-executor/tests/executor.test.ts` | `mcp/nodejs-executor/src/executor.ts` |
 
-Strip `.test` or `.spec` infix from filename. Replace `__tests__/` with `src/`.
+Strip `.test` or `.spec` infix from filename. Replace nested or root `tests/`, `test/`, or `__tests__/` directory with `src/`.
 
 ### Critical Rule (all languages)
 
@@ -397,10 +399,12 @@ For `vi.spyOn(authModule, 'login')`:
 ### JavaScript / TypeScript
 
 - **Built-in JS errors:** `Error`, `TypeError`, `RangeError`, `ReferenceError`, `SyntaxError`, `URIError`, `EvalError`.
-- **Jest/Vitest globals:** `describe`, `it`, `test`, `expect`, `beforeEach`, `afterEach`, `beforeAll`, `afterAll`, `jest`, `vi`, `mock`.
+- **Jest/Vitest / Node:test globals & assertions:** `describe`, `it`, `test`, `expect`, `beforeEach`, `afterEach`, `beforeAll`, `afterAll`, `fit`, `xit`, `jest`, `vi`, `mock`, `assert`, `equal`, `strictEqual`, `deepEqual`, `notEqual`, `ok`, `match`, `throws`, `rejects`, `fileURLToPath`.
 - **Jest matchers (not source symbols):** `.toBe`, `.toEqual`, `.toBeDefined`, `.toBeNull`, `.toBeTruthy`, `.toHaveBeenCalled`, `.toThrow`, `.resolves`, `.rejects`.
 - **Third-party npm packages:** Any import without a `./` or `../` prefix (e.g., `import axios from 'axios'`) — these are external packages, not source symbols.
-- **Globals:** `console`, `process`, `setTimeout`, `setInterval`, `Promise`, `JSON`, `Math`, `Object`, `Array`.
+- **Globals & Builtins:** `console`, `process`, `setTimeout`, `setInterval`, `Promise`, `JSON`, `Math`, `Object`, `Array`, `Buffer`, `URL`, `URLSearchParams`, `Reflect`, `Intl`, `Atomics`.
+- **String/Comment/Regex Literals:** `parse-test-refs.py` masks single-line/block comments, string literals, and regex patterns (`/.../`), ensuring tokens inside assertions or failure messages (e.g., `FAIL: WROTE FILE` or `/SUCCESSFULLY BLOCKED/`) are not falsely extracted as constants.
+- **Member/Property Access:** Identifiers preceded by dots (`.`) such as `process.env.GITHUB_TOKEN` are excluded from standalone constant hallucination checks.
 
 ---
 

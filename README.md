@@ -39,9 +39,9 @@ Runs ruff (lint + format) and optionally mypy (type checking) on Python code. Au
 ---
 
 ### `github-security-scanner-hook`
-Scans staged files for secrets and code-level security vulnerabilities before every git commit. Language-agnostic — works with Python, JavaScript, Go, Ruby, and more. Uses `detect-secrets` for credential/key detection and `semgrep` with 20 bundled rules for injection flaws, XSS, path traversal, and other OWASP patterns. Can install a git pre-commit hook to automate scanning on every commit.
+Scans staged files for secrets and code-level security vulnerabilities before every git commit. Language-agnostic — works with Python, JavaScript/TypeScript, Go, Ruby, and more. Uses `detect-secrets` for credential/key detection and `semgrep` with 23 bundled rules for command injection, shell execution risks, destructive filesystem deletions, environment secret leakage, XSS, path traversal, and other OWASP patterns. Can install a git pre-commit hook to automate scanning on every commit.
 
-**Trigger phrases:** "scan for security vulnerabilities", "check for secrets in code", "set up a pre-commit security hook", "scan staged files for secrets", "check for hardcoded credentials", "detect leaked API keys", "scan for SQL injection", "check for XSS vulnerabilities"
+**Trigger phrases:** "scan for security vulnerabilities", "check for secrets in code", "set up a pre-commit security hook", "scan staged files for secrets", "check for hardcoded credentials", "detect leaked API keys", "scan for SQL injection", "check for XSS vulnerabilities", "check for command injection", "audit subprocess security"
 
 **Prerequisites:** Python on PATH — skill creates `.venv` and installs `detect-secrets` and `semgrep` automatically
 
@@ -66,11 +66,11 @@ Efficiently locate and extract information from repository README files. Uses a 
 ### `design-pattern-detector`
 Detects design patterns and anti-patterns in source code using structural extraction (Python AST, regex for other languages) combined with a subagent for contextual reasoning. Supports single-file and repo-wide modes with staleness checking — skips regeneration if the source file has not changed since the last run. Output is written to `.pattern-analysis/` mirroring the source file structure, with a `_index.md` summary for repo-wide scans.
 
-**Design patterns:** Singleton, Factory, Observer, Strategy, Builder, Decorator, Repository, Command, Template Method
+**Design patterns:** Singleton, Factory, Observer, Strategy, Builder, Decorator, Repository, Command, Template Method, Facade
 
-**Anti-patterns:** God Object, Long Method, Feature Envy
+**Anti-patterns:** God Object / God File, Long Method, Feature Envy
 
-**Trigger phrases:** "detect design patterns", "find patterns in this file", "analyze code for patterns", "check for anti-patterns", "pattern analysis", "is this a singleton", "detect god object", "find factory pattern", "check for strategy pattern", "scan for design patterns", "what patterns does this code use", "find anti-patterns", "pattern audit"
+**Trigger phrases:** "detect design patterns", "find patterns in this file", "analyze code for patterns", "check for anti-patterns", "pattern analysis", "is this a singleton", "detect god object", "check for god file", "find factory pattern", "detect facade", "check for strategy pattern", "scan for design patterns", "what patterns does this code use", "find anti-patterns", "pattern audit"
 
 **Supported languages:** Python (AST), Java, JavaScript, TypeScript, Go, C# (regex), Ruby, Rust, C++, C (fallback)
 
@@ -90,10 +90,34 @@ Comprehensive guidelines and best practices for modern Java (LTS 17/21/25) and S
 
 **Supported versions:** Java 17, 21, 25 LTS; Spring Boot 3.x
 
+---
+
+### `nodejs-executor`
+Executes JavaScript and TypeScript code snippets, evaluates expressions, runs script files, and automates package scripts using the `nodejs-executor` MCP server with multi-layered sandbox security (Node.js C++ permission model, secret scrubbing, and pre-execution safety linter).
+
+**Trigger phrases:** "run nodejs code", "execute javascript", "execute typescript", "run js snippet", "run node script", "evaluate expression", "execute node file", "run package script", "test node snippet"
+
+**Prerequisites:** Node.js >= 20.0.0 (Node 22+ recommended for native TypeScript strip-types)
+
+---
+
+## Model Context Protocol (MCP) Servers
+
+Reusable MCP servers located in `mcp/` providing protocol-compliant tool integrations for AI assistants.
+
+### `nodejs-executor`
+A high-performance MCP server for executing JavaScript and TypeScript code snippets, evaluating expressions with deep object inspection, executing `.js`/`.ts` script files, and running npm/pnpm/yarn package scripts.
+
+- **Tools:** `execute_code`, `evaluate_expression`, `execute_file`, `run_package_script`, `get_runtime_info`
+- **Location:** `mcp/nodejs-executor/`
+- **TypeScript Support:** Native type-stripping execution on Node.js 22+
+
 ## Usage
 
 ### Claude Code
 Skills are loaded automatically from `.github/skills/`. Invoke them by using any trigger phrase above in your Claude Code session.
+
+MCP servers can be registered via `claude mcp add nodejs-executor node <path-to-repo>/mcp/nodejs-executor/dist/index.js` or `.mcp.json`.
 
 ### GitHub Copilot
 Skills in `.github/skills/` are picked up as custom instructions by Copilot Chat. Use the same trigger phrases in Copilot Chat, or reference a skill by name (e.g. `@workspace /python-linter`).
@@ -101,6 +125,19 @@ Skills in `.github/skills/` are picked up as custom instructions by Copilot Chat
 ## Structure
 
 ```
+mcp/
+└── nodejs-executor/
+    ├── dist/
+    ├── src/
+    │   ├── index.ts
+    │   ├── executor.ts
+    │   └── types.ts
+    ├── tests/
+    │   ├── executor.test.ts
+    │   └── mcp-client.test.ts
+    ├── package.json
+    ├── tsconfig.json
+    └── README.md
 .github/
 └── skills/
     ├── trace-code-context/
@@ -156,6 +193,10 @@ Skills in `.github/skills/` are picked up as custom instructions by Copilot Chat
     │   ├── SKILL.md
     │   └── references/
     │       └── architectural-planning-reference.md
+    ├── nodejs-executor/
+    │   ├── SKILL.md
+    │   └── references/
+    │       └── nodejs-executor-reference.md
     └── java-developer/
         ├── SKILL.md
         ├── plain-java/

@@ -198,21 +198,36 @@ Reference guide for the `design-pattern-detector` skill — pattern catalog, det
 
 ---
 
+### 10. Facade
+
+**Intent:** Provide a unified, simplified interface to a set of interfaces or sub-modules in a subsystem, hiding complex inter-component orchestration.
+
+**Structural signals:**
+- `has_facade_pattern` — module predominantly aggregates and re-exports multiple sub-modules (`export { ... } from '...'`), or a class/object provides a simplified interface delegating to 2 or more distinct subsystem components.
+
+**Confidence scoring:**
+- **HIGH:** module or class re-exports or wraps 2+ internal sub-modules/services with a simplified unified API
+- **MEDIUM:** class coordinates multiple distinct sub-services with delegation methods
+- **LOW:** single re-export or thin wrapper around a single dependency
+
+---
+
 ## Anti-Pattern Catalog
 
-### 1. God Object
+### 1. God Object / God File
 
-**Definition:** A class that has taken on too many responsibilities, violating the Single Responsibility Principle.
+**Definition:** A class or source file that has taken on too many responsibilities, violating the Single Responsibility Principle (SRP).
 
 **Detection thresholds:**
 
-| Metric | Warning (MEDIUM) | Severe (HIGH) |
-|--------|-------------------|---------------|
-| Method count | >15 | >20 |
-| Field count | >10 | >15 |
-| Total LOC | >300 | >500 |
-
-The subagent should also check if methods span unrelated responsibilities (e.g., a class handling auth + logging + routing).
+| Target | Metric | Warning (MEDIUM) | Severe (HIGH) |
+|--------|--------|-------------------|---------------|
+| **Class-based** | Method count | >15 | >20 |
+| | Field count | >10 | >15 |
+| | Total LOC | >300 | >500 |
+| **Module / File-based** | Top-level function count | >8 | >12 |
+| *(TS, JS, Go, Python)* | Total file LOC | >300 | >500 |
+| | Domain cohesion | Spans 2+ distinct responsibilities | Spans 3+ unrelated domains (e.g. process + crypto + CLI + IO) |
 
 ---
 
@@ -258,6 +273,7 @@ Flagged from `metrics.max_method_loc`. The subagent should identify which specif
 | `has_same_type_wrapping` | Constructor accepts own base/interface type | Decorator |
 | `has_execute_undo` | `execute()` + `undo()`/`redo()`/`rollback()` method pair | Command |
 | `has_abstract_template_steps` | Abstract base with `@abstractmethod` hooks + concrete non-init methods | Template Method |
+| `has_facade_pattern` | Module re-exports multiple sub-modules (`export ... from`), or class delegates to 2+ distinct subsystems | Facade |
 
 ---
 

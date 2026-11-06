@@ -7,7 +7,7 @@ description: Use when the user asks to "scan for hallucinated tests", "check if 
   or "check javascript tests for hallucinations". Also use when the user wants to
   cross-check a test file against real source code to detect phantom symbols,
   wrong imports, bad mock targets, or fabricated constants — in any supported language.
-version: 1.1.0
+version: 1.2.0
 ---
 
 # Scan Hallucinated Tests
@@ -38,12 +38,14 @@ Accept two arguments from the user:
 |----------|------------------|---------------------|
 | Python | `tests/test_auth.py` | `src/auth.py` |
 | Python | `tests/unit/test_auth.py` | `src/auth.py` |
+| Python | `packages/core/tests/test_auth.py` | `packages/core/src/auth.py` |
 | Java | `src/test/java/com/example/AuthTest.java` | `src/main/java/com/example/Auth.java` |
 | Java | `AuthTest.java` (flat) | `Auth.java` |
 | C# | `Tests/AuthTests.cs` | `src/Auth.cs` |
 | C# | `AuthService.Tests/AuthServiceTests.cs` | `AuthService/AuthService.cs` |
 | JavaScript | `auth.test.ts` | `auth.ts` |
 | JavaScript | `__tests__/auth.js` | `src/auth.js` |
+| JavaScript | `mcp/nodejs-executor/tests/executor.test.ts` | `mcp/nodejs-executor/src/executor.ts` |
 
 If the inferred path does not exist on disk, tell the user and ask for `<source-file>` explicitly before continuing.
 

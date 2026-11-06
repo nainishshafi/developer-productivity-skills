@@ -193,6 +193,7 @@ def _empty_signals() -> dict:
         "has_same_type_wrapping": False,
         "has_execute_undo": False,
         "has_abstract_template_steps": False,
+        "has_facade_pattern": False,
     }
 
 
@@ -879,13 +880,14 @@ def extract_js_ts(source_path: Path) -> dict:
             if "return this" in method_body:
                 modifiers.append("returns_self")
 
+            method_loc = max(1, class_body[method_start:method_end_pos].count("\n") + 1)
             params = [p.strip() for p in params_raw.split(",") if p.strip()] if params_raw else []
             methods.append({
                 "name": method_name,
                 "params": params,
                 "modifiers": modifiers,
                 "line": text[:class_start + mm.start()].count("\n") + 1,
-                "loc": 0,
+                "loc": method_loc,
             })
 
         classes.append({
@@ -895,29 +897,50 @@ def extract_js_ts(source_path: Path) -> dict:
             "fields": fields,
         })
 
+    def _find_js_func_loc(start_pos: int) -> int:
+        open_brace = text.find("{", start_pos)
+        if open_brace == -1:
+            return 1
+        brace_depth = 0
+        for i in range(open_brace, len(text)):
+            if text[i] == "{":
+                brace_depth += 1
+            elif text[i] == "}":
+                brace_depth -= 1
+                if brace_depth == 0:
+                    return max(1, text[open_brace:i].count("\n") + 1)
+        return 1
+
     # Top-level functions
     for m in _JS_FUNC.finditer(text):
+        fn_loc = _find_js_func_loc(m.end())
         functions.append({
             "name": m.group(1),
             "params": [],
             "modifiers": [],
             "line": text[:m.start()].count("\n") + 1,
-            "loc": 0,
+            "loc": fn_loc,
         })
 
     for m in _JS_CONST_FUNC.finditer(text):
         fn_name = m.group(1)
         if fn_name not in {f["name"] for f in functions}:
+            fn_loc = _find_js_func_loc(m.end())
             functions.append({
                 "name": fn_name,
                 "params": [],
                 "modifiers": [],
                 "line": text[:m.start()].count("\n") + 1,
-                "loc": 0,
+                "loc": fn_loc,
             })
 
     metrics = compute_metrics(classes, functions, len(lines))
     signals = compute_signals(classes, functions)
+
+    # Detect Facade pattern in JS/TS: Module predominantly re-exporting multiple internal sub-modules
+    reexport_matches = len(re.findall(r"export\s+(\*|{[^}]+})\s+from\s+['\"][^'\"]+['\"]", text))
+    if reexport_matches >= 2:
+        signals["has_facade_pattern"] = True
 
     return {
         "classes": classes,

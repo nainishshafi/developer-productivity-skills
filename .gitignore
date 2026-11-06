@@ -6,3 +6,12 @@
 !.github/
 !.github/**
 !.secrets.baseline
+
+# MCP Servers
+!mcp/
+!mcp/**
+mcp/**/node_modules/
+mcp/**/dist/
+mcp/**/.env
+mcp/**/*.log
+

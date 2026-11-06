@@ -137,7 +137,9 @@ Semgrep detects injection patterns across many languages by understanding code s
 | Pattern | Languages | Example |
 |---------|-----------|---------|
 | SQL injection | Python, JS, Go, Java, Ruby, PHP | String-formatted SQL queries with user input |
-| Command injection | Python, JS, Go | `os.system(user_input)`, `exec(user_input)` |
+| Command injection | Python, JS, Go | `os.system(user_input)`, `exec(user_input)`, `spawn(cmd, { shell: true })` |
+| Destructive file deletion | JS/TS, Python | Recursive `fs.rm()`, `rmdir` on unconstrained paths |
+| Environment secret leaks | JS/TS | Passing unscrubbed `process.env` to subprocesses |
 | Path traversal | Python, JS, Go, Java | Unsanitised user input in file paths |
 | Server-side template injection | Python (Jinja2/Mako), JS | `render_template_string(user_input)` |
 
@@ -169,7 +171,25 @@ if urlparse(next_url).netloc:
 return redirect(next_url)
 ```
 
-### 3.7 Semgrep False Positives
+### 3.7 Subprocess & Sandbox Security Rules (semgrep)
+
+#### `command-injection-js-spawn-shell`
+Detects `spawn()` invoked with `shell: true`. On Windows and Unix, passing commands through the shell enables command chaining via `&`, `|`, `;`.
+```javascript
+// BAD
+spawn(cmd, args, { shell: true });
+
+// GOOD
+spawn(cmd, args, { shell: false });
+```
+
+#### `destructive-fs-deletion-js`
+Detects recursive directory deletion (`fs.rm` with `recursive: true` or `fs.rmdirSync`) on dynamic paths without path boundary verification or permission sandboxing (`--experimental-permission`).
+
+#### `secret-leak-env-inheritance-js`
+Detects passing `process.env` directly to child processes executing dynamic or external code. Environment variables should be scrubbed of credentials (`*TOKEN*`, `*KEY*`, `*SECRET*`) before subprocess invocation.
+
+### 3.8 Semgrep False Positives
 
 Semgrep rules can flag code that is safe in context. To suppress a finding:
 
