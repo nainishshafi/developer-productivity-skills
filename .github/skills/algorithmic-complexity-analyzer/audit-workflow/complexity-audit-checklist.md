@@ -24,10 +24,20 @@ Scan every line inside loops for implicit linear scans:
 - Express Worst-Case Time Complexity in Big-O notation.
 - Express Auxiliary Space Complexity (excluding input parameters).
 
+### Step 4b: Empirical Verification via MCP (`nodejs-executor`)
+When auditing high-risk algorithms ($P0/P1$) or disputed theoretical bounds, run an empirical doubling ratio test using `nodejs-executor`:
+- Test doubling sizes ($N = 500, 1000, 2000, 4000$).
+- Calculate $R = T(2N)/T(N)$:
+  - $R \approx 2 \implies O(n)$
+  - $R \approx 4 \implies O(n^2)$
+  - $R \approx 8 \implies O(n^3)$
+  - $R \gg 10 \implies O(2^n)$
+
 ### Step 5: Formulate Refactored Strategy
 - Can an inner $O(n)$ check be pre-computed into an $O(1)$ Hash Map?
 - Can a two-pointer or sliding window eliminate a nested loop?
 - Can recursive calls be memoized or converted to bottom-up dynamic programming?
+- Benchmark before vs after to prove empirical speedup.
 
 ---
 
@@ -71,5 +81,9 @@ Structure complexity findings clearly:
 +   totalTax += item.amount * percentage;
 + }
 ```
+- **Empirical Validation (via `nodejs-executor` MCP):**
+  - **Baseline ($O(n^2)$):** $N=2000 \implies 3.6\text{ms}, N=4000 \implies 14.2\text{ms}$ ($R = 3.94\times$)
+  - **Refactored ($O(n)$):** $N=2000 \implies 0.08\text{ms}, N=4000 \implies 0.16\text{ms}$ ($R = 2.00\times$)
+  - **Empirical Speedup:** $\approx 88\times$ faster at $N=4000$.
 ```
 

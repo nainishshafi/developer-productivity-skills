@@ -81,9 +81,10 @@ Senior-level code review across languages (Python, TypeScript/JavaScript, Java, 
 - **Trigger phrases:** `"review code"`, `"code review"`, `"review pull request"`, `"audit code changes"`, `"code review checklist"`, `"review this diff"`.
 
 ### `algorithmic-complexity-analyzer`
-Language-independent asymptotic complexity auditing (Big-O). Audits worst-case time and auxiliary space complexity ($O(1)$, $O(\log n)$, $O(n)$, $O(n \log n)$, $O(n^2)$, $O(2^n)$), detects hidden quadratic traps (nested `includes`/`contains`, array `.shift()` in loops, string concatenation copies, unmemoized recursion), and provides concrete optimization strategies.
+Language-independent asymptotic complexity auditing (Big-O). Audits worst-case time and auxiliary space complexity ($O(1)$, $O(\log n)$, $O(n)$, $O(n \log n)$, $O(n^2)$, $O(2^n)$), detects hidden quadratic traps (nested `includes`/`contains`, array `.shift()` in loops, string concatenation copies, unmemoized recursion), and provides concrete optimization strategies. Integrates with the `nodejs-executor` MCP server for empirical doubling hypothesis benchmarks ($T(2N)/T(N)$ ratio testing) with adaptive batching and sandbox safety.
 - **Trigger phrases:** `"check time complexity"`, `"analyze big o"`, `"check algorithmic logic"`, `"optimize loop performance"`, `"audit algorithmic complexity"`, `"check for o(n) vs o(1)"`, `"find hidden quadratic loops"`.
 - **Supported languages:** Universal (Python, TypeScript/JavaScript, Java, Go, C++, Rust, C#).
+- **Empirical MCP Harness:** Available via `execute_code` in `nodejs-executor` or standalone at `.github/skills/algorithmic-complexity-analyzer/scripts/benchmark-harness.mjs`.
 
 ### `detect-overengineering`
 Analyzes source code to detect premature abstractions, speculative generality (YAGNI violations), layer bloat, and trampoline pass-through methods. Uses structural extraction to score over-engineering risk and output simplified refactoring diffs.
