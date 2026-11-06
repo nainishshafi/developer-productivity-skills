@@ -174,3 +174,4 @@ Connect Views and ViewModels cleanly with Dependency Injection:
     </StackPanel>
 </UserControl>
 ```
+

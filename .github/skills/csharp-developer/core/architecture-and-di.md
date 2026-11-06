@@ -147,3 +147,4 @@ builder.Services.AddHttpClient<IPaymentGateway, StripePaymentGateway>((sp, clien
     client.DefaultRequestHeaders.Add("User-Agent", "App-Backend/2.0");
 });
 ```
+

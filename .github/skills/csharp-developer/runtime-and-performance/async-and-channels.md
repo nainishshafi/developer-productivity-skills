@@ -151,3 +151,4 @@ app.MapPost("/api/orders", async (OrderRequest req, CancellationToken ct) =>
 ### `ConfigureAwait(false)` in Modern .NET
 - **In ASP.NET Core Apps**: ASP.NET Core does not have a `SynchronizationContext`. `ConfigureAwait(false)` is not required in application code.
 - **In Reusable Class Libraries**: Always append `.ConfigureAwait(false)` to avoid deadlocking consumers that run on custom synchronization contexts (WPF, WinForms, older ASP.NET).
+

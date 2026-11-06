@@ -194,3 +194,4 @@ app.MapGroup("/api").MapEndpoints();
 
 app.Run();
 ```
+

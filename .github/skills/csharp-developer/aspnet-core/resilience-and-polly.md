@@ -112,3 +112,4 @@ app.MapHealthChecks("/healthz/ready", new HealthCheckOptions
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse // detailed JSON
 });
 ```
+

@@ -130,3 +130,4 @@ public static bool IsValidBase64(ReadOnlySpan<char> input)
     return input.IndexOfAnyExcept(Base64Chars) == -1;
 }
 ```
+
