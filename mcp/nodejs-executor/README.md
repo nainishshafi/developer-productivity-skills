@@ -174,14 +174,31 @@ In `.cursor/mcp.json` or `.vscode/settings.json`:
 
 ```
 mcp/nodejs-executor/
-├── dist/                # Compiled JavaScript distribution
 ├── src/
-│   ├── index.ts         # MCP Server entrypoint & tool registrations
-│   ├── executor.ts      # Process execution, isolation, and evaluation logic
-│   └── types.ts         # TypeScript interfaces and schemas
+│   ├── process/
+│   │   ├── runner.ts          # Child process execution, stdio streaming & timeouts
+│   │   └── terminator.ts      # Graceful process tree termination & signals
+│   ├── security/
+│   │   ├── permissions.ts     # Node.js permission flags & sandbox isolation
+│   │   ├── sanitizer.ts       # Host environment secret scrubbing
+│   │   └── validator.ts       # Pre-execution safety linter (destructive actions)
+│   ├── tools/
+│   │   ├── evaluate-expr.ts   # evaluate_expression tool handler
+│   │   ├── execute-code.ts    # execute_code tool handler
+│   │   ├── execute-file.ts    # execute_file tool handler
+│   │   ├── package-script.ts  # run_package_script tool handler
+│   │   └── runtime-info.ts    # get_runtime_info tool handler
+│   ├── executor.ts            # Public API Facade
+│   ├── index.ts               # CLI executable & stdio transport entrypoint
+│   ├── server.ts              # MCP Server definition & tool registration
+│   └── types.ts               # TypeScript types, interfaces & Zod schemas
 ├── tests/
-│   ├── executor.test.ts # Execution unit and integration tests
-│   └── mcp-client.test.ts # MCP JSON-RPC protocol compliance tests
+│   ├── executor.test.ts       # Execution, security sandbox & timeout test suite
+│   └── mcp-client.test.ts     # MCP JSON-RPC protocol compliance tests
+├── examples/
+│   └── demo.ts                # Programmatic Facade usage example
+├── scripts/
+│   └── invoke.mjs             # Interactive manual testing harness
 ├── package.json
 ├── tsconfig.json
 └── README.md

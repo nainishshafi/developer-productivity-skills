@@ -127,14 +127,31 @@ Skills in `.github/skills/` are picked up as custom instructions by Copilot Chat
 ```
 mcp/
 └── nodejs-executor/
-    ├── dist/
     ├── src/
-    │   ├── index.ts
+    │   ├── process/
+    │   │   ├── runner.ts
+    │   │   └── terminator.ts
+    │   ├── security/
+    │   │   ├── permissions.ts
+    │   │   ├── sanitizer.ts
+    │   │   └── validator.ts
+    │   ├── tools/
+    │   │   ├── evaluate-expr.ts
+    │   │   ├── execute-code.ts
+    │   │   ├── execute-file.ts
+    │   │   ├── package-script.ts
+    │   │   └── runtime-info.ts
     │   ├── executor.ts
+    │   ├── index.ts
+    │   ├── server.ts
     │   └── types.ts
     ├── tests/
     │   ├── executor.test.ts
     │   └── mcp-client.test.ts
+    ├── examples/
+    │   └── demo.ts
+    ├── scripts/
+    │   └── invoke.mjs
     ├── package.json
     ├── tsconfig.json
     └── README.md
