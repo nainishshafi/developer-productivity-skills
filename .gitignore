@@ -14,4 +14,7 @@ mcp/**/node_modules/
 mcp/**/dist/
 mcp/**/.env
 mcp/**/*.log
+mcp/**/*.db
+mcp/**/*.db-journal
+.project-memory/
 

@@ -1,0 +1,207 @@
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { z } from 'zod';
+import { saveMemory } from './tools/save-memory.js';
+import { loadMemory } from './tools/load-memory.js';
+import { searchMemory } from './tools/search-memory.js';
+import { deleteMemory, clearSidecar } from './tools/manage-memory.js';
+
+export function createServer(): McpServer {
+  const server = new McpServer({
+    name: 'project-memory',
+    version: '1.0.0',
+  });
+
+  // Tool: save_memory
+  server.tool(
+    'save_memory',
+    'Persist non-bloated project memory categorized into "ledger" (important project truths), "sidecar" (current WIP), or "journal" (summary of the current session with learnings). Both summary and learnings are strictly required.',
+    {
+      category: z
+        .enum(['ledger', 'sidecar', 'journal'])
+        .describe(
+          'Memory category: "ledger" (high-impact project truths/architecture), "sidecar" (what is currently working on), or "journal" (summary of the current session with learnings)'
+        ),
+      title: z.string().describe('Concise title for the memory item (max 150 chars)'),
+      summary: z
+        .string()
+        .describe(
+          'Crisp, high-signal summary (for journal: summary of the current session; for ledger/sidecar: architecture or WIP summary). No bloated logs or raw code (max 1500 chars)'
+        ),
+      learnings: z
+        .string()
+        .describe(
+          'Concrete learnings or mistakes encountered/avoided, root causes, and prevention rules (mandatory for all, especially journal)'
+        ),
+      tags: z
+        .array(z.string())
+        .optional()
+        .describe('Optional search tags (e.g. ["sqlite", "auth", "mcp"])'),
+    },
+    async (params) => {
+      try {
+        const result = await saveMemory(params);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          isError: !result.success,
+        };
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: false, error: errorMsg }, null, 2),
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // Tool: load_memory
+  server.tool(
+    'load_memory',
+    'Load concise project memory summaries. Returns zero bloated vectors or raw dumps. If category is omitted, loads active sidecar WIP, recent session journals, and core ledger truths.',
+    {
+      category: z
+        .enum(['ledger', 'sidecar', 'journal'])
+        .optional()
+        .describe('Filter by category ("ledger", "sidecar", or "journal"). If omitted, returns balanced context.'),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(20)
+        .default(5)
+        .optional()
+        .describe('Maximum number of memory summaries to return (default: 5)'),
+    },
+    async (params) => {
+      try {
+        const result = await loadMemory(params);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          isError: !result.success,
+        };
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: false, error: errorMsg }, null, 2),
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // Tool: search_memory
+  server.tool(
+    'search_memory',
+    'Perform hybrid search (40% semantic cosine + 60% lexical match) across memories. Always returns lean summaries only; vectors are never returned.',
+    {
+      query: z.string().describe('Search query string'),
+      category: z
+        .enum(['ledger', 'sidecar', 'journal'])
+        .optional()
+        .describe('Optional category filter ("ledger", "sidecar", or "journal")'),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(20)
+        .default(5)
+        .optional()
+        .describe('Maximum number of results to return (default: 5)'),
+      minScore: z
+        .number()
+        .min(0)
+        .max(1)
+        .default(0.25)
+        .optional()
+        .describe('Minimum hybrid relevance score threshold (default: 0.25)'),
+    },
+    async (params) => {
+      try {
+        const result = await searchMemory(params);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          isError: !result.success,
+        };
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: false, error: errorMsg }, null, 2),
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // Tool: delete_memory
+  server.tool(
+    'delete_memory',
+    'Delete a specific memory item by ID.',
+    {
+      id: z.string().describe('The ID of the memory item to delete'),
+    },
+    async (params) => {
+      try {
+        const result = await deleteMemory(params);
+        return {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          isError: !result.success,
+        };
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: false, error: errorMsg }, null, 2),
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // Tool: clear_sidecar
+  server.tool(
+    'clear_sidecar',
+    'Flush all transient "sidecar" working context (e.g. after a task is finished). Permanent ledger and journal entries remain untouched.',
+    {},
+    async () => {
+      try {
+        const result = await clearSidecar();
+        return {
+          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          isError: !result.success,
+        };
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: false, error: errorMsg }, null, 2),
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  return server;
+}

@@ -1,0 +1,7 @@
+node_modules
+dist
+.project-memory
+*.db
+*.db-journal
+*.log
+

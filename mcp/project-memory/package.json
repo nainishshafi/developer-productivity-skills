@@ -1,0 +1,43 @@
+{
+  "name": "project-memory-mcp",
+  "version": "1.0.0",
+  "description": "Model Context Protocol (MCP) server for project memory with SQLite, 40% semantic search, categorized memories (ledger, sidecar, learnings), and bloat prevention.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "project-memory",
+    "sqlite",
+    "semantic-search",
+    "hybrid-search"
+  ],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "project-memory": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "pretest": "npm run build",
+    "start": "node --experimental-sqlite dist/index.js",
+    "dev": "node --experimental-sqlite --experimental-strip-types src/index.ts",
+    "test": "node --experimental-sqlite --experimental-strip-types tests/memory.test.ts && node --experimental-sqlite --experimental-strip-types tests/mcp-client.test.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
+
