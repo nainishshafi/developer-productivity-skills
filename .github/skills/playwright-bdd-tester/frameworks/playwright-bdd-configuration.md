@@ -91,3 +91,81 @@ from tests.steps.checkout_steps import *
 # Binds all scenarios in checkout.feature to pytest runner
 scenarios("checkout.feature")
 ```
+
+---
+
+## 4. Java Ecosystem: Playwright Java + Cucumber-JVM
+
+In Java, combine Microsoft Playwright (`com.microsoft.playwright:playwright`) with Cucumber-JVM:
+
+### Dependencies (`pom.xml`):
+```xml
+<dependencies>
+    <!-- Microsoft Playwright for Java -->
+    <dependency>
+        <groupId>com.microsoft.playwright</groupId>
+        <artifactId>playwright</artifactId>
+        <version>1.49.0</version>
+        <scope>test</scope>
+    </dependency>
+    <!-- Cucumber Java & JUnit Platform Engine -->
+    <dependency>
+        <groupId>io.cucumber</groupId>
+        <artifactId>cucumber-java</artifactId>
+        <version>7.20.1</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>io.cucumber</groupId>
+        <artifactId>cucumber-junit-platform-engine</artifactId>
+        <version>7.20.1</version>
+        <scope>test</scope>
+    </dependency>
+</dependencies>
+```
+
+### Cucumber Test Runner (`RunCucumberTest.java`):
+```java
+package com.example.bdd;
+
+import org.junit.platform.suite.api.ConfigurationParameter;
+import org.junit.platform.suite.api.IncludeEngines;
+import org.junit.platform.suite.api.SelectClasspathResource;
+import org.junit.platform.suite.api.Suite;
+
+import static io.cucumber.junit.platform.engine.Constants.GLUE_PROPERTY_NAME;
+import static io.cucumber.junit.platform.engine.Constants.PLUGIN_PROPERTY_NAME;
+
+@Suite
+@IncludeEngines("cucumber")
+@SelectClasspathResource("features")
+@ConfigurationParameter(key = GLUE_PROPERTY_NAME, value = "com.example.bdd.steps")
+@ConfigurationParameter(key = PLUGIN_PROPERTY_NAME, value = "pretty, html:target/cucumber-report.html")
+public class RunCucumberTest {}
+```
+
+---
+
+## 5. C# / .NET Ecosystem: Playwright .NET + Reqnroll (SpecFlow Successor)
+
+In .NET, use **Reqnroll** (the modern open-source successor to SpecFlow) paired with `Microsoft.Playwright`:
+
+### NuGet Packages (`.csproj`):
+```xml
+<ItemGroup>
+  <PackageReference Include="Microsoft.Playwright" Version="1.49.0" />
+  <PackageReference Include="Microsoft.Playwright.NUnit" Version="1.49.0" />
+  <PackageReference Include="Reqnroll.NUnit" Version="2.2.1" />
+</ItemGroup>
+```
+
+### Configuration (`reqnroll.json`):
+```json
+{
+  "$schema": "https://schemas.reqnroll.net/reqnroll-config-latest.json",
+  "language": {
+    "feature": "en"
+  }
+}
+```
+

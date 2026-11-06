@@ -77,3 +77,84 @@ export class CheckoutPage extends BasePage {
   }
 }
 ```
+
+---
+
+## 4. Java Page Object Pattern (Playwright Java)
+
+```java
+// src/test/java/com/example/bdd/pages/CheckoutPage.java
+package com.example.bdd.pages;
+
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
+
+public class CheckoutPage {
+    private final Page page;
+    public final Locator totalAmount;
+    public final Locator shippingAddressInput;
+    public final Locator standardShippingRadio;
+    public final Locator placeOrderButton;
+
+    public CheckoutPage(Page page) {
+        this.page = page;
+        this.totalAmount = page.getByTestId("total-billed-amount");
+        this.shippingAddressInput = page.getByLabel("Shipping Address");
+        this.standardShippingRadio = page.getByRole(AriaRole.RADIO, new Page.GetByRoleOptions().setName("Standard Shipping"));
+        this.placeOrderButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Place Order"));
+    }
+
+    public void enterShippingDetails(String address) {
+        shippingAddressInput.fill(address);
+        standardShippingRadio.check();
+    }
+
+    public void submitOrder() {
+        placeOrderButton.click();
+    }
+}
+```
+
+---
+
+## 5. C# Page Object Pattern (Playwright .NET)
+
+```csharp
+// Pages/CheckoutPage.cs
+using System.Threading.Tasks;
+using Microsoft.Playwright;
+
+namespace MyBddTests.Pages
+{
+    public class CheckoutPage
+    {
+        private readonly IPage _page;
+        public ILocator TotalAmount { get; }
+        public ILocator ShippingAddressInput { get; }
+        public ILocator StandardShippingRadio { get; }
+        public ILocator PlaceOrderButton { get; }
+
+        public CheckoutPage(IPage page)
+        {
+            _page = page;
+            TotalAmount = page.GetByTestId("total-billed-amount");
+            ShippingAddressInput = page.GetByLabel("Shipping Address");
+            StandardShippingRadio = page.GetByRole(AriaRole.Radio, new() { Name = "Standard Shipping" });
+            PlaceOrderButton = page.GetByRole(AriaRole.Button, new() { Name = "Place Order" });
+        }
+
+        public async Task EnterShippingDetailsAsync(string address)
+        {
+            await ShippingAddressInput.FillAsync(address);
+            await StandardShippingRadio.CheckAsync();
+        }
+
+        public async Task SubmitOrderAsync()
+        {
+            await PlaceOrderButton.ClickAsync();
+        }
+    }
+}
+```
+

@@ -1,12 +1,12 @@
 ---
 name: playwright-bdd-tester
-description: Architectural and engineering guidance for Behavior-Driven Development (BDD) and End-to-End browser test automation using Gherkin and Playwright. Covers Gherkin feature file design, declarative scenario architecture, playwright-bdd and Cucumber integration, step definitions, Page Object Model (POM), web-first assertions, auto-waiting, network mocking, and CI parallel sharding. Use when asked to "write playwright tests", "gherkin playwright", "playwright bdd", "write gherkin feature", "e2e browser test", "test with playwright", "cucumber playwright", or "bdd e2e testing".
-version: 1.0.0
+description: Architectural and engineering guidance for Behavior-Driven Development (BDD) and End-to-End browser test automation using Gherkin and Playwright across TypeScript/Node.js, Python, Java, and C# / .NET. Covers Gherkin feature file design, declarative scenario architecture, Playwright BDD integration (playwright-bdd, pytest-bdd, Cucumber-JVM, Reqnroll/SpecFlow), step definitions, Page Object Model (POM), web-first assertions, auto-waiting, network mocking, and CI parallel sharding. Use when asked to "write playwright tests", "gherkin playwright", "playwright bdd", "write gherkin feature", "e2e browser test", "test with playwright", "cucumber playwright", "playwright c#", "playwright java", or "bdd e2e testing".
+version: 1.1.0
 ---
 
 # Playwright BDD Tester
 
-You are an expert test automation architect specializing in Behavior-Driven Development (BDD), Gherkin scenario modeling, and robust browser test automation using Microsoft Playwright across TypeScript/Node.js and Python.
+You are an expert test automation architect specializing in Behavior-Driven Development (BDD), Gherkin scenario modeling, and robust browser test automation using Microsoft Playwright across all officially supported language runtimes: **TypeScript/Node.js**, **Python**, **Java**, and **C# / .NET**.
 
 ## Core Directives
 

@@ -90,3 +90,4 @@ Scenario Outline: Password complexity validation
     | alllowercase | Password must contain at least one uppercase letter |
     | 12345678    | Password must contain at least one special character |
 ```
+

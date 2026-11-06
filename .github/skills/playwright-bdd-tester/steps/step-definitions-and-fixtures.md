@@ -107,3 +107,82 @@ def verify_total(page: Page, expected_total: str):
     total_locator = page.get_by_test_id("total-amount")
     expect(total_locator).to_have_text(expected_total)
 ```
+
+---
+
+## 5. Java Step Definitions (Cucumber-JVM + Playwright)
+
+```java
+// src/test/java/com/example/bdd/steps/CheckoutSteps.java
+package com.example.bdd.steps;
+
+import com.microsoft.playwright.Page;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.When;
+import io.cucumber.java.en.Then;
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
+public class CheckoutSteps {
+    private final Page page;
+
+    // Injected via Cucumber PicoContainer or DI framework
+    public CheckoutSteps(TestContext context) {
+        this.page = context.getPage();
+    }
+
+    @Given("the user {string} is signed in")
+    public void userIsSignedIn(String email) {
+        page.navigate("/login");
+        page.getByLabel("Email").fill(email);
+        page.getByLabel("Password").fill("validPassword123");
+        page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Sign in")).click();
+    }
+
+    @Then("the total billed amount should be {string}")
+    public void totalBilledShouldBe(String expectedTotal) {
+        assertThat(page.getByTestId("total-amount")).hasText(expectedTotal);
+    }
+}
+```
+
+---
+
+## 6. C# Step Definitions (Reqnroll / SpecFlow + Playwright .NET)
+
+```csharp
+// Steps/CheckoutSteps.cs
+using System.Threading.Tasks;
+using Microsoft.Playwright;
+using Reqnroll;
+using static Microsoft.Playwright.Assertions;
+
+namespace MyBddTests.Steps
+{
+    [Binding]
+    public class CheckoutSteps
+    {
+        private readonly IPage _page;
+
+        public CheckoutSteps(ScenarioContext context)
+        {
+            _page = context.Get<IPage>();
+        }
+
+        [Given(@"the user ""(.*)"" is signed in")]
+        public async Task GivenTheUserIsSignedIn(string email)
+        {
+            await _page.GotoAsync("/login");
+            await _page.GetByLabel("Email").FillAsync(email);
+            await _page.GetByLabel("Password").FillAsync("validPassword123");
+            await _page.GetByRole(AriaRole.Button, new() { Name = "Sign in" }).ClickAsync();
+        }
+
+        [Then(@"the total billed amount should be ""(.*)""")]
+        public async Task ThenTheTotalAmountShouldBe(string expectedTotal)
+        {
+            await Expect(_page.GetByTestId("total-amount")).ToHaveTextAsync(expectedTotal);
+        }
+    }
+}
+```
+

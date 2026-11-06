@@ -99,9 +99,9 @@ Generates authoritative ground-truth Markdown context files covering defined sym
 - **Trigger phrases:** `"trace code context"`, `"analyze this file"`, `"show callers and callees"`, `"generate a code context file"`, `"map dependencies for X"`.
 
 ### `playwright-bdd-tester`
-Architectural and engineering guidance for Behavior-Driven Development (BDD) and End-to-End browser test automation using Gherkin and Playwright across TypeScript/Node.js (`playwright-bdd`) and Python (`pytest-bdd`). Covers declarative scenario design, step definitions with parameter expressions, Page Object Models with accessible locators, auto-waiting, network mocking (`page.route`), authenticated state reuse (`storageState`), and parallel CI sharding.
-- **Trigger phrases:** `"write playwright tests"`, `"gherkin playwright"`, `"playwright bdd"`, `"write gherkin feature"`, `"e2e browser test"`, `"test with playwright"`, `"cucumber playwright"`, `"bdd e2e testing"`.
-- **Supported environments:** TypeScript / Node.js (`playwright-bdd`, `@playwright/test`), Python (`pytest-bdd`, `playwright`).
+Architectural and engineering guidance for Behavior-Driven Development (BDD) and End-to-End browser test automation using Gherkin and Playwright across TypeScript/Node.js, Python, Java, and C# / .NET. Covers declarative scenario design, step definitions with parameter expressions, Page Object Models with accessible locators, auto-waiting, network mocking (`page.route`), authenticated state reuse (`storageState`), and parallel CI sharding.
+- **Trigger phrases:** `"write playwright tests"`, `"gherkin playwright"`, `"playwright bdd"`, `"write gherkin feature"`, `"e2e browser test"`, `"test with playwright"`, `"cucumber playwright"`, `"playwright java"`, `"playwright c#"`, `"bdd e2e testing"`.
+- **Supported environments:** TypeScript / Node.js (`playwright-bdd`), Python (`pytest-bdd`), Java (`playwright` + `cucumber-jvm`), C# / .NET (`Microsoft.Playwright` + `Reqnroll`/`SpecFlow`).
 
 ---
 
