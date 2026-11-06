@@ -6,6 +6,25 @@ import { executeFile } from './tools/execute-file.js';
 import { runPackageScript } from './tools/package-script.js';
 import { getRuntimeInfo } from './tools/runtime-info.js';
 
+async function handleToolExecution<T>(
+  action: () => Promise<T> | T
+): Promise<{ content: Array<{ type: 'text'; text: string }>; isError?: boolean }> {
+  try {
+    const result = await action();
+    const hasSuccess = typeof result === 'object' && result !== null && 'success' in result;
+    return {
+      content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+      ...(hasSuccess ? { isError: !(result as { success: boolean }).success } : {}),
+    };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    return {
+      content: [{ type: 'text', text: JSON.stringify({ success: false, error: errorMsg }, null, 2) }],
+      isError: true,
+    };
+  }
+}
+
 export function createServer(): McpServer {
   const server = new McpServer({
     name: 'nodejs-executor',
@@ -25,21 +44,7 @@ export function createServer(): McpServer {
       workingDirectory: z.string().optional().describe('Working directory context'),
       environmentVariables: z.record(z.string(), z.string()).optional().describe('Custom environment variables'),
     },
-    async (params) => {
-      try {
-        const result = await executeCode(params);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          isError: !result.success,
-        };
-      } catch (err: unknown) {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: false, error: errorMsg }, null, 2) }],
-          isError: true,
-        };
-      }
-    }
+    (params) => handleToolExecution(() => executeCode(params))
   );
 
   // Tool: evaluate_expression
@@ -53,21 +58,7 @@ export function createServer(): McpServer {
       workingDirectory: z.string().optional().describe('Working directory context'),
       environmentVariables: z.record(z.string(), z.string()).optional().describe('Custom environment variables'),
     },
-    async (params) => {
-      try {
-        const result = await evaluateExpression(params);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          isError: !result.success,
-        };
-      } catch (err: unknown) {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: false, error: errorMsg }, null, 2) }],
-          isError: true,
-        };
-      }
-    }
+    (params) => handleToolExecution(() => evaluateExpression(params))
   );
 
   // Tool: execute_file
@@ -83,21 +74,7 @@ export function createServer(): McpServer {
       workingDirectory: z.string().optional().describe('Working directory to execute from'),
       environmentVariables: z.record(z.string(), z.string()).optional().describe('Custom environment variables'),
     },
-    async (params) => {
-      try {
-        const result = await executeFile(params);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          isError: !result.success,
-        };
-      } catch (err: unknown) {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: false, error: errorMsg }, null, 2) }],
-          isError: true,
-        };
-      }
-    }
+    (params) => handleToolExecution(() => executeFile(params))
   );
 
   // Tool: run_package_script
@@ -111,21 +88,7 @@ export function createServer(): McpServer {
       args: z.array(z.string()).optional().describe('Arguments appended after "--"'),
       timeout: z.number().int().min(100).max(300000).default(60000).optional().describe('Timeout in milliseconds'),
     },
-    async (params) => {
-      try {
-        const result = await runPackageScript(params);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          isError: !result.success,
-        };
-      } catch (err: unknown) {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ success: false, error: errorMsg }, null, 2) }],
-          isError: true,
-        };
-      }
-    }
+    (params) => handleToolExecution(() => runPackageScript(params))
   );
 
   // Tool: get_runtime_info
@@ -133,22 +96,8 @@ export function createServer(): McpServer {
     'get_runtime_info',
     'Get information about the Node.js runtime environment (versions, platform, memory usage, TypeScript & permission support).',
     {},
-    async () => {
-      try {
-        const info = getRuntimeInfo();
-        return {
-          content: [{ type: 'text', text: JSON.stringify(info, null, 2) }],
-        };
-      } catch (err: unknown) {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ error: errorMsg }, null, 2) }],
-          isError: true,
-        };
-      }
-    }
+    () => handleToolExecution(() => getRuntimeInfo())
   );
 
   return server;
 }
-

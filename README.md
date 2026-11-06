@@ -76,6 +76,15 @@ Detects design patterns and anti-patterns in source code using structural extrac
 
 ---
 
+### `detect-overengineering`
+Analyzes source code and architectures to detect over-engineering, premature abstractions, speculative generality (YAGNI violations), layer bloat, trampoline pass-through methods, and pattern overkill. Uses deterministic structural extraction (Python AST for Python, structural regex for TS/JS, Java, C#, Go) to calculate an over-engineering risk score and output concrete, simplified refactoring diffs. Results are written to `.overengineering-analysis/` mirroring the source file structure.
+
+**Trigger phrases:** "check for over-engineering", "detect over-engineering", "find over-engineered code", "simplify this code", "audit for over-engineering", "check yagni violations", "reduce accidental complexity", "eliminate premature abstractions", "check code bloat", "is this over-engineered", "refactor for simplicity"
+
+**Supported languages:** Python (AST), TypeScript, JavaScript, Java, C#, Go
+
+---
+
 ### `architectural-planning`
 Interactively guides you through architectural decisions for a new or existing project. Asks structured questions about project type, backend/frontend stack, database, caching, authentication, messaging, deployment, CI/CD, and monitoring — recommending compatible technologies at each step with specific library and version suggestions. Generates a comprehensive architecture document with Mermaid diagrams, component breakdown, data model, API design, security architecture, deployment topology, and project directory layout.
 
@@ -206,6 +215,12 @@ mcp/
     │   │   └── design-pattern-detector-reference.md
     │   └── scripts/
     │       └── extract-patterns.py
+    ├── detect-overengineering/
+    │   ├── SKILL.md
+    │   ├── references/
+    │   │   └── detect-overengineering-reference.md
+    │   └── scripts/
+    │       └── extract-signals.py
     ├── architectural-planning/
     │   ├── SKILL.md
     │   └── references/

@@ -5,6 +5,30 @@ import { loadMemory } from './tools/load-memory.js';
 import { searchMemory } from './tools/search-memory.js';
 import { deleteMemory, clearSidecar } from './tools/manage-memory.js';
 
+async function handleToolExecution<T>(
+  action: () => Promise<T> | T
+): Promise<{ content: Array<{ type: 'text'; text: string }>; isError?: boolean }> {
+  try {
+    const result = await action();
+    const hasSuccess = typeof result === 'object' && result !== null && 'success' in result;
+    return {
+      content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+      ...(hasSuccess ? { isError: !(result as { success: boolean }).success } : {}),
+    };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({ success: false, error: errorMsg }, null, 2),
+        },
+      ],
+      isError: true,
+    };
+  }
+}
+
 export function createServer(): McpServer {
   const server = new McpServer({
     name: 'project-memory',
@@ -37,26 +61,7 @@ export function createServer(): McpServer {
         .optional()
         .describe('Optional search tags (e.g. ["sqlite", "auth", "mcp"])'),
     },
-    async (params) => {
-      try {
-        const result = await saveMemory(params);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          isError: !result.success,
-        };
-      } catch (err: unknown) {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({ success: false, error: errorMsg }, null, 2),
-            },
-          ],
-          isError: true,
-        };
-      }
-    }
+    (params) => handleToolExecution(() => saveMemory(params))
   );
 
   // Tool: load_memory
@@ -77,26 +82,7 @@ export function createServer(): McpServer {
         .optional()
         .describe('Maximum number of memory summaries to return (default: 5)'),
     },
-    async (params) => {
-      try {
-        const result = await loadMemory(params);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          isError: !result.success,
-        };
-      } catch (err: unknown) {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({ success: false, error: errorMsg }, null, 2),
-            },
-          ],
-          isError: true,
-        };
-      }
-    }
+    (params) => handleToolExecution(() => loadMemory(params))
   );
 
   // Tool: search_memory
@@ -125,26 +111,7 @@ export function createServer(): McpServer {
         .optional()
         .describe('Minimum hybrid relevance score threshold (default: 0.25)'),
     },
-    async (params) => {
-      try {
-        const result = await searchMemory(params);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          isError: !result.success,
-        };
-      } catch (err: unknown) {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({ success: false, error: errorMsg }, null, 2),
-            },
-          ],
-          isError: true,
-        };
-      }
-    }
+    (params) => handleToolExecution(() => searchMemory(params))
   );
 
   // Tool: delete_memory
@@ -154,26 +121,7 @@ export function createServer(): McpServer {
     {
       id: z.string().describe('The ID of the memory item to delete'),
     },
-    async (params) => {
-      try {
-        const result = await deleteMemory(params);
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          isError: !result.success,
-        };
-      } catch (err: unknown) {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({ success: false, error: errorMsg }, null, 2),
-            },
-          ],
-          isError: true,
-        };
-      }
-    }
+    (params) => handleToolExecution(() => deleteMemory(params))
   );
 
   // Tool: clear_sidecar
@@ -181,26 +129,7 @@ export function createServer(): McpServer {
     'clear_sidecar',
     'Flush all transient "sidecar" working context (e.g. after a task is finished). Permanent ledger and journal entries remain untouched.',
     {},
-    async () => {
-      try {
-        const result = await clearSidecar();
-        return {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          isError: !result.success,
-        };
-      } catch (err: unknown) {
-        const errorMsg = err instanceof Error ? err.message : String(err);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({ success: false, error: errorMsg }, null, 2),
-            },
-          ],
-          isError: true,
-        };
-      }
-    }
+    () => handleToolExecution(() => clearSidecar())
   );
 
   return server;
