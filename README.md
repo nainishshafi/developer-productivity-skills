@@ -93,13 +93,13 @@ Interactively guides you through architectural decisions for a new or existing p
 ---
 
 ### `agent-orchestrator`
-Automates and coordinates end-to-end multi-agent software engineering workflows across six quality stages: `plan` -> `develop` -> `codereview` -> `architecturechecks` -> `halucinationchecks` -> `securitychecks`. Manages bounded context handoffs to prevent context pollution in sub-agents, routes tasks to specialized skills (`architectural-planning`, `python-developer`, `typescript-developer`, `java-developer`, `code-reviewer`, `detect-overengineering`, `scan-halucinated-tests`, `github-security-scanner-hook`), and enforces quality gates with closed-loop remediation feedback.
+Automates and coordinates end-to-end multi-agent software engineering workflows across six quality stages: `plan` -> `develop` -> `codereview` -> `architecturechecks` -> `halucinationchecks` -> `securitychecks`. Manages bounded context handoffs to prevent context pollution in sub-agents, routes tasks to specialized skills (`architectural-planning`, `python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `troubleshoot-and-fix`, `code-reviewer`, `detect-overengineering`, `scan-halucinated-tests`, `github-security-scanner-hook`), and enforces quality gates with closed-loop remediation feedback.
 
 **Trigger phrases:** "orchestrate a feature", "run full development pipeline", "plan-develop-review", "agent orchestrator", "orchestrate subagents", "run full lifecycle checks", "orchestrate sdlc"
 
 **Supported stages:**
 1. `plan` — System design and contract specifications (`architectural-planning`)
-2. `develop` — Production code and unit test implementation (`python-developer`, `typescript-developer`, `java-developer`)
+2. `develop` — Production code and unit test implementation (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`)
 3. `codereview` — Multi-dimension code review across logic, errors, security, and clean code (`code-reviewer`)
 4. `architecturechecks` — Over-engineering, YAGNI, layer bloat, and anti-pattern detection (`detect-overengineering`, `design-pattern-detector`)
 5. `halucinationchecks` — Cross-validation of test symbols against ground-truth AST (`scan-halucinated-tests`)
@@ -125,10 +125,28 @@ Architectural and engineering guidance for modern TypeScript and JavaScript (Nod
 
 ---
 
+### `react-developer`
+Architectural and engineering guidance for modern React development (React 18 & 19, Next.js App Router, Remix / React Router v7, Vite, React Server Components). Guides the LLM to inspect project context, adapt to frontend architecture (Feature-Sliced, Layered, or App Router), manage state cleanly (TanStack Query, Zustand, Context, URL state), apply custom hook abstraction, adhere to RSC client/server boundaries, and ensure accessible, resilient component design.
+
+**Trigger phrases:** "write react code", "develop react component", "react architecture best practices", "nextjs server components", "refactor react frontend", "react 19 actions", "custom hook patterns"
+
+**Supported environments:** React 18, React 19, Next.js, Remix/React Router v7, Vite
+
+---
+
 ### `code-reviewer`
 Conducts rigorous, senior-level code reviews across languages (Python, TypeScript/JavaScript, Java, Go, C#). Audits code changes across 7 dimensions: logic correctness, architecture & design principles (DRY/KISS/SOLID), error handling & boundary defense, test coverage & quality, security & input sanitization, performance & resource hygiene, and clean code readability. Classifies all findings into standardized severities (`[P0 - Blocker]`, `[P1 - Major]`, `[P2 - Minor]`, `[P3 - Nit]`) with actionable suggested fix diffs.
 
 **Trigger phrases:** "review code", "code review", "review pull request", "audit code changes", "code review checklist", "review this diff", "inspect pull request"
+
+---
+
+### `troubleshoot-and-fix`
+Universal, language-independent diagnostic and repair framework for debugging runtime crashes, exceptions, logic errors, and flakiness. Refers to language-specific developer skills (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`) for runtime idioms. When direct in-project reproduction is blocked by heavy dependencies, cloud credentials, or monolithic setup, it systematically extracts the problematic logic, generates realistic mock fixtures, and executes an isolated reproduction testbed to verify the fix before porting it back.
+
+**Trigger phrases:** "troubleshoot and fix", "debug this error", "fix this bug", "solve runtime exception", "diagnose issue", "reproduce and fix bug", "debug failing code", "isolate and debug"
+
+**Tools included:** Standalone reproduction harness generator (`scripts/isolate-runner.js`, `scripts/isolate-runner.py`)
 
 ---
 
@@ -351,6 +369,33 @@ mcp/
     │   └── SKILL.md
     ├── load-memory/
     │   └── SKILL.md
+    ├── agent-orchestrator/
+    │   ├── SKILL.md
+    │   └── scripts/
+    │       └── orchestrator-context-manager.py
+    ├── code-reviewer/
+    │   ├── SKILL.md
+    │   └── references/
+    │       └── code-reviewer-reference.md
+    ├── python-developer/
+    │   ├── SKILL.md
+    │   └── references/
+    │       └── python-developer-reference.md
+    ├── typescript-developer/
+    │   ├── SKILL.md
+    │   └── references/
+    │       └── typescript-developer-reference.md
+    ├── react-developer/
+    │   ├── SKILL.md
+    │   └── references/
+    │       └── react-developer-reference.md
+    ├── troubleshoot-and-fix/
+    │   ├── SKILL.md
+    │   ├── references/
+    │   │   └── troubleshoot-and-fix-reference.md
+    │   └── scripts/
+    │       ├── isolate-runner.js
+    │       └── isolate-runner.py
     └── java-developer/
         ├── SKILL.md
         ├── plain-java/

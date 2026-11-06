@@ -31,7 +31,7 @@ At each stage, the orchestrator invokes the correct domain skill, packages bound
 | # | Stage | Assigned Skill | Sub-Agent Role | Primary Responsibilities |
 |---|---|---|---|---|
 | **1** | `plan` | `architectural-planning` | Architecture & Planning Specialist | Requirements decomposition, tech stack alignment, interface contracts, ADR creation. |
-| **2** | `develop` | Language developer (`python-developer`, `typescript-developer`, `java-developer`) | Core Implementation Engineer | Production implementation, unit and integration tests, error handling. |
+| **2** | `develop` | Language developer (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`) | Core Implementation Engineer | Production implementation, unit and integration tests, error handling. |
 | **3** | `codereview` | `code-reviewer` | Senior Code Reviewer | Multi-dimension code review (correctness, resilience, edge cases, clean code). Supported by linters. |
 | **4** | `architecturechecks` | `detect-overengineering` | Principal Architecture Auditor | Over-engineering detection, speculative generality (YAGNI), layer bloat, anti-patterns. |
 | **5** | `halucinationchecks` | `scan-halucinated-tests` | Ground-Truth Verification Auditor | Cross-validating test assertions, mocks, and imports against real AST symbols. |
