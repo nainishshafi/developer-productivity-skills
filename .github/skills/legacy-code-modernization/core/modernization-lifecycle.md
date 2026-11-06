@@ -44,3 +44,4 @@ The modernization lifecycle is an **iterative, non-destructive 4-stage pipeline*
 | **Big-Bang Rewrite** | Almost never (only for trivial standalone scripts < 200 lines). | Catastrophic failure, lost business rules, multi-month delivery delays. | **Avoid**. |
 | **Branch by Abstraction** | Refactoring internal modules within a single monolithic codebase. | Temporary indirection layer in code. | **Recommended for monoliths**. |
 | **Strangler Fig Pattern** | Modernizing coarse-grained backend services or microservice extractions. | Network latency during parallel routing; data synchronization. | **Recommended for services & APIs**. |
+

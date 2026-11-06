@@ -23,6 +23,7 @@ These skills provide ready-made workflows for modern software engineering — sp
 | [`architectural-planning`](#architectural-planning) | **Architecture & Quality** | Interactive system design, Mermaid specs & tech choices | `"plan my architecture"` |
 | [`scan-halucinated-tests`](#scan-halucinated-tests) | **Architecture & Quality** | Cross-validates test symbols against AST ground truth | `"scan for hallucinated tests"` |
 | [`trace-code-context`](#trace-code-context) | **Architecture & Quality** | AST symbol extraction, callers/callees & Mermaid graph | `"trace code context"` |
+| [`playwright-bdd-tester`](#playwright-bdd-tester) | **Testing & Quality** | BDD Gherkin & Playwright browser test automation | `"write playwright tests"` |
 | [`troubleshoot-and-fix`](#troubleshoot-and-fix) | **Diagnostics** | Isolated reproduction testbeds and fix verification | `"troubleshoot and fix"` |
 | [`legacy-code-modernization`](#legacy-code-modernization) | **Modernization** | 4-phase safe modernization (Extract $\to$ Pin $\to$ TDD $\to$ Strangler) | `"modernize legacy code"` |
 | [`skill-creator`](#skill-creator) | **Tooling & Automation** | Scaffolds modular knowledge-packs and task skills | `"create a new skill"` |
@@ -96,6 +97,11 @@ Cross-validates test files against real source code AST to catch phantom functio
 ### `trace-code-context`
 Generates authoritative ground-truth Markdown context files covering defined symbols, imports, callers, callees, and Mermaid call graphs via AST extraction.
 - **Trigger phrases:** `"trace code context"`, `"analyze this file"`, `"show callers and callees"`, `"generate a code context file"`, `"map dependencies for X"`.
+
+### `playwright-bdd-tester`
+Architectural and engineering guidance for Behavior-Driven Development (BDD) and End-to-End browser test automation using Gherkin and Playwright across TypeScript/Node.js (`playwright-bdd`) and Python (`pytest-bdd`). Covers declarative scenario design, step definitions with parameter expressions, Page Object Models with accessible locators, auto-waiting, network mocking (`page.route`), authenticated state reuse (`storageState`), and parallel CI sharding.
+- **Trigger phrases:** `"write playwright tests"`, `"gherkin playwright"`, `"playwright bdd"`, `"write gherkin feature"`, `"e2e browser test"`, `"test with playwright"`, `"cucumber playwright"`, `"bdd e2e testing"`.
+- **Supported environments:** TypeScript / Node.js (`playwright-bdd`, `@playwright/test`), Python (`pytest-bdd`, `playwright`).
 
 ---
 
@@ -232,6 +238,7 @@ developer-productivity-skills/
 │       ├── llm-as-judge/             # Multi-agent response evaluation & ranking
 │       ├── load-memory/              # Hybrid memory retrieval skill
 │       ├── nodejs-executor/          # MCP wrapper skill for node execution
+│       ├── playwright-bdd-tester/    # Gherkin BDD & Playwright browser test automation
 │       ├── python-developer/         # Python 3.10-3.13, Pydantic v2, asyncio pack
 │       ├── python-linter/            # Automated Ruff & Mypy quality runner
 │       ├── react-developer/          # React 18/19, RSC, Zustand, Query pack

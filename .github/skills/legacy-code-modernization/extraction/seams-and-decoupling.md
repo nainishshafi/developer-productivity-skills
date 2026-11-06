@@ -106,3 +106,4 @@ When adding new functionality to a 3,000-line legacy method:
 - **Do NOT** add another 50 lines to the giant method.
 - **Sprout a new class** or standalone pure function containing the new logic.
 - Call the sprouted component from the legacy method. Write 100% TDD unit tests for the sprouted component.
+

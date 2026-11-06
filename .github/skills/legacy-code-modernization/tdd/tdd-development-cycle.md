@@ -70,3 +70,4 @@ export class ModernPricingEngine {
 | **Fake** | Working implementation with in-memory state (e.g. `InMemoryUserRepository`). | **Preferred default**: authentic behavior, zero brittle method stubs. |
 | **Stub** | Returns canned, hardcoded responses. | Simulating external network errors, timeouts, or specific error states. |
 | **Mock** | Verifies method call expectations (`expect(mailer.send).toHaveBeenCalledTimes(1)`). | Use sparingly; over-mocking couples tests to private implementation details. |
+

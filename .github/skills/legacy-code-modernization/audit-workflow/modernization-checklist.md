@@ -43,3 +43,4 @@ A procedural checklist and risk classification rubric for executing safe, increm
 | **Tier 1 (High Risk)** | Financial transactions, authorization gates, complex state machines, untracked global state mutations, database trigger dependencies. | Mandatory Golden Master snapshot + Shadow Parallel Run (7+ days zero diff) before traffic cutover. |
 | **Tier 2 (Medium Risk)** | Internal business logic, data transformers, batch report generators, CRUD services. | Characterization tests + Branch by Abstraction with instant feature-flag rollback. |
 | **Tier 3 (Low Risk)** | Isolated utility functions, string parsers, formatting helpers with zero external I/O. | In-memory characterization tests $\to$ direct TDD replacement. |
+

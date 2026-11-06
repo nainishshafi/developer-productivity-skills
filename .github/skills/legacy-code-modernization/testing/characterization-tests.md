@@ -94,3 +94,4 @@ Characterization tests are **scaffolding**. Once:
 3. Parity is proven,
 
 The characterization tests can either be archived or replaced with domain-level acceptance tests.
+
