@@ -10,7 +10,7 @@ These skills provide ready-made workflows for modern software engineering — sp
 
 | Skill | Category | Core Purpose | Primary Trigger Phrase |
 |---|---|---|---|
-| [`agent-orchestrator`](#agent-orchestrator) | **Orchestration** | End-to-end 6-stage multi-agent SDLC coordination | `"orchestrate a feature"` |
+| [`agent-orchestrator`](#agent-orchestrator) | **Orchestration** | End-to-end 7-stage multi-agent SDLC coordination | `"orchestrate a feature"` |
 | [`llm-as-judge`](#llm-as-judge) | **Orchestration** | Rubric evaluations, pairwise ranking & consensus | `"judge this response"` |
 | [`typescript-developer`](#typescript-developer) | **Language Specialist** | Node.js, TS 5+, Zod, Drizzle/Prisma, event loop hygiene | `"write typescript code"` |
 | [`python-developer`](#python-developer) | **Language Specialist** | Python 3.10–3.13, Pydantic v2, asyncio, memory/GC | `"write python code"` |
@@ -101,9 +101,9 @@ Generates authoritative ground-truth Markdown context files covering defined sym
 ## 🚀 3. SDLC Orchestration & Multi-Agent Workflows
 
 ### `agent-orchestrator`
-Automates and coordinates end-to-end multi-agent software engineering workflows across six quality stages:
-`plan` $\to$ `develop` $\to$ `codereview` $\to$ `architecturechecks` $\to$ `halucinationchecks` $\to$ `securitychecks`.
-Manages bounded context handoffs to prevent context pollution in sub-agents and enforces quality gates with closed-loop remediation feedback.
+Automates and coordinates end-to-end multi-agent software engineering workflows across seven quality stages:
+`plan` $\to$ `develop` $\to$ `codereview` $\to$ `complexitychecks` $\to$ `architecturechecks` $\to$ `halucinationchecks` $\to$ `securitychecks`.
+Manages bounded context handoffs to prevent context pollution in sub-agents, integrates `troubleshoot-and-fix` for isolated reproduction testbeds during remediation, and enforces quality gates with closed-loop feedback.
 - **Trigger phrases:** `"orchestrate a feature"`, `"run full development pipeline"`, `"plan-develop-review"`, `"agent orchestrator"`, `"run full lifecycle checks"`.
 
 ### `llm-as-judge`

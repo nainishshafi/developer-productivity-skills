@@ -31,6 +31,7 @@ STAGES = [
     "plan",
     "develop",
     "codereview",
+    "complexitychecks",
     "architecturechecks",
     "halucinationchecks",
     "securitychecks",
@@ -44,8 +45,8 @@ STAGE_SKILLS_MAP = {
         "description": "System design, requirements breakdown, component boundaries, and contract definition.",
     },
     "develop": {
-        "primary_skill": "python-developer / typescript-developer / java-developer",
-        "supporting_skills": ["load-memory", "save-memory"],
+        "primary_skill": "python-developer / typescript-developer / react-developer / java-developer",
+        "supporting_skills": ["load-memory", "save-memory", "troubleshoot-and-fix"],
         "subagent_role": "Core Implementation & Test Engineer",
         "description": "Production code authoring, automated unit/integration tests, and implementation of planned specs.",
     },
@@ -54,6 +55,12 @@ STAGE_SKILLS_MAP = {
         "supporting_skills": ["python-linter", "design-pattern-detector"],
         "subagent_role": "Senior Code Reviewer",
         "description": "Code quality, readability, style conformance, idiomatic usage, error handling, and clean code inspection.",
+    },
+    "complexitychecks": {
+        "primary_skill": "algorithmic-complexity-analyzer",
+        "supporting_skills": ["trace-code-context"],
+        "subagent_role": "Algorithmic Complexity & Performance Auditor",
+        "description": "Asymptotic Big-O time and space complexity analysis, hidden quadratic loop detection, collection efficiency, and recursion depth audits.",
     },
     "architecturechecks": {
         "primary_skill": "detect-overengineering",

@@ -9,19 +9,19 @@ A comprehensive architectural and operational reference for multi-stage software
 The **Agent Orchestrator** implements a **Hub-and-Spoke Multi-Agent Architecture** designed to execute end-to-end software development lifecycle (SDLC) tasks with high rigor and zero context degradation.
 
 ```
-                              ┌────────────────────────┐
-                              │   Agent Orchestrator   │
-                              │     (Hub / State)      │
-                              └───────────┬────────────┘
-                                          │
-       ┌──────────────┬──────────────┬────┴─────────┬──────────────┬──────────────┐
-       ▼              ▼              ▼              ▼              ▼              ▼
- ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐
- │   PLAN    │  │  DEVELOP  │  │CODEREVIEW │  │ARCH CHECKS│  │HALU CHECKS │  │ SEC CHECKS │
- └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘
-       ▼              ▼              ▼              ▼              ▼              ▼
- architectural-  language       python-linter  detect-over-   scan-haluci-   github-sec-
- planning        specialist     design-pattern engineering    nated-tests    scanner-hook
+                               ┌────────────────────────┐
+                               │   Agent Orchestrator   │
+                               │     (Hub / State)      │
+                               └───────────┬────────────┘
+                                           │
+        ┌──────────────┬──────────────┬────┴─────────┬──────────────┬──────────────┬──────────────┐
+        ▼              ▼              ▼              ▼              ▼              ▼              ▼
+  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐
+  │   PLAN    │  │  DEVELOP  │  │CODEREVIEW │  │COMPLEXITY │  │ARCH CHECKS│  │HALU CHECKS │  │ SEC CHECKS │
+  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘  └─────┬─────┘
+        ▼              ▼              ▼              ▼              ▼              ▼              ▼
+  architectural- language       code-reviewer  algorithmic-   detect-over-   scan-haluci-   github-sec-
+  planning       specialists                   complexity     engineering    nated-tests    scanner-hook
 ```
 
 ### Context Isolation vs. Context Pollution
@@ -38,16 +38,17 @@ The Orchestrator solves this through **Bounded Stage Handoffs**:
 
 ---
 
-## 2. The 6-Stage SDLC Pipeline Breakdown
+## 2. The 7-Stage SDLC Pipeline Breakdown
 
 | Stage | Name | Primary Skill | Supporting Skills | Gate Criteria |
 |---|---|---|---|---|
-| **1** | `plan` | `architectural-planning` | `trace-code-context`, `load-memory` | Clear problem definition, component boundaries, API/contract specs, and test strategy. |
-| **2** | `develop` | `python-developer`, `typescript-developer`, `java-developer` | `load-memory`, `save-memory` | Code implements plan contracts, passes unit/integration tests, zero unhandled errors. |
+| **1** | `plan` | `architectural-planning` | `trace-code-context`, `load-memory`, `llm-as-judge` | Clear problem definition, component boundaries, API/contract specs, and test strategy. |
+| **2** | `develop` | `python-developer`, `typescript-developer`, `react-developer`, `java-developer` | `load-memory`, `save-memory`, `troubleshoot-and-fix` | Code implements plan contracts, passes unit/integration tests, zero unhandled errors. |
 | **3** | `codereview` | `code-reviewer` | `python-linter`, `design-pattern-detector` | Clean code conventions, robust error handling, edge-case coverage, zero P0/P1 issues. |
-| **4** | `architecturechecks` | `detect-overengineering` | `design-pattern-detector`, `trace-code-context` | No premature abstractions, zero YAGNI violations, layer depth <= 3, low overengineering risk score. |
-| **5** | `halucinationchecks` | `scan-halucinated-tests` | `trace-code-context` | Zero phantom symbols, all test mock targets verified against ground truth, valid imports. |
-| **6** | `securitychecks` | `github-security-scanner-hook` | `detect-secrets`, `semgrep` | Zero leaked credentials/API keys, zero high/critical OWASP vulnerabilities. |
+| **4** | `complexitychecks` | `algorithmic-complexity-analyzer` | `trace-code-context` | Asymptotic time & space efficiency verified, zero hidden quadratic loops, zero unbounded recursion. |
+| **5** | `architecturechecks` | `detect-overengineering` | `design-pattern-detector`, `trace-code-context` | No premature abstractions, zero YAGNI violations, layer depth <= 3, low overengineering risk score. |
+| **6** | `halucinationchecks` | `scan-halucinated-tests` | `trace-code-context` | Zero phantom symbols, all test mock targets verified against ground truth, valid imports. |
+| **7** | `securitychecks` | `github-security-scanner-hook` | `detect-secrets`, `semgrep` | Zero leaked credentials/API keys, zero high/critical OWASP vulnerabilities. |
 
 ---
 
@@ -55,14 +56,14 @@ The Orchestrator solves this through **Bounded Stage Handoffs**:
 
 ### Stage 1: `plan`
 - **Objective:** Establish the technical foundation, architecture decision records (ADRs), interface contracts, and delivery roadmap.
-- **Skill:** `architectural-planning`
+- **Skill:** `architectural-planning` (supported by `llm-as-judge` for architecture arbitration).
 - **Inputs:** User request, existing codebase conventions, project memory (`load-memory`).
 - **Outputs:** `.orchestrator/runs/<run-id>/stages/plan/plan.md`
 - **Gate Check:** Must contain explicit component responsibilities, file modification list, and verifiable acceptance criteria.
 
 ### Stage 2: `develop`
 - **Objective:** Implement production-grade source code and automated tests strictly adhering to the planned contracts.
-- **Skill:** Language developer skill (`python-developer`, `typescript-developer`, `java-developer`).
+- **Skill:** Language developer skill (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`).
 - **Inputs:** `plan.md`, relevant existing source files, test dependencies.
 - **Outputs:** Working source code, unit and integration tests, verified test execution logs.
 - **Gate Check:** All automated test suites must compile and pass cleanly without skips or mocks of unverified symbols.
@@ -74,7 +75,20 @@ The Orchestrator solves this through **Bounded Stage Handoffs**:
 - **Outputs:** `.orchestrator/runs/<run-id>/stages/codereview/review.md`
 - **Gate Check:** Zero P0 (Blocker) or P1 (Major) review comments; linter/formatter runs cleanly.
 
-### Stage 4: `architecturechecks`
+### Stage 4: `complexitychecks`
+- **Objective:** Audit the code for asymptotic Big-O time and space complexity efficiency.
+- **Skill:** `algorithmic-complexity-analyzer`
+- **Inputs:** Algorithms, loops, data structures, and collection traversals.
+- **Checks:**
+  - Hidden quadratic loops (e.g. `arr.includes()`, `in list`, `contains()` inside loops).
+  - Array `.shift()` or `list.pop(0)` queue-draining antipatterns.
+  - String concatenation in loops (`+=` string copying).
+  - Unmemoized recursive branch explosions ($O(2^n)$).
+  - High auxiliary space allocations inside hot paths.
+- **Outputs:** `.orchestrator/runs/<run-id>/stages/complexitychecks/complexity-report.md`
+- **Gate Check:** No `[P0]` or `[P1]` complexity blockers; algorithms match or exceed theoretical efficiency requirements.
+
+### Stage 5: `architecturechecks`
 - **Objective:** Audit the code against over-engineering, unnecessary design patterns, and structural degradation.
 - **Skill:** `detect-overengineering`, `design-pattern-detector`, `trace-code-context`
 - **Inputs:** Modified classes, inheritance trees, interfaces, call-graphs.
@@ -86,7 +100,7 @@ The Orchestrator solves this through **Bounded Stage Handoffs**:
 - **Outputs:** `.orchestrator/runs/<run-id>/stages/architecturechecks/architecture-audit.md`
 - **Gate Check:** Overengineering risk score classified as LOW or accepted by lead.
 
-### Stage 5: `halucinationchecks`
+### Stage 6: `halucinationchecks`
 - **Objective:** Cross-validate newly written tests and mocks against the actual ground-truth source code.
 - **Skill:** `scan-halucinated-tests`, `trace-code-context`
 - **Inputs:** Test files and corresponding source files.
@@ -98,7 +112,7 @@ The Orchestrator solves this through **Bounded Stage Handoffs**:
 - **Outputs:** `.orchestrator/runs/<run-id>/stages/halucinationchecks/hallucination-report.md`
 - **Gate Check:** Zero Critical or High hallucination findings.
 
-### Stage 6: `securitychecks`
+### Stage 7: `securitychecks`
 - **Objective:** Ensure no credentials, tokens, or security flaws are introduced into the repository.
 - **Skill:** `github-security-scanner-hook`
 - **Inputs:** Staged git files / modified workspace files.
@@ -134,13 +148,13 @@ BOUNDS & CONSTRAINTS:
 
 ---
 
-## 5. Failure Recovery & Feedback Loops
+## 5. Failure Recovery & Remediation with `troubleshoot-and-fix`
 
-If a gate fails at any verification stage (`codereview`, `architecturechecks`, `halucinationchecks`, `securitychecks`):
+If a gate fails at any verification stage (`codereview`, `complexitychecks`, `architecturechecks`, `halucinationchecks`, `securitychecks`):
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│  Gate Failed (e.g. halucinationchecks: 2 fake methods) │
+│  Gate Failed (e.g. tests failing or hidden O(n^2) loop)│
 └───────────────────────────┬────────────────────────────┘
                             │
                             ▼
@@ -150,13 +164,15 @@ If a gate fails at any verification stage (`codereview`, `architecturechecks`, `
                             │
                             ▼
 ┌────────────────────────────────────────────────────────┐
-│  Loop back to DEVELOP subagent with remediation delta  │
-│  "Fix methods foo() and bar() which do not exist"      │
+│  Activate `troubleshoot-and-fix` to isolate testbed    │
+│  Generate `isolate-runner.js` / `isolate-runner.py`    │
+│  Verify reproduction & validate fix in test harness    │
 └───────────────────────────┬────────────────────────────┘
                             │
                             ▼
 ┌────────────────────────────────────────────────────────┐
-│  Re-run DEVELOP -> re-run failed Gate until PASSED     │
+│  Port verified patch back to source code               │
+│  Re-run failed Gates until all stages are PASSED       │
 └────────────────────────────────────────────────────────┘
 ```
-This closed-loop feedback guarantees that defects are remediated immediately before code reaches downstream environments.
+This closed-loop feedback with isolated reproduction guarantees that defects are remediated immediately and verified before code advances.
