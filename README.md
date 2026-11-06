@@ -24,6 +24,7 @@ These skills provide ready-made workflows for modern software engineering — sp
 | [`scan-halucinated-tests`](#scan-halucinated-tests) | **Architecture & Quality** | Cross-validates test symbols against AST ground truth | `"scan for hallucinated tests"` |
 | [`trace-code-context`](#trace-code-context) | **Architecture & Quality** | AST symbol extraction, callers/callees & Mermaid graph | `"trace code context"` |
 | [`troubleshoot-and-fix`](#troubleshoot-and-fix) | **Diagnostics** | Isolated reproduction testbeds and fix verification | `"troubleshoot and fix"` |
+| [`legacy-code-modernization`](#legacy-code-modernization) | **Modernization** | 4-phase safe modernization (Extract $\to$ Pin $\to$ TDD $\to$ Strangler) | `"modernize legacy code"` |
 | [`skill-creator`](#skill-creator) | **Tooling & Automation** | Scaffolds modular knowledge-packs and task skills | `"create a new skill"` |
 | [`github-security-scanner-hook`](#github-security-scanner-hook) | **Tooling & Automation** | Pre-commit secret scanning & Semgrep OWASP rules | `"scan for security vulnerabilities"` |
 | [`python-linter`](#python-linter) | **Tooling & Automation** | Automated Ruff linting, formatting & Mypy typing | `"lint python"` |
@@ -112,11 +113,20 @@ Built-in evaluation capability for evaluating and comparing LLM responses direct
 
 ---
 
-## 🛠️ 4. Diagnostics & Debugging
+## 🛠️ 4. Diagnostics, Debugging & Modernization
 
 ### `troubleshoot-and-fix`
 Universal diagnostic and repair framework for runtime crashes, exceptions, and logic errors. Extracts problematic logic and test fixtures into an isolated sandbox harness (`scripts/isolate-runner.js`, `scripts/isolate-runner.py`) to systematically reproduce and verify fixes before porting them back to source code.
 - **Trigger phrases:** `"troubleshoot and fix"`, `"debug this error"`, `"fix this bug"`, `"solve runtime exception"`, `"diagnose issue"`, `"reproduce and fix bug"`.
+
+### `legacy-code-modernization`
+Systematic, language-independent framework for safely refactoring and modernizing legacy codebases across 4 phases:
+1. **Extract & Isolate:** Break tight couplings using Michael Feathers' seam techniques (parameterize constructor, extract interface, subclass and override).
+2. **Characterization Tests:** Freeze existing runtime behavior and quirks using the Golden Master pattern / Approval pinning tests before changing any logic.
+3. **TDD Target Architecture:** Design clean domain contracts with Dependency Inversion, driving modern implementation via outside-in Red-Green-Refactor.
+4. **Develop & Migrate:** Migrate production traffic incrementally using Branch by Abstraction, the Strangler Fig pattern, and shadow parallel runs with zero downtime.
+- **Trigger phrases:** `"modernize legacy code"`, `"refactor legacy service"`, `"extract legacy code"`, `"characterization tests"`, `"golden master testing"`, `"tdd refactor"`, `"strangler fig migration"`.
+- **Supported languages:** Universal (Python, TypeScript/JavaScript, Java, C#, Go, C++, PHP).
 
 ---
 
@@ -210,7 +220,7 @@ developer-productivity-skills/
 │   └── project-memory/               # SQLite hybrid-search memory MCP server
 ├── .github/
 │   └── skills/
-│       ├── agent-orchestrator/       # 6-stage multi-agent SDLC workflow
+│       ├── agent-orchestrator/       # 7-stage multi-agent SDLC workflow
 │       ├── algorithmic-complexity-analyzer/ # Language-agnostic Big-O analysis
 │       ├── architectural-planning/   # Interactive system architecture designer
 │       ├── code-reviewer/            # 7-dimension code reviewer ([P0] to [P3])
@@ -218,6 +228,7 @@ developer-productivity-skills/
 │       ├── detect-overengineering/   # YAGNI & complexity risk auditor
 │       ├── github-security-scanner-hook/ # Pre-commit secret & Semgrep scanner
 │       ├── java-developer/           # Modern Java 17/21/25 & Spring Boot 3+ pack
+│       ├── legacy-code-modernization/ # Safe 4-phase refactoring & migration framework
 │       ├── llm-as-judge/             # Multi-agent response evaluation & ranking
 │       ├── load-memory/              # Hybrid memory retrieval skill
 │       ├── nodejs-executor/          # MCP wrapper skill for node execution

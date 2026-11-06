@@ -46,9 +46,9 @@ STAGE_SKILLS_MAP = {
     },
     "develop": {
         "primary_skill": "python-developer / typescript-developer / react-developer / java-developer",
-        "supporting_skills": ["load-memory", "save-memory", "troubleshoot-and-fix"],
+        "supporting_skills": ["load-memory", "save-memory", "troubleshoot-and-fix", "legacy-code-modernization"],
         "subagent_role": "Core Implementation & Test Engineer",
-        "description": "Production code authoring, automated unit/integration tests, and implementation of planned specs.",
+        "description": "Production code authoring, automated unit/integration tests, legacy code refactoring/modernization, and implementation of planned specs.",
     },
     "codereview": {
         "primary_skill": "code-reviewer",
