@@ -46,7 +46,23 @@ In `claude_desktop_config.json`, Cursor, or Antigravity configuration:
       "command": "node",
       "args": [
         "--experimental-sqlite",
-        "c:/Users/naini/developer-productivity-skills/mcp/project-memory/dist/index.js"
+        "./mcp/project-memory/dist/index.js"
+      ]
+    }
+  }
+}
+```
+
+Or with an absolute path:
+
+```json
+{
+  "mcpServers": {
+    "project-memory": {
+      "command": "node",
+      "args": [
+        "--experimental-sqlite",
+        "/path/to/developer-productivity-skills/mcp/project-memory/dist/index.js"
       ]
     }
   }
