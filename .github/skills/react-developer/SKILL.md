@@ -229,4 +229,4 @@ Accordion.Item = function AccordionItem({ id, title, children }: { id: string; t
 
 ## References
 
-- [React Developer Reference Guide](file:///c:/Users/naini/developer-productivity-skills/.github/skills/react-developer/references/react-developer-reference.md) — Comprehensive architecture matrix, state management recipes, RSC decision tree, custom hooks, and testing patterns.
+- [React Developer Reference Guide](file:///.github/skills/react-developer/references/react-developer-reference.md) — Comprehensive architecture matrix, state management recipes, RSC decision tree, custom hooks, and testing patterns.

@@ -177,7 +177,7 @@ Before marking the issue resolved:
 - [ ] **Exact Root Cause Identified**: Can you articulate in one sentence *why* the bug occurred?
 - [ ] **Isolated Test Passed**: Did the standalone harness fail first, then pass strictly after the logic fix?
 - [ ] **Zero Unintended Diffs**: Did you avoid unnecessary formatting, variable renames, or unrelated refactorings in the production file?
-- [ ] **Language Developer Skill Consulted**: Does the fix match idioms from [`python-developer`](file:///c:/Users/naini/developer-productivity-skills/.github/skills/python-developer/SKILL.md), [`typescript-developer`](file:///c:/Users/naini/developer-productivity-skills/.github/skills/typescript-developer/SKILL.md), [`react-developer`](file:///c:/Users/naini/developer-productivity-skills/.github/skills/react-developer/SKILL.md), or [`java-developer`](file:///c:/Users/naini/developer-productivity-skills/.github/skills/java-developer/SKILL.md)?
+- [ ] **Language Developer Skill Consulted**: Does the fix match idioms from [`python-developer`](file:///.github/skills/python-developer/SKILL.md), [`typescript-developer`](file:///.github/skills/typescript-developer/SKILL.md), [`react-developer`](file:///.github/skills/react-developer/SKILL.md), or [`java-developer`](file:///.github/skills/java-developer/SKILL.md)?
 - [ ] **Permanent Regression Test Added**: Is the isolated reproduction test case integrated into the project's native test suite (`tests/`, `__tests__/`, `src/test/`)?
 - [ ] **Blast Radius Checked**: Are other occurrences of the same pattern in adjacent modules audited and protected?
 

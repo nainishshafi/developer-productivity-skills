@@ -16,10 +16,10 @@ This skill defines the **diagnostic and verification process**, but delegates la
 
 | Target Ecosystem | Delegated Developer Skill | Domain Focus Delegated to Skill |
 |---|---|---|
-| **Python** (3.10–3.13) | [`python-developer`](file:///c:/Users/naini/developer-productivity-skills/.github/skills/python-developer/SKILL.md) | Asyncio event loops, `typing.Protocol`, Pydantic validation, pytest fixtures, memory leaks. |
-| **TypeScript / Node.js** | [`typescript-developer`](file:///c:/Users/naini/developer-productivity-skills/.github/skills/typescript-developer/SKILL.md) | ESM/CommonJS quirks, TS strictness, async/await promises, Prisma/Drizzle ORM boundaries, Vitest/Jest. |
-| **React** (18 & 19, RSC) | [`react-developer`](file:///c:/Users/naini/developer-productivity-skills/.github/skills/react-developer/SKILL.md) | Hook dependency arrays, stale closures, infinite re-render loops, Server vs Client Component boundaries. |
-| **Java / Spring Boot** | [`java-developer`](file:///c:/Users/naini/developer-productivity-skills/.github/skills/java-developer/SKILL.md) | JVM threading, null safety, Spring dependency injection cycles, transaction boundaries, JUnit 5. |
+| **Python** (3.10–3.13) | [`python-developer`](file:///.github/skills/python-developer/SKILL.md) | Asyncio event loops, `typing.Protocol`, Pydantic validation, pytest fixtures, memory leaks. |
+| **TypeScript / Node.js** | [`typescript-developer`](file:///.github/skills/typescript-developer/SKILL.md) | ESM/CommonJS quirks, TS strictness, async/await promises, Prisma/Drizzle ORM boundaries, Vitest/Jest. |
+| **React** (18 & 19, RSC) | [`react-developer`](file:///.github/skills/react-developer/SKILL.md) | Hook dependency arrays, stale closures, infinite re-render loops, Server vs Client Component boundaries. |
+| **Java / Spring Boot** | [`java-developer`](file:///.github/skills/java-developer/SKILL.md) | JVM threading, null safety, Spring dependency injection cycles, transaction boundaries, JUnit 5. |
 | **Other (Go, Rust, C#, etc.)** | Standard toolchain | Identify language version, package manager, and native test runner via discovery. |
 
 ---
@@ -140,7 +140,7 @@ Execute the standalone file directly:
 Once proven in isolation, port the verified solution back to the source codebase:
 
 1. **Respect Existing Code Conventions**:
-   - Refer to the respective developer skill ([`python-developer`](file:///c:/Users/naini/developer-productivity-skills/.github/skills/python-developer/SKILL.md), [`typescript-developer`](file:///c:/Users/naini/developer-productivity-skills/.github/skills/typescript-developer/SKILL.md), [`react-developer`](file:///c:/Users/naini/developer-productivity-skills/.github/skills/react-developer/SKILL.md), [`java-developer`](file:///c:/Users/naini/developer-productivity-skills/.github/skills/java-developer/SKILL.md)) to ensure the ported fix matches project idiomatic patterns (e.g. error types, immutability, async style).
+   - Refer to the respective developer skill ([`python-developer`](file:///.github/skills/python-developer/SKILL.md), [`typescript-developer`](file:///.github/skills/typescript-developer/SKILL.md), [`react-developer`](file:///.github/skills/react-developer/SKILL.md), [`java-developer`](file:///.github/skills/java-developer/SKILL.md)) to ensure the ported fix matches project idiomatic patterns (e.g. error types, immutability, async style).
 2. **Apply Minimal Diff**:
    - Modify only what is necessary to solve the defect. Avoid unnecessary refactoring or style churning in the fix commit.
 3. **Verify with Ground Truth**:
@@ -223,4 +223,4 @@ Safely apply the optional chaining and nullish coalescing back to the production
 
 ## References
 
-- [Troubleshoot and Fix Reference Guide](file:///c:/Users/naini/developer-productivity-skills/.github/skills/troubleshoot-and-fix/references/troubleshoot-and-fix-reference.md) — Bug taxonomy, mock data generation cookbook, concurrency debugging patterns, and isolation templates across languages.
+- [Troubleshoot and Fix Reference Guide](file:///.github/skills/troubleshoot-and-fix/references/troubleshoot-and-fix-reference.md) — Bug taxonomy, mock data generation cookbook, concurrency debugging patterns, and isolation templates across languages.
