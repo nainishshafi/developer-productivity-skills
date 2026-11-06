@@ -16,6 +16,7 @@ These skills provide ready-made workflows for modern software engineering — sp
 | [`python-developer`](#python-developer) | **Language Specialist** | Python 3.10–3.13, Pydantic v2, asyncio, memory/GC | `"write python code"` |
 | [`react-developer`](#react-developer) | **Language Specialist** | React 18/19, Next.js RSC, Zustand, TanStack Query | `"write react code"` |
 | [`java-developer`](#java-developer) | **Language Specialist** | Modern Java 17/21/25 LTS, Spring Boot 3+, Virtual Threads | `"review java code"` |
+| [`csharp-developer`](#csharp-developer) | **Language Specialist** | C# 12/13, .NET 8/9, Minimal APIs, MVVM/WPF, EF Core | `"write c# code"` |
 | [`code-reviewer`](#code-reviewer) | **Architecture & Quality** | 7-dimension senior review ([P0] Blocker to [P3] Nit) | `"review code"` |
 | [`algorithmic-complexity-analyzer`](#algorithmic-complexity-analyzer) | **Architecture & Quality** | Big-O time/space audits ($O(1) \dots O(2^n)$), hidden loop traps | `"check time complexity"` |
 | [`detect-overengineering`](#detect-overengineering) | **Architecture & Quality** | YAGNI audits, layer bloat, trampoline pass-throughs | `"check for over-engineering"` |
@@ -64,6 +65,12 @@ Comprehensive guidelines and best practices for modern Java (LTS 17/21/25) and S
 - **Core Topics:** Modern idioms (records, sealed types, pattern matching), Virtual Threads & CompletableFuture, carrier pinning avoidance, collections selection, JVM tuning & low-latency GC (ZGC/Shenandoah/G1), application security, Spring Boot 3+ production patterns (RFC 7807 problem details, RestClient, slice/testcontainer testing), and legacy modernization (refactoring JSP and Spring Webflow to RESTful microservices).
 - **Trigger phrases:** `"review java code"`, `"spring boot best practices"`, `"optimize jvm"`, `"write java unit test"`, `"design java service"`, `"java concurrency guide"`, `"virtual threads vs reactor"`, `"java security audit"`, `"migrate to spring boot 3"`.
 - **Supported versions:** Java 17, 21, 25 LTS; Spring Boot 3.x.
+
+### `csharp-developer`
+Comprehensive architectural and engineering guidance for modern C# (C# 12 & 13, .NET 8 LTS & .NET 9), ASP.NET Core, and cross-platform desktop/client development.
+- **Core Topics:** Modern idioms (primary constructors, collection expressions, records, required members, frozen collections), Clean Architecture & Vertical Slice Architecture, strict DI lifetime scoping & captive dependency prevention, Minimal APIs (`TypedResults`), RFC 7807 problem details, Polly v8 resilience pipelines (`AddStandardResilienceHandler`), MVVM (`CommunityToolkit.Mvvm`, `WeakReferenceMessenger`, WPF & .NET MAUI thread dispatching), EF Core 8/9 query optimization (split queries, bulk updates, DbContext pooling), Dapper high-throughput queries, zero-allocation memory hygiene (`ReadOnlySpan<T>`, `Memory<T>`, `ArrayPool<T>`, static lambdas), asynchronous backpressure (`System.Threading.Channels`), and modern test stacks (xUnit, NSubstitute, FluentAssertions, `WebApplicationFactory`, Testcontainers.NET).
+- **Trigger phrases:** `"write c# code"`, `"develop c# service"`, `"c# architecture best practices"`, `"minimal apis best practices"`, `"wpf mvvm guide"`, `"maui mvvm"`, `"ef core query optimization"`, `"polly resilience pipeline"`, `"c# span memory optimization"`.
+- **Supported runtimes:** .NET 8 LTS, .NET 9; C# 12, C# 13.
 
 ---
 
@@ -230,6 +237,7 @@ developer-productivity-skills/
 │       ├── algorithmic-complexity-analyzer/ # Language-agnostic Big-O analysis
 │       ├── architectural-planning/   # Interactive system architecture designer
 │       ├── code-reviewer/            # 7-dimension code reviewer ([P0] to [P3])
+│       ├── csharp-developer/         # Modern C# 12/13, .NET 8/9, Minimal APIs, MVVM pack
 │       ├── design-pattern-detector/  # AST design pattern & anti-pattern detector
 │       ├── detect-overengineering/   # YAGNI & complexity risk auditor
 │       ├── github-security-scanner-hook/ # Pre-commit secret & Semgrep scanner

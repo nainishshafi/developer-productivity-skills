@@ -45,7 +45,7 @@ STAGE_SKILLS_MAP = {
         "description": "System design, requirements breakdown, component boundaries, and contract definition.",
     },
     "develop": {
-        "primary_skill": "python-developer / typescript-developer / react-developer / java-developer",
+        "primary_skill": "python-developer / typescript-developer / react-developer / java-developer / csharp-developer",
         "supporting_skills": ["load-memory", "save-memory", "troubleshoot-and-fix", "legacy-code-modernization"],
         "subagent_role": "Core Implementation & Test Engineer",
         "description": "Production code authoring, automated unit/integration tests, legacy code refactoring/modernization, and implementation of planned specs.",

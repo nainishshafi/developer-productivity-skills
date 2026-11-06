@@ -37,7 +37,7 @@ At each stage, the orchestrator invokes the correct domain skill, packages bound
 | # | Stage | Assigned Skill | Sub-Agent Role | Primary Responsibilities |
 |---|---|---|---|---|
 | **1** | `plan` | `architectural-planning` | Architecture & Planning Specialist | Requirements decomposition, tech stack alignment, interface contracts, ADR creation. Supported by `llm-as-judge`. |
-| **2** | `develop` | Language developer (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`) | Core Implementation Engineer | Production implementation, unit and integration tests, error handling. Supported by `troubleshoot-and-fix`. |
+| **2** | `develop` | Language developer (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`) | Core Implementation Engineer | Production implementation, unit and integration tests, error handling. Supported by `troubleshoot-and-fix`. |
 | **3** | `codereview` | `code-reviewer` | Senior Code Reviewer | Multi-dimension code review (correctness, resilience, edge cases, clean code). Supported by linters. |
 | **4** | `complexitychecks` | `algorithmic-complexity-analyzer` | Algorithmic Complexity Auditor | Asymptotic Big-O time and space complexity ($O(1) \dots O(2^n)$), hidden quadratic loops (`.includes()`, `in list`), recursion depth traps. |
 | **5** | `architecturechecks` | `detect-overengineering` | Principal Architecture Auditor | Over-engineering detection, speculative generality (YAGNI), layer bloat, anti-patterns (`design-pattern-detector`). |
@@ -89,7 +89,7 @@ python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py
 ### Step 3: Stage 2 — `develop`
 1. Generate handoff context: `orchestrator-context-manager.py handoff --stage develop`.
 2. Pass bounded context (contracts, specifications, target files) to the implementation sub-agent.
-3. Activate relevant language skill (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`).
+3. Activate relevant language skill (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`).
 4. Write production code and automated tests. Run test runner to verify green test status.
 5. Record verdict:
    ```bash
