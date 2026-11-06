@@ -92,6 +92,46 @@ Interactively guides you through architectural decisions for a new or existing p
 
 ---
 
+### `agent-orchestrator`
+Automates and coordinates end-to-end multi-agent software engineering workflows across six quality stages: `plan` -> `develop` -> `codereview` -> `architecturechecks` -> `halucinationchecks` -> `securitychecks`. Manages bounded context handoffs to prevent context pollution in sub-agents, routes tasks to specialized skills (`architectural-planning`, `python-developer`, `typescript-developer`, `java-developer`, `code-reviewer`, `detect-overengineering`, `scan-halucinated-tests`, `github-security-scanner-hook`), and enforces quality gates with closed-loop remediation feedback.
+
+**Trigger phrases:** "orchestrate a feature", "run full development pipeline", "plan-develop-review", "agent orchestrator", "orchestrate subagents", "run full lifecycle checks", "orchestrate sdlc"
+
+**Supported stages:**
+1. `plan` — System design and contract specifications (`architectural-planning`)
+2. `develop` — Production code and unit test implementation (`python-developer`, `typescript-developer`, `java-developer`)
+3. `codereview` — Multi-dimension code review across logic, errors, security, and clean code (`code-reviewer`)
+4. `architecturechecks` — Over-engineering, YAGNI, layer bloat, and anti-pattern detection (`detect-overengineering`, `design-pattern-detector`)
+5. `halucinationchecks` — Cross-validation of test symbols against ground-truth AST (`scan-halucinated-tests`)
+6. `securitychecks` — Pre-commit credential leak and OWASP security vulnerability scan (`github-security-scanner-hook`)
+
+---
+
+### `python-developer`
+Architectural and engineering guidance for modern Python development (3.10–3.13). Guides the LLM to inspect and discover the project's baseline architecture, adapt to codebase conventions, and apply clean architecture (Hexagonal/Layered/Modular), domain modeling, dependency inversion (`typing.Protocol`), and testing patterns pragmatically without imposing dogmatic hard rules.
+
+**Trigger phrases:** "write python code", "develop python service", "python architecture best practices", "design python backend", "pytest guidelines", "modern python patterns", "refactor python"
+
+**Supported versions:** Python 3.10, 3.11, 3.12, 3.13
+
+---
+
+### `typescript-developer`
+Architectural and engineering guidance for modern TypeScript and JavaScript (Node.js 20+, ES2023+, TS 5+). Guides the LLM to inspect and discover existing project architecture (Modular/NestJS, Layered/Express/Fastify, or Vertical Slice), adapt to runtime conventions, and apply clean architecture, type-driven domain modeling (discriminated unions, `as const`), resilient error handling (`Result` pattern), and testing patterns pragmatically without imposing dogmatic hard rules.
+
+**Trigger phrases:** "write typescript code", "develop typescript service", "typescript architecture best practices", "design node backend", "vitest testing", "modern nodejs patterns", "refactor javascript"
+
+**Supported runtimes:** Node.js 20+, TypeScript 5.x+
+
+---
+
+### `code-reviewer`
+Conducts rigorous, senior-level code reviews across languages (Python, TypeScript/JavaScript, Java, Go, C#). Audits code changes across 7 dimensions: logic correctness, architecture & design principles (DRY/KISS/SOLID), error handling & boundary defense, test coverage & quality, security & input sanitization, performance & resource hygiene, and clean code readability. Classifies all findings into standardized severities (`[P0 - Blocker]`, `[P1 - Major]`, `[P2 - Minor]`, `[P3 - Nit]`) with actionable suggested fix diffs.
+
+**Trigger phrases:** "review code", "code review", "review pull request", "audit code changes", "code review checklist", "review this diff", "inspect pull request"
+
+---
+
 ### `java-developer`
 Comprehensive guidelines and best practices for modern Java (LTS 17/21/25) and Spring Boot enterprise applications. Covers modern language features (records, sealed types, pattern matching, switch expressions), concurrency (Virtual Threads, CompletableFuture, carrier pinning avoidance), collection selection and performance, functional architecture, JVM tuning & low-latency GC (ZGC/Shenandoah/G1), application security (OWASP, IDOR, SSRF, injection defense), Spring Boot 3+ production patterns (thin controllers, transactional boundaries, RFC 7807 problem details, RestClient, and slice/testcontainer testing), and legacy modernization (refactoring JSP and Spring Webflow state machines to RESTful microservices, `jakarta.*` migration, Spring Security 6, and AOT/GraalVM).
 
