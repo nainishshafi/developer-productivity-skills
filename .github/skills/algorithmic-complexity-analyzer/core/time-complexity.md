@@ -89,3 +89,4 @@ An operation has **Amortized Time Complexity** $O(1)$ if an occasional expensive
    - Across $N$ appends, total copy operations $\le 2N$, resulting in **amortized $O(1)$**.
 2. **Hash Table Rehashing**:
    - When load factor threshold is breached, a new bucket array is allocated and all keys re-hashed ($O(n)$). Amortized cost per insertion remains $O(1)$.
+

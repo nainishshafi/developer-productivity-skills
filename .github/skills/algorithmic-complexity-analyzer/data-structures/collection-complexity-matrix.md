@@ -47,3 +47,4 @@ Do you need to access items by numeric index?
                               └── NO ───> Do you need continuous Min/Max extraction?
                                             └── YES ──> Use Binary Heap / PriorityQueue (O(1) peek, O(log n) pop)
 ```
+
