@@ -1,5 +1,19 @@
 # Changelog — llm-as-judge Skill
 
+## Version 1.5.0 — Engineering Evaluator Archetypes & Specialized Evaluation Personas
+
+### Core Enhancements
+- **Evaluator Archetypes (Pattern 7)**: Added 4 specialized evaluation styles and immediate reactions for technical and architectural arbitration:
+  - **Pessimist**: Resilience, bulkhead isolation, thread starvation, cascading dependency failure.
+  - **Contrarian**: Velocity vs. gatekeeping, feature toggles, canary deployments, real-time telemetry.
+  - **Pragmatist**: Zero-downtime database migrations, backwards-compatible rollback scripts, operational safety.
+  - **Specialist**: Subsystem-level traps, connection lease holding during socket I/O, transaction boundaries.
+- **Multi-Persona Evaluation Panel**: Added Template 9 in `references/judge-templates.md` for orchestrating multi-perspective technical evaluations and synthesizing blockers vs. canary rollout paths.
+- **Repository Skill Cross-Linking**: Enhanced clickable markdown links across related skills (`agent-orchestrator`, `code-reviewer`, `algorithmic-complexity-analyzer`, `sql-executor`, `caching-queues-reviewer`, `detect-overengineering`, `scan-halucinated-tests`).
+- **Heuristic Expansion**: Integrated Principle 6 (Multi-Perspective Evaluator Archetypes) and expanded common pitfalls with Unidimensional Technical Evaluation mitigations.
+
+---
+
 ## Version 1.4.0 — Critique-First Ordering, Bias Mitigation & Anchored Scales
 
 ### Core Enhancements

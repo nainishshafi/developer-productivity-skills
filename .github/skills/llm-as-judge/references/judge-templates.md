@@ -415,3 +415,62 @@ Output strictly in this critique-first JSON format:
   "pass": true
 }
 ```
+
+---
+
+## Template 9 — Evaluator Archetypes Panel (Pessimist, Contrarian, Pragmatist, Specialist)
+
+Use to stress-test architectural proposals, code implementations, and database migrations from 4 divergent engineering perspectives.
+
+```text
+You are arbitrating a technical proposal / code implementation as a multi-perspective panel of 4 distinct engineering archetypes.
+Each archetype must provide their critique-first evidence and immediate reaction before scoring:
+
+1. Pessimist: "When that remote API goes down, what stops this worker from thread-starving the entire service? Where is the fallback and bulkhead?"
+2. Contrarian: "Why are we gatekeeping this feature in review for 3 days? Put it behind a toggle, run canary traffic, and check the telemetry."
+3. Pragmatist: "Does this schema update require downtime? If the DB rollback script isn't backwards-compatible, this cannot merge."
+4. Specialist: "The API call is fine, but you're calling it inside an active database transaction. You're holding a connection lease during socket I/O."
+
+Technical Submission / Code:
+{submission}
+
+Task / Context:
+{context}
+
+Output strictly in this critique-first JSON format:
+{
+  "archetype_reviews": {
+    "pessimist": {
+      "immediate_reaction": "...",
+      "cascade_risks": ["..."],
+      "bulkhead_and_fallback_verdict": "ADEQUATE | MISSING | VULNERABLE",
+      "blockers": ["..."]
+    },
+    "contrarian": {
+      "immediate_reaction": "...",
+      "delivery_velocity_critique": "...",
+      "toggle_or_canary_recommendation": "...",
+      "blockers": ["..."]
+    },
+    "pragmatist": {
+      "immediate_reaction": "...",
+      "migration_and_rollback_safety": "SAFE | DOWNTIME_RISK | BREAKING",
+      "operational_concerns": ["..."],
+      "blockers": ["..."]
+    },
+    "specialist": {
+      "immediate_reaction": "...",
+      "concurrency_and_resource_leaks": ["..."],
+      "transaction_boundary_safety": "SAFE | CONNECTION_LEAK | DEADLOCK_RISK",
+      "blockers": ["..."]
+    }
+  },
+  "critical_blockers": [
+    { "archetype": "Pessimist | Specialist | Pragmatist", "issue": "...", "severity": "CRITICAL" }
+  ],
+  "canary_or_toggle_path": "...",
+  "consensus_verdict": "APPROVE | REQUEST_CHANGES | BLOCK",
+  "remediation_checklist": ["..."]
+}
+```
+

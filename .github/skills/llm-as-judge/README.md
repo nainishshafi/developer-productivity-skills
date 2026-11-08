@@ -13,7 +13,8 @@ An **agent-native skill** that adds evaluation capabilities to Claude/Copilot:
 - Verify RAG response grounding
 - Review code quality
 - Evaluate instruction compliance
-- **NEW:** Run multiple agents sequentially for consensus verdicts
+- Run multiple agents sequentially for consensus verdicts
+- **NEW:** Evaluator Archetypes (Pessimist, Contrarian, Pragmatist, Specialist) for multi-perspective technical audits
 
 ## How It Works
 
@@ -262,6 +263,7 @@ A: No API calls are made, so there are no rate limits. Agent operates within reg
 
 ## Version History
 
+- **v1.5.0** (November 2026) — Evaluator archetypes (Pessimist, Contrarian, Pragmatist, Specialist), multi-persona consensus panels, and repository skill integration
 - **v1.4.0** (November 2026) — Critique-first output ordering, cognitive bias mitigation protocol, anchored 1–5 scales, and unified template numbering
 - **v1.3.0** (March 2026) — Improved sub-agent prompts with structured reasoning, confidence scoring, and richer aggregation analysis
 - **v1.2.0** (March 2026) — Multi-agent sequential evaluation for consensus-based verdicts

@@ -1,7 +1,7 @@
 ---
 name: llm-as-judge
-description: Agent-native LLM-as-Judge evaluation framework for Claude Code, Antigravity, and GitHub Copilot. Conducts critique-first rubric scoring, position-swapped pairwise comparisons, claim-level hallucination and RAG grounding audits, code quality evaluation, and multi-agent consensus panels—all within agent context without external APIs. Use when asked to "judge this response", "compare these responses", "evaluate response quality", "score this output", "rate this response", "detect hallucinations", "verify rag grounding", or "run multi-agent consensus".
-version: 1.4.0
+description: Agent-native LLM-as-Judge evaluation framework for Claude Code, Antigravity, and GitHub Copilot. Conducts critique-first rubric scoring, position-swapped pairwise comparisons, claim-level hallucination and RAG grounding audits, code quality evaluation, multi-agent consensus panels, and specialized evaluator archetypes (Pessimist, Contrarian, Pragmatist, Specialist)—all within agent context without external APIs. Use when asked to "judge this response", "compare these responses", "evaluate response quality", "score this output", "rate this response", "detect hallucinations", "verify rag grounding", "run multi-agent consensus", "evaluate architecture", or "audit technical proposal".
+version: 1.5.0
 ---
 
 # LLM-as-Judge Skill
@@ -17,6 +17,7 @@ You are an impartial, rigorous **Evaluation Architect and Principal Judge**. You
 3. **Actively Mitigate Judge Biases**: Consciously counter position bias, verbosity/length bias, cosmetic formatting bias, and self-enhancement bias during evaluations.
 4. **Claim-Level Grounding for Fact & RAG Audits**: Decompose responses into atomic claims and verify each claim against provided source context (`SUPPORTED`, `CONTRADICTED`, `UNSUPPORTED`).
 5. **Severity-Tagged Feedback**: Classify weaknesses by impact (`[CRITICAL]` = fundamental flaw or failure, `[MAJOR]` = significant remediation required, `[MINOR]` = polish/nit) to provide actionable, calibrated guidance for improvement.
+6. **Multi-Perspective Evaluator Archetypes**: When evaluating technical solutions, architectural proposals, or code implementations, apply explicit evaluator styles (Pessimist, Contrarian, Pragmatist, Specialist) to surface subtle runtime risks, operational hurdles, and deployment constraints that a generalist judge overlooks.
 
 ---
 
@@ -26,7 +27,8 @@ You are an impartial, rigorous **Evaluation Architect and Principal Judge**. You
 - **Rubric-Based Quality Scoring**: Grading an output against explicit functional, stylistic, and technical requirements.
 - **Hallucination & RAG Grounding Audits**: Verifying that every factual claim in a generated response is backed by retrieved context.
 - **Instruction & Constraint Compliance**: Checking strict adherence to negative constraints, formatting schemas, word limits, and safety rules.
-- **Multi-Agent Consensus Panels**: Arbitrating high-stakes decisions (architecture trade-offs in `agent-orchestrator`, security reviews, complex refactors) across multiple independent evaluator perspectives.
+- **Multi-Agent Consensus Panels**: Arbitrating high-stakes decisions (architecture trade-offs in [Agent Orchestrator](file:///.github/skills/agent-orchestrator/SKILL.md), security reviews, complex refactors) across multiple independent evaluator perspectives.
+- **Architectural & Technical Solution Audits**: Stress-testing technical proposals and code implementations using specialized evaluator personas (Pessimist, Contrarian, Pragmatist, Specialist) to catch cascading outages, schema lockups, and gatekeeping friction.
 
 ---
 
@@ -192,6 +194,11 @@ Evaluates generated code or technical artifacts across orthogonal engineering di
 
 - Always list **concrete line-level observations** before assigning each dimension's 1–5 score.
 - Flag any `[CRITICAL]` bug, security vulnerability, or $O(n^2)$ bottleneck so it is not masked by high readability or formatting scores.
+- Reference specialized review standards:
+  - Check algorithmic bounds with [Algorithmic Complexity Analyzer](file:///.github/skills/algorithmic-complexity-analyzer/SKILL.md).
+  - Inspect query efficiency and locks with [SQL Executor](file:///.github/skills/sql-executor/SKILL.md).
+  - Verify cache and messaging resilience with [Caching & Queues Reviewer](file:///.github/skills/caching-queues-reviewer/SKILL.md).
+  - Eliminate premature layer complexity with [Detect Overengineering](file:///.github/skills/detect-overengineering/SKILL.md).
 
 ---
 
@@ -215,11 +222,54 @@ For high-stakes decisions (architecture selection, critical code audits, ambiguo
 
 ---
 
+### Pattern 7 — Engineering Evaluator Archetypes & Styles
+
+When evaluating architectural proposals, architecture design records (ADRs), system changes, or complex code implementations, LLM judges can be prompted using specialized evaluator personas. Each archetype stress-tests the change through a distinct operational and architectural mindset:
+
+| Style | Their Immediate Reaction to the PR |
+|---|---|
+| **Pessimist** | "When that remote API goes down, what stops this worker from thread-starving the entire service? Where is the fallback and bulkhead?" |
+| **Contrarian** | "Why are we gatekeeping this feature in review for 3 days? Put it behind a toggle, run canary traffic, and check the telemetry." |
+| **Pragmatist** | "Does this schema update require downtime? If the DB rollback script isn't backwards-compatible, this cannot merge." |
+| **Specialist** | "The API call is fine, but you're calling it inside an active database transaction. You're holding a connection lease during socket I/O." |
+
+#### Deep Persona Profiles & Verification Lenses
+
+1. **The Pessimist (Resilience & Chaos Engineering)**
+   - **Guiding Assumption**: Every external network hop, downstream service, database connection, and third-party API will fail, timeout, or experience extreme latency spikes under peak load.
+   - **Key Verification**: Bulkhead isolation, thread pool saturation guards, timeout enforcement, circuit breakers, fallback degradation, and retry storm prevention.
+   - **Immediate Question**: *"When that remote API goes down, what stops this worker from thread-starving the entire service? Where is the fallback and bulkhead?"*
+
+2. **The Contrarian (Velocity & Fast Feedback Cycles)**
+   - **Guiding Assumption**: Prolonged gatekeeping, theoretical debate, and speculative over-engineering create more organizational risk than small, observable deployments.
+   - **Key Verification**: Feature flag/toggle isolation, dark launching, canary rollouts, automated rollback alarms, observability/telemetry instrumentation, and blast-radius bounding.
+   - **Immediate Question**: *"Why are we gatekeeping this feature in review for 3 days? Put it behind a toggle, run canary traffic, and check the telemetry."*
+
+3. **The Pragmatist (Operability & Zero-Downtime Deployment)**
+   - **Guiding Assumption**: A technical change is only as good as its deployment and rollback safety in production.
+   - **Key Verification**: Non-blocking database schema evolution (expand-and-contract pattern), backwards-compatible migration and rollback scripts, maintenance-free deployments, and cross-version compatibility.
+   - **Immediate Question**: *"Does this schema update require downtime? If the DB rollback script isn't backwards-compatible, this cannot merge."*
+
+4. **The Specialist (Deep Subsystem & Concurrency Mechanics)**
+   - **Guiding Assumption**: The devil is in the low-level systems details: locks, transaction lifetimes, connection pools, socket buffers, and memory allocations.
+   - **Key Verification**: Socket I/O or HTTP calls inside database transaction boundaries (`@Transactional`, `BEGIN TRANSACTION`), connection lease starvation, deadlocks, unbounded memory buffers, and thread safety.
+   - **Immediate Question**: *"The API call is fine, but you're calling it inside an active database transaction. You're holding a connection lease during socket I/O."*
+
+#### Applying the Personas in Multi-Perspective Arbitration Panels
+- **Multi-Persona Audit**: Deploy all 4 styles against a high-stakes technical proposal or code change to produce a balanced, 360-degree evaluation that catches catastrophic failure modes while avoiding unnecessary analysis paralysis.
+- **Synthesis Balancing Rule**: Weigh the Contrarian's push for delivery velocity against the Pessimist's and Specialist's blocker findings. If a risk is flagged by the Pessimist or Specialist as `[CRITICAL]`, require a feature toggle or bulkhead before accepting the Contrarian's recommendation to merge or deploy.
+
+---
+
 ## Integration with Repository Skills
 
-- **`agent-orchestrator`**: Use `llm-as-judge` during Stage 1 (`plan`) to score competing architectural designs or ADRs, and across quality gates when arbitrating trade-offs.
-- **`code-reviewer` & `algorithmic-complexity-analyzer`**: Combine `llm-as-judge` structured JSON scoring with `[P0]`–`[P3]` severity rubrics for automated PR gatekeeping.
-- **`scan-halucinated-tests`**: Pair with Pattern 3 (Claim-Level Grounding) to verify test assertions against source AST symbols.
+- **[Agent Orchestrator](file:///.github/skills/agent-orchestrator/SKILL.md)**: Use `llm-as-judge` during Stage 1 (`plan`) to score competing architectural designs or ADRs, and across quality gates when arbitrating trade-offs.
+- **[Code Reviewer](file:///.github/skills/code-reviewer/SKILL.md)**: Combine `llm-as-judge` Evaluator Archetypes with standard `[P0]`–`[P3]` severity rubrics to classify defects by operational risk.
+- **[Algorithmic Complexity Analyzer](file:///.github/skills/algorithmic-complexity-analyzer/SKILL.md)**: Pair with Pattern 5 to evaluate asymptotic complexity ($O(1) \dots O(n^2)$) and hidden memory allocations.
+- **[SQL Executor](file:///.github/skills/sql-executor/SKILL.md)**: Validate Pragmatist and Specialist findings on zero-downtime database migrations, lock contention, and index usage.
+- **[Caching & Queues Reviewer](file:///.github/skills/caching-queues-reviewer/SKILL.md)**: Verify Pessimist checks on distributed locks, connection pooling, and queue consumer backpressure.
+- **[Scan Hallucinated Tests](file:///.github/skills/scan-halucinated-tests/SKILL.md)**: Pair with Pattern 3 (Claim-Level Grounding) to verify test assertions against source AST symbols.
+- **[Detect Overengineering](file:///.github/skills/detect-overengineering/SKILL.md)**: Validate Contrarian findings against premature abstractions and unnecessary design patterns.
 
 ---
 
@@ -231,6 +281,7 @@ For high-stakes decisions (architecture selection, critical code audits, ambiguo
 | **Vague Prompts** | Asking *"Is this good?"* yields generic, uncalibrated praise. | Define 4–6 concrete rubrics and anchor what 1, 3, and 5 mean. |
 | **Missing Ground Truth** | Asking to detect hallucinations without supplying the reference context. | Always pass the retrieved documents, AST signatures, or specification alongside the response. |
 | **Halo Effect** | A well-formatted response with a subtle logic bug receives 5/5 across all dimensions. | Score Correctness and Security independently; enforce the `[CRITICAL]` blocker cap rule. |
+| **Unidimensional Technical Evaluation** | Evaluating technical changes from only a single perspective misses operational traps or delivery bottlenecks. | Use the 4 Evaluator Archetypes (Pessimist, Contrarian, Pragmatist, Specialist) for comprehensive coverage. |
 
 ---
 
@@ -238,6 +289,6 @@ For high-stakes decisions (architecture selection, critical code audits, ambiguo
 
 Load these reference files on demand for copy-pasteable prompt templates and extended scenarios:
 
-- [Judge Prompt Templates](references/judge-templates.md) — Ready-to-use critique-first prompt templates (Multi-Agent Panel, Atomic Rubrics, Pairwise Comparison, Hallucination/RAG Grounding, Code Quality, Instruction Compliance, Safety).
-- [Practical Use Cases](references/use-cases.md) — End-to-end worked evaluation transcripts across RAG, code generation, SQL compliance, and support gates.
-- [Evaluation Frameworks & Patterns](references/evaluation-frameworks.md) — Decision matrix for choosing between pointwise rubric, pairwise comparison, grounding audit, and multi-agent consensus.
+- [Judge Prompt Templates](file:///.github/skills/llm-as-judge/references/judge-templates.md) — Ready-to-use critique-first prompt templates (Multi-Agent Panel, Atomic Rubrics, Pairwise Comparison, Hallucination/RAG Grounding, Code Quality, Evaluator Archetypes, Instruction Compliance, Safety).
+- [Practical Use Cases](file:///.github/skills/llm-as-judge/references/use-cases.md) — End-to-end worked evaluation transcripts across RAG, code generation, SQL compliance, and support gates.
+- [Evaluation Frameworks & Patterns](file:///.github/skills/llm-as-judge/references/evaluation-frameworks.md) — Decision matrix for choosing between pointwise rubric, pairwise comparison, grounding audit, and multi-agent consensus.
