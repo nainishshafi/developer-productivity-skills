@@ -1,7 +1,7 @@
 ---
 name: agent-orchestrator
 description: Orchestrates an end-to-end multi-agent development lifecycle across seven quality stages: plan -> develop -> codereview -> complexitychecks -> architecturechecks -> halucinationchecks -> securitychecks. Coordinates sub-agent handoffs, manages stage-isolated context, provides structured verification guidance across quality gates, and integrates isolated testbed remediation (troubleshoot-and-fix). Use when asked to "orchestrate a feature", "run full development pipeline", "plan-develop-review", "agent orchestrator", "orchestrate subagents", or "run full lifecycle checks".
-version: 1.1.0
+version: 1.2.0
 ---
 
 # Agent Orchestrator
@@ -24,10 +24,10 @@ At each stage, the orchestrator invokes the correct domain skill, packages bound
 
 - Building a new feature, service, or refactoring task requiring comprehensive verification.
 - Running multi-agent workflows where sub-agents require strictly scoped context (preventing context pollution).
-- Auditing algorithmic time and space complexity ($O(1) \dots O(2^n)$) and eliminating hidden quadratic loops.
+- Auditing algorithmic time and space complexity ($O(1) \dots O(2^n)$) and eliminating hidden quadratic loops or $O(N)$ database table scans.
 - Enforcing architectural standards, anti-pattern detection, and YAGNI compliance on generated code.
 - Verifying unit tests and mocks against source code to catch LLM hallucinations.
-- Running pre-delivery security and secret audits before code commits or pull requests.
+- Running pre-delivery security, secret audits, and API authentication/cryptographic reviews before code commits.
 - Isolating and verifying bug fixes using standalone testbeds when quality gates fail.
 
 ---
@@ -36,13 +36,13 @@ At each stage, the orchestrator invokes the correct domain skill, packages bound
 
 | # | Stage | Assigned Skill | Sub-Agent Role | Primary Responsibilities |
 |---|---|---|---|---|
-| **1** | `plan` | `architectural-planning` | Architecture & Planning Specialist | Requirements decomposition, tech stack alignment, interface contracts, ADR creation. Supported by `llm-as-judge`. |
-| **2** | `develop` | Language developer (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`) | Core Implementation Engineer | Production implementation, unit and integration tests, error handling. Supported by `troubleshoot-and-fix`. |
-| **3** | `codereview` | `code-reviewer` | Senior Code Reviewer | Multi-dimension code review (correctness, resilience, edge cases, clean code). Supported by linters. |
-| **4** | `complexitychecks` | `algorithmic-complexity-analyzer` | Algorithmic Complexity Auditor | Asymptotic Big-O time and space complexity ($O(1) \dots O(2^n)$), hidden quadratic loops (`.includes()`, `in list`), recursion depth traps. |
-| **5** | `architecturechecks` | `detect-overengineering` | Principal Architecture Auditor | Over-engineering detection, speculative generality (YAGNI), layer bloat, anti-patterns (`design-pattern-detector`). |
+| **1** | `plan` | `architectural-planning` | Architecture & Planning Specialist | Requirements decomposition, tech stack alignment, interface contracts, ADR creation. Supported by `llm-as-judge`, `api-security` (auth/topology), `caching-queues-reviewer` (queue/cache architecture), and `sql-executor` (schema/indexing strategy). |
+| **2** | `develop` | Language developer (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer`) | Core Implementation Engineer | Production implementation, unit and integration tests, error handling, self-checks. Supported by `troubleshoot-and-fix` and `sql-connector` (ephemeral SQLite `:memory:` test fixtures). |
+| **3** | `codereview` | `code-reviewer` | Senior Code Reviewer | Multi-dimension code review (correctness, resilience, edge cases, clean code). Supported by linters and `caching-queues-reviewer` (Redis/Kafka/RabbitMQ PR review). |
+| **4** | `complexitychecks` | `algorithmic-complexity-analyzer` | Algorithmic Complexity Auditor | Asymptotic Big-O time and space complexity ($O(1) \dots O(2^n)$), hidden quadratic loops (`.includes()`, `in list`), recursion depth traps, and `sql-executor` (`explain_query`) for query execution plan complexity ($O(N)$ table scans). |
+| **5** | `architecturechecks` | `detect-overengineering` | Principal Architecture Auditor | Over-engineering detection, speculative generality (YAGNI), layer bloat, anti-patterns (`design-pattern-detector`), and language-specialist over-engineering self-checks. |
 | **6** | `halucinationchecks` | `scan-halucinated-tests` | Ground-Truth Verification Auditor | Cross-validating test assertions, mocks, and imports against real AST symbols (`trace-code-context`). |
-| **7** | `securitychecks` | `github-security-scanner-hook` | Application Security Auditor | Secret/credential scanning (`detect-secrets`), OWASP pattern analysis (`semgrep`). |
+| **7** | `securitychecks` | `github-security-scanner-hook`, `api-security` | Application Security Auditor | Secret/credential scanning (`detect-secrets`), OWASP pattern analysis (`semgrep`), API auth audit (JWT/OAuth 2.1/mTLS), and `sql-connector` (`audit_query_safety` firewall). |
 
 ---
 
@@ -80,7 +80,7 @@ python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py
 ### Step 2: Stage 1 — `plan`
 1. Invoke sub-agent with role `Architecture & Planning Specialist`.
 2. Activate skill `architectural-planning`.
-3. Produce system design, interface contracts, and list of files to create/modify. Use `llm-as-judge` if evaluating trade-offs between competing architectures.
+3. Produce system design, interface contracts, and list of files to create/modify. Consult `api-security` for token/auth architectures, `caching-queues-reviewer` for message broker and cache topologies, and `sql-executor` for data modeling, partitioning, and indexing strategies. Use `llm-as-judge` if evaluating trade-offs between competing architectures.
 4. Record verdict:
    ```bash
    python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage plan --status PASSED --summary "Plan approved: contract defined" --artifact "plan.md"
@@ -89,7 +89,7 @@ python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py
 ### Step 3: Stage 2 — `develop`
 1. Generate handoff context: `orchestrator-context-manager.py handoff --stage develop`.
 2. Pass bounded context (contracts, specifications, target files) to the implementation sub-agent.
-3. Activate relevant language skill (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`).
+3. Activate relevant language skill (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, or `python-api-writer` for FastAPI/Django endpoints). For database testing, utilize `sql-connector` with ephemeral SQLite (`:memory:`) to seed fixtures without external dependencies. Run the language specialist's embedded Over-Engineering Self-Checks.
 4. Write production code and automated tests. Run test runner to verify green test status.
 5. Record verdict:
    ```bash
@@ -99,7 +99,7 @@ python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py
 ### Step 4: Stage 3 — `codereview`
 1. Generate handoff context: `orchestrator-context-manager.py handoff --stage codereview`.
 2. Invoke reviewer sub-agent to inspect git diff or modified files.
-3. Activate skill `code-reviewer` (supported by `python-linter` or relevant language linters).
+3. Activate skill `code-reviewer` (supported by `python-linter` or relevant language linters). When reviewing caching or queue implementations (Redis, Kafka, RabbitMQ), activate `caching-queues-reviewer` to audit cache stampede, consumer idempotency, and partition key distribution.
 4. Review against the 7 dimensions: logic correctness, error boundaries, edge cases, test quality, security, performance, and style.
 5. Record verdict:
    ```bash
@@ -113,6 +113,7 @@ python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py
    - Verify absence of hidden quadratic loops (e.g. `array.includes()` or `in list` inside loops).
    - Check queue operations for array shift antipatterns.
    - Audit recursive functions for stack depth traps and missing memoization.
+   - Inspect database queries with `sql-executor` (`explain_query`) to identify $O(N)$ unindexed full table scans, Cartesian joins, and N+1 query patterns.
 4. Verify no `[P0]` or `[P1]` complexity blockers exist.
 5. Record verdict:
    ```bash
@@ -122,7 +123,7 @@ python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py
 ### Step 6: Stage 5 — `architecturechecks`
 1. Generate handoff context: `orchestrator-context-manager.py handoff --stage architecturechecks`.
 2. Activate skill `detect-overengineering` and `design-pattern-detector`.
-3. Check for premature abstractions, layer bloat, trampoline methods, and YAGNI violations.
+3. Check for premature abstractions, layer bloat, trampoline methods, and YAGNI violations, verifying alignment with language specialist anti-bloat guardrails.
 4. Verify over-engineering risk score is LOW (< 40).
 5. Record verdict:
    ```bash
@@ -141,10 +142,12 @@ python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py
 
 ### Step 8: Stage 7 — `securitychecks`
 1. Generate handoff context: `orchestrator-context-manager.py handoff --stage securitychecks`.
-2. Activate skill `github-security-scanner-hook`.
+2. Activate skill `github-security-scanner-hook` and `api-security`.
 3. Run `detect-secrets` scan for credentials, private keys, and tokens.
 4. Run `semgrep` scan for OWASP injection flaws (command injection, path traversal, SQLi, XSS).
-5. Record verdict:
+5. Audit API authentication and cryptographic hygiene with `api-security` (JWT RS256/ES256, OAuth 2.1 PKCE, session cookie flags, mTLS).
+6. Verify database operations with `sql-connector` (`audit_query_safety`) to guarantee zero destructive SQL (`DROP TABLE`, `DELETE *`).
+7. Record verdict:
    ```bash
    python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage securitychecks --status PASSED --summary "Security gate passed: 0 secrets, 0 vulnerabilities"
    ```
@@ -172,4 +175,10 @@ If any quality gate fails (`FAILED` or `BLOCKED`):
 
 - [Agent Orchestrator Reference Guide](file:///.github/skills/agent-orchestrator/references/agent-orchestrator-reference.md) — Architectural patterns, sub-agent prompts, and gate policies.
 - Context Manager Script: `.github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py`
-- [SQL Connector MCP Server](file:///.github/skills/sql-connector/SKILL.md) — Multi-database query and schema inspection with zero-tolerance destructive DDL/DML guardrails (`sql-connector`).
+- [API Security Audit](file:///.github/skills/api-security/SKILL.md) — Universal API authentication, token security, and cryptographic audit.
+- [Python API Writer](file:///.github/skills/python-api-writer/SKILL.md) — Production-grade FastAPI, Django, and Django Ninja endpoint engineering.
+- [Caching & Queues Reviewer](file:///.github/skills/caching-queues-reviewer/SKILL.md) — Redis, Kafka, and RabbitMQ architecture and code review.
+- [SQL Executor](file:///.github/skills/sql-executor/SKILL.md) — Multi-engine SQL query tuning, indexing, and validation.
+- [SQL Connector MCP Server](file:///.github/skills/sql-connector/SKILL.md) — Multi-database query and schema inspection with zero-tolerance SQL guardrails.
+- [Detect Overengineering](file:///.github/skills/detect-overengineering/SKILL.md) — Anti-bloat heuristics and YAGNI auditing.
+- [Troubleshoot and Fix](file:///.github/skills/troubleshoot-and-fix/SKILL.md) — Isolated testbed reproduction and 3-iteration circuit breaker remediation.
