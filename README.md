@@ -21,6 +21,7 @@ These skills provide ready-made workflows for modern software engineering — sp
 | [`csharp-developer`](#csharp-developer) | **Language Specialist** | C# 12/13, .NET 8/9, Minimal APIs, MVVM/WPF, EF Core | `"write c# code"` |
 | [`code-reviewer`](#code-reviewer) | **Architecture & Quality** | 7-dimension senior review ([P0] Blocker to [P3] Nit) | `"review code"` |
 | [`algorithmic-complexity-analyzer`](#algorithmic-complexity-analyzer) | **Architecture & Quality** | Big-O time/space audits ($O(1) \dots O(2^n)$), hidden loop traps | `"check time complexity"` |
+| [`caching-queues-reviewer`](#caching-queues-reviewer) | **Architecture & Quality** | Redis, Kafka, Lua scripts, stampede defense, multi-language caching | `"review caching code"` |
 | [`detect-overengineering`](#detect-overengineering) | **Architecture & Quality** | YAGNI audits, layer bloat, trampoline pass-throughs | `"check for over-engineering"` |
 | [`design-pattern-detector`](#design-pattern-detector) | **Architecture & Quality** | Structural AST extraction of design patterns & anti-patterns | `"detect design patterns"` |
 | [`architectural-planning`](#architectural-planning) | **Architecture & Quality** | Interactive system design, Mermaid specs & tech choices | `"plan my architecture"` |
@@ -91,6 +92,10 @@ Language-independent asymptotic complexity auditing (Big-O). Audits worst-case t
 ### `detect-overengineering`
 Analyzes source code to detect premature abstractions, speculative generality (YAGNI violations), layer bloat, and trampoline pass-through methods. Uses structural extraction to score over-engineering risk and output simplified refactoring diffs.
 - **Trigger phrases:** `"check for over-engineering"`, `"detect over-engineering"`, `"find over-engineered code"`, `"simplify this code"`, `"audit for over-engineering"`, `"check yagni violations"`.
+
+### `caching-queues-reviewer`
+Comprehensive architectural guidance and code review auditing for caching, distributed memory systems, and message queues (Redis, Apache Kafka, RabbitMQ, Lua scripting, multi-tier HybridCache, and ecosystem drivers across JavaScript/TypeScript, Python, and C#/.NET). Audits code changes for cache stampede defense, eviction policies, atomic Lua operations, poison pill handling, Kafka partition skew, and offset commit hygiene.
+- **Trigger phrases:** `"review caching code"`, `"kafka vs redis"`, `"redis lua script"`, `"audit queue architecture"`, `"cache stampede defense"`, `"c# hybridcache"`, `"python redis celery"`, `"bullmq review"`.
 
 ### `design-pattern-detector`
 Identifies design patterns (Singleton, Factory, Observer, Strategy, Builder, Decorator, Repository, Command, Template Method, Facade, Dependency Injection) and anti-patterns (God Object / God File, Long Method, Feature Envy) using structural AST extraction combined with contextual semantic reasoning.
@@ -239,6 +244,7 @@ developer-productivity-skills/
 │       ├── agent-orchestrator/       # 7-stage multi-agent SDLC workflow
 │       ├── algorithmic-complexity-analyzer/ # Language-agnostic Big-O analysis
 │       ├── architectural-planning/   # Interactive system architecture designer
+│       ├── caching-queues-reviewer/  # Redis, Kafka, Lua scripts & queue auditor
 │       ├── code-reviewer/            # 7-dimension code reviewer ([P0] to [P3])
 │       ├── csharp-developer/         # Modern C# 12/13, .NET 8/9, Minimal APIs, MVVM pack
 │       ├── design-pattern-detector/  # AST design pattern & anti-pattern detector
