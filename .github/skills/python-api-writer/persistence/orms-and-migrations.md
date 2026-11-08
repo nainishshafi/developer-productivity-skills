@@ -86,3 +86,4 @@ engine = create_async_engine(
 > **Total Database Connections Formula**:
 > $$\text{Max DB Connections} = \text{Gunicorn Workers} \times (\text{pool\_size} + \text{max\_overflow}) \times \text{Container Instances}$$
 > Ensure this total is strictly below the database server's `max_connections` (e.g., PostgreSQL default 100). Use **PgBouncer** when scaling beyond 4 API instances.
+

@@ -111,3 +111,4 @@ gunicorn src.main:app \
 
 - **Worker Calculation**: Sizing formula: `workers = (2 * CPU_CORES) + 1`
 - **Memory Footprint**: Each worker process occupies independent memory; size Docker container RAM accordingly.
+

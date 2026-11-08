@@ -133,3 +133,4 @@ class Order(models.Model):
 # Usage in views/services:
 active_orders = Order.objects.active().for_customer(user.id).with_items_count()
 ```
+

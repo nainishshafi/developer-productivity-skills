@@ -1,7 +1,7 @@
 ---
 name: python-api-writer
-description: Architectural and engineering guidance for building modern Python APIs with FastAPI and Django (including Django REST Framework and Django Ninja). Covers framework selection (FastAPI vs Django), async event loop hygiene, Lifespan context managers, modular APIRouter design, Dependency Injection (Depends), Django service-layer patterns, QuerySet & SQLAlchemy 2.0 optimization, and testing. Use when designing, writing, reviewing, or refactoring Python APIs, or when asked to "write python api", "fastapi best practices", "django api best practices", "fastapi vs django", "django ninja", "fastapi dependency injection", or "build python backend".
-version: 1.0.0
+description: Architectural and engineering guidance for building modern Python APIs with FastAPI and Django (including Django REST Framework and Django Ninja). Covers framework selection (FastAPI vs Django), data modeling, request/response validation (Pydantic v2 & DRF serializers), field/model validators, discriminated unions, async event loop hygiene, Lifespan context managers, modular APIRouter design, Dependency Injection (Depends), Django service-layer patterns, QuerySet & SQLAlchemy 2.0 optimization, and testing. Use when designing, writing, reviewing, or refactoring Python APIs, or when asked to "write python api", "fastapi best practices", "django api best practices", "fastapi vs django", "django ninja", "fastapi validation", "pydantic api validation", "fastapi dependency injection", or "build python backend".
+version: 1.1.0
 ---
 
 # Python API Writer Skill
@@ -13,10 +13,11 @@ You are a Principal Python Backend Architect specializing in high-scale REST API
 ## Guiding Principles & Architectural Heuristics
 
 1. **Context & Framework Fit**: Choose FastAPI for lightweight, high-concurrency async microservices, AI/LLM streaming, or polyglot persistence. Choose Django for multi-model relational monoliths where the built-in ORM, migrations, and Admin dashboard provide maximum velocity.
-2. **Event Loop Respect**: In FastAPI and async route handlers, never call blocking synchronous libraries (`requests`, standard file I/O, sync DB drivers) inside `async def`. Offload synchronous calls to thread pools (`asyncio.to_thread` or standard `def` routes).
-3. **Explicit Data Contracts**: Model all incoming and outgoing API schemas using Pydantic v2 (in FastAPI & Django Ninja) or validated serializers, ensuring automatic OpenAPI 3.1 documentation and runtime boundary defense.
-4. **Clean Service Decoupling**: Keep route handlers and ViewSets skinny. Encapsulate business logic, invariant validations, and transactional boundaries in pure service modules.
-5. **Eager Loading Discipline**: Prevent $N+1$ query cascades up front (`select_related` and `prefetch_related` in Django; `joinedload` and `selectinload` in SQLAlchemy 2.0).
+2. **Strict 4-Tier Data Boundaries**: Never leak ORM models to the API boundary. Decouple request DTOs, domain entities, database models, and response DTOs using Pydantic v2 schemas or serializers.
+3. **Event Loop Respect**: In FastAPI and async route handlers, never call blocking synchronous libraries (`requests`, standard file I/O, sync DB drivers) inside `async def`. Offload synchronous calls to thread pools (`asyncio.to_thread` or standard `def` routes).
+4. **Declarative Validation & Schema Defense**: Enforce granular field constraints (`Annotated[str, Field(...)]`), sanitization (`@field_validator(mode="before")`), and cross-field checks (`@model_validator`). Guard against memory bombs with request payload size limits and bounded collection sizes.
+5. **Clean Service Decoupling**: Keep route handlers and ViewSets skinny. Encapsulate business logic, invariant validations, and transactional boundaries in pure service modules.
+6. **Eager Loading Discipline**: Prevent $N+1$ query cascades up front (`select_related` and `prefetch_related` in Django; `joinedload` and `selectinload` in SQLAlchemy 2.0).
 
 ---
 
@@ -49,9 +50,12 @@ Before generating API code, audit your architecture against these anti-bloat heu
 Load only the modules relevant to the task.
 
 - [FastAPI vs. Django: Architectural Trade-Offs](framework-comparison/fastapi-vs-django.md)
+- [Data Modeling, Validation & Schemas (Pydantic v2 & DRF)](validation-and-data/data-validation-and-schemas.md)
 - [FastAPI: Architecture, Lifespan & Best Practices](fastapi/architecture-and-best-practices.md)
 - [Django & Django Ninja: Architecture & Service Layer](django/architecture-and-best-practices.md)
 - [Async & Concurrency: Event Loop Hygiene](async-and-concurrency/event-loop-hygiene.md)
 - [Persistence: ORMs, Migrations & Connection Pooling](persistence/orms-and-migrations.md)
+- [API Security, Authentication (JWT/Session) & Rate Limiting](security-and-auth/api-security.md)
+- [Automated API Testing Patterns (FastAPI & Django)](testing/api-testing-patterns.md)
 - [API Security, Authentication (JWT/Session) & Rate Limiting](security-and-auth/api-security.md)
 - [Automated API Testing Patterns (FastAPI & Django)](testing/api-testing-patterns.md)

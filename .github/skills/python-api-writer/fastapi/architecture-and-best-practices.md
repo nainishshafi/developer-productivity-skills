@@ -168,3 +168,4 @@ async def stream_completion(prompt: str):
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
     )
 ```
+

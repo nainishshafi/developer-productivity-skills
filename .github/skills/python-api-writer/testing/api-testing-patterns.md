@@ -105,3 +105,4 @@ def test_place_order_service(auth_client):
     product.refresh_from_db()
     assert product.stock == 4
 ```
+
