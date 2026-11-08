@@ -15,7 +15,7 @@ These skills provide ready-made workflows for modern software engineering — sp
 | [`typescript-developer`](#typescript-developer) | **Language Specialist** | Node.js, TS 5+, Zod, Drizzle/Prisma, event loop hygiene | `"write typescript code"` |
 | [`python-developer`](#python-developer) | **Language Specialist** | Python 3.10–3.13, Pydantic v2, asyncio, memory/GC | `"write python code"` |
 | [`react-developer`](#react-developer) | **Language Specialist** | React 18/19, Next.js RSC, Zustand, TanStack Query | `"write react code"` |
-| [`java-developer`](#java-developer) | **Language Specialist** | Modern Java 17/21/25 LTS, Spring Boot 3+, Virtual Threads | `"review java code"` |
+| [`java-developer`](#java-developer) | **Language Specialist** | Java 17/21/25, Spring Boot 3+, Virtual Threads, Low-Latency, Spring Batch | `"write java code"` |
 | [`csharp-developer`](#csharp-developer) | **Language Specialist** | C# 12/13, .NET 8/9, Minimal APIs, MVVM/WPF, EF Core | `"write c# code"` |
 | [`code-reviewer`](#code-reviewer) | **Architecture & Quality** | 7-dimension senior review ([P0] Blocker to [P3] Nit) | `"review code"` |
 | [`algorithmic-complexity-analyzer`](#algorithmic-complexity-analyzer) | **Architecture & Quality** | Big-O time/space audits ($O(1) \dots O(2^n)$), hidden loop traps | `"check time complexity"` |
@@ -61,9 +61,9 @@ Architectural and engineering guidance for modern React (React 18 & 19, Next.js 
 - **Supported environments:** React 18, React 19, Next.js App Router, Remix / React Router v7, Vite.
 
 ### `java-developer`
-Comprehensive guidelines and best practices for modern Java (LTS 17/21/25) and Spring Boot enterprise applications.
-- **Core Topics:** Modern idioms (records, sealed types, pattern matching), Virtual Threads & CompletableFuture, carrier pinning avoidance, collections selection, JVM tuning & low-latency GC (ZGC/Shenandoah/G1), application security, Spring Boot 3+ production patterns (RFC 7807 problem details, RestClient, slice/testcontainer testing), and legacy modernization (refactoring JSP and Spring Webflow to RESTful microservices).
-- **Trigger phrases:** `"review java code"`, `"spring boot best practices"`, `"optimize jvm"`, `"write java unit test"`, `"design java service"`, `"java concurrency guide"`, `"virtual threads vs reactor"`, `"java security audit"`, `"migrate to spring boot 3"`.
+Comprehensive architectural and engineering guidance for modern Java (LTS 17/21/25) and Spring Boot enterprise applications.
+- **Core Topics:** Feature decision matrices (when to use records vs classes, virtual threads vs CompletableFuture, sealed ADTs vs enums, JPA vs JdbcClient), zero-reflection execution (MethodHandles, VarHandle, MapStruct, GraalVM AOT hints), low-latency architecture & mechanical sympathy (CPU cache lines, false sharing, `@Contended`, zero-allocation steady states, off-heap FFM `Arena`, LMAX Disruptor, Chronicle Queue), enterprise data pipelines (Spring Batch chunk-oriented steps, `JdbcTemplate` & `JdbcClient` cursor streaming, bulk inserts without GC bottlenecks), Virtual Threads & carrier pinning avoidance, collections selection, JVM tuning (Generational ZGC/G1), and Spring Boot 3+ production patterns.
+- **Trigger phrases:** `"write java code"`, `"develop java service"`, `"java architecture best practices"`, `"spring boot best practices"`, `"low latency java"`, `"spring batch pipeline"`, `"zero reflection java"`, `"optimize jvm"`, `"write java unit test"`, `"design java service"`, `"java concurrency guide"`, `"virtual threads vs reactor"`, `"migrate to spring boot 3"`.
 - **Supported versions:** Java 17, 21, 25 LTS; Spring Boot 3.x.
 
 ### `csharp-developer`
