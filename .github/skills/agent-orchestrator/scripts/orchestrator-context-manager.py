@@ -1,21 +1,27 @@
 #!/usr/bin/env python3
-"""
-orchestrator-context-manager.py — Pipeline state and context handoff manager for agent-orchestrator.
+r"""
+orchestrator-context-manager.py — Pipeline state, context handoff, and memory manager for agent-orchestrator.
 
-Manages execution state, stage artifacts, and context packaging across the 6 SDLC stages:
+Manages execution state, stage artifacts, memory tracking (save-memory / load-memory),
+and context packaging across the 7 SDLC stages:
 1. plan
 2. develop
 3. codereview
-4. architecturechecks
-5. halucinationchecks
-6. securitychecks
+4. complexitychecks
+5. architecturechecks
+6. halucinationchecks
+7. securitychecks
+
+Always execute with the repository virtual environment:
+    Windows: .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py <command>
+    POSIX:   .venv/bin/python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py <command>
 
 Usage:
-    python orchestrator-context-manager.py init --task "Feature name or description"
-    python orchestrator-context-manager.py status [--run-id <id>]
-    python orchestrator-context-manager.py handoff --stage <stage> [--run-id <id>]
-    python orchestrator-context-manager.py record --stage <stage> --status <PASSED|FAILED|BLOCKED|SKIPPED> --summary "Notes" [--run-id <id>]
-    python orchestrator-context-manager.py report [--run-id <id>]
+    .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py init --task "Feature name or description"
+    .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py status [--run-id <id>]
+    .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py handoff --stage <stage> [--run-id <id>]
+    .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage <stage> --status <PASSED|FAILED|BLOCKED|SKIPPED> --summary "Notes" [--run-id <id>]
+    .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py report [--run-id <id>]
 """
 
 import argparse
@@ -40,45 +46,59 @@ STAGES = [
 STAGE_SKILLS_MAP = {
     "plan": {
         "primary_skill": "architectural-planning",
-        "supporting_skills": ["trace-code-context", "load-memory"],
+        "supporting_skills": ["trace-code-context", "load-memory", "save-memory", "llm-as-judge", "api-security", "caching-queues-reviewer", "sql-executor"],
         "subagent_role": "Architecture & Planning Specialist",
         "description": "System design, requirements breakdown, component boundaries, and contract definition.",
+        "memory_load": "load_memory(category='ledger') to check architecture truths; load_memory(category='journal') for past design traps.",
+        "memory_save": "save_memory(category='ledger') for architecture decisions/contracts; save_memory(category='journal') for plan learnings.",
     },
     "develop": {
         "primary_skill": "python-developer / typescript-developer / react-developer / java-developer / csharp-developer",
-        "supporting_skills": ["load-memory", "save-memory", "troubleshoot-and-fix", "legacy-code-modernization"],
+        "supporting_skills": ["load-memory", "save-memory", "troubleshoot-and-fix", "legacy-code-modernization", "sql-connector"],
         "subagent_role": "Core Implementation & Test Engineer",
         "description": "Production code authoring, automated unit/integration tests, legacy code refactoring/modernization, and implementation of planned specs.",
+        "memory_load": "load_memory(category='ledger') for plan contracts; load_memory(category='sidecar') for active WIP; search_memory for domain traps.",
+        "memory_save": "save_memory(category='sidecar') for WIP state & touched files; save_memory(category='journal') for implementation lessons.",
     },
     "codereview": {
         "primary_skill": "code-reviewer",
-        "supporting_skills": ["python-linter", "design-pattern-detector"],
+        "supporting_skills": ["python-linter", "design-pattern-detector", "caching-queues-reviewer", "load-memory", "save-memory"],
         "subagent_role": "Senior Code Reviewer",
         "description": "Code quality, readability, style conformance, idiomatic usage, error handling, and clean code inspection.",
+        "memory_load": "load_memory(category='sidecar') for WIP context; search_memory for past review patterns and missed bugs.",
+        "memory_save": "save_memory(category='journal') for review findings and traps detected.",
     },
     "complexitychecks": {
         "primary_skill": "algorithmic-complexity-analyzer",
-        "supporting_skills": ["trace-code-context"],
+        "supporting_skills": ["trace-code-context", "sql-executor", "load-memory", "save-memory"],
         "subagent_role": "Algorithmic Complexity & Performance Auditor",
         "description": "Asymptotic Big-O time and space complexity analysis, hidden quadratic loop detection, collection efficiency, and recursion depth audits.",
+        "memory_load": "search_memory for known performance bottlenecks, full table scans, or quadratic loop patterns.",
+        "memory_save": "save_memory(category='journal') for complexity fixes and asymptotic efficiency learnings.",
     },
     "architecturechecks": {
         "primary_skill": "detect-overengineering",
-        "supporting_skills": ["design-pattern-detector", "trace-code-context"],
+        "supporting_skills": ["design-pattern-detector", "trace-code-context", "load-memory", "save-memory"],
         "subagent_role": "Principal Architecture Auditor",
         "description": "Structural analysis, detection of premature abstractions (YAGNI), layer bloat, anti-patterns, and dependency call-graphs.",
+        "memory_load": "load_memory(category='ledger') for architecture rules; search_memory for past over-engineering traps.",
+        "memory_save": "save_memory(category='ledger') for approved structural conventions; save_memory(category='journal') for YAGNI lessons.",
     },
     "halucinationchecks": {
         "primary_skill": "scan-halucinated-tests",
-        "supporting_skills": ["trace-code-context"],
+        "supporting_skills": ["trace-code-context", "load-memory", "save-memory"],
         "subagent_role": "Ground-Truth Verification Auditor",
         "description": "Verification of test symbols, non-existent imports, fabricated APIs, and phantom dependencies against ground-truth source code.",
+        "memory_load": "load_memory(category='ledger') for verified API contracts; search_memory for mock drift lessons.",
+        "memory_save": "save_memory(category='journal') for hallucinated test corrections and ground-truth verification learnings.",
     },
     "securitychecks": {
         "primary_skill": "github-security-scanner-hook",
-        "supporting_skills": ["semgrep", "detect-secrets"],
+        "supporting_skills": ["semgrep", "detect-secrets", "api-security", "sql-connector", "load-memory", "save-memory"],
         "subagent_role": "Application Security Auditor",
         "description": "Secrets scanning, API key leakage detection, OWASP vulnerability audit (injections, traversal, shell execution), and secure defaults.",
+        "memory_load": "load_memory(category='ledger') for security invariants & token rules; search_memory for OWASP patterns.",
+        "memory_save": "save_memory(category='ledger') for permanent security rules; save_memory(category='journal') for vulnerabilities prevented.",
     },
 }
 
@@ -235,9 +255,15 @@ def cmd_handoff(args: argparse.Namespace) -> None:
 
     print("\n## Stage Instructions for Sub-Agent")
     print(f"1. Activate skill: `{stage_spec['primary_skill']}`.")
-    print("2. Focus strictly on this stage's scope. Do not regress upstream stage decisions.")
-    print("3. Write stage findings and generated files into the workspace.")
-    print(f"4. Record results with: python orchestrator-context-manager.py record --stage {stage} --status PASSED --summary \"<findings>\"")
+    print("2. Memory Retrieval: Check useful past knowledge via load-memory / search_memory:")
+    print(f"   - Recommendation: {stage_spec.get('memory_load', 'load_memory() for relevant context.')}")
+    print("3. Focus strictly on this stage's scope. Do not regress upstream stage decisions.")
+    print("4. Write stage findings and generated files into the workspace.")
+    print("5. Sub-Agent Output Tracking (save-memory):")
+    print(f"   - Persist findings & learnings: {stage_spec.get('memory_save', 'save_memory(category=\'journal\')')}")
+    print(f"6. Record gate results with:")
+    print(f"   Windows: .\\.venv\\Scripts\\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage {stage} --status PASSED --summary \"<findings>\"")
+    print(f"   POSIX:   .venv/bin/python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage {stage} --status PASSED --summary \"<findings>\"")
     print("# " + "=" * 60)
 
 

@@ -40,15 +40,15 @@ The Orchestrator solves this through **Bounded Stage Handoffs**:
 
 ## 2. The 7-Stage SDLC Pipeline Breakdown
 
-| Stage | Name | Primary Skill | Supporting Skills | Gate Criteria |
+| Stage | Name | Primary Skill | Supporting Skills & Memory Bus | Gate Criteria |
 |---|---|---|---|---|
-| **1** | `plan` | `architectural-planning` | `trace-code-context`, `load-memory`, `llm-as-judge`, `api-security`, `caching-queues-reviewer`, `sql-executor` | Clear problem definition, component boundaries, API/contract specs, cache/queue architecture, and test strategy. |
-| **2** | `develop` | Language developer (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer`, `powershell-writer`) | `load-memory`, `save-memory`, `troubleshoot-and-fix`, `sql-connector` (ephemeral SQLite `:memory:`) | Code implements plan contracts, passes unit/integration tests, zero unhandled errors, passes over-engineering self-checks. |
-| **3** | `codereview` | `code-reviewer` | `python-linter`, `design-pattern-detector`, `caching-queues-reviewer` | Clean code conventions, robust error handling, edge-case coverage, queue/cache resilience, zero P0/P1 issues. |
-| **4** | `complexitychecks` | `algorithmic-complexity-analyzer` | `trace-code-context`, `sql-executor` (`explain_query`) | Asymptotic time & space efficiency verified, zero hidden quadratic loops, zero unbounded recursion, zero unindexed $O(N)$ full table scans. |
-| **5** | `architecturechecks` | `detect-overengineering` | `design-pattern-detector`, `trace-code-context` | No premature abstractions, zero YAGNI violations, layer depth <= 3, low overengineering risk score (< 40). |
-| **6** | `halucinationchecks` | `scan-halucinated-tests` | `trace-code-context` | Zero phantom symbols, all test mock targets verified against ground truth, valid imports. |
-| **7** | `securitychecks` | `github-security-scanner-hook`, `api-security` | `detect-secrets`, `semgrep`, `sql-connector` (`audit_query_safety`) | Zero leaked credentials/API keys, zero high/critical OWASP vulnerabilities, verified token/cryptographic hygiene, zero destructive SQL. |
+| **1** | `plan` | `architectural-planning` | `load-memory`, `save-memory`, `trace-code-context`, `llm-as-judge`, `api-security`, `caching-queues-reviewer`, `sql-executor` | Clear problem definition, component boundaries, API/contract specs, cache/queue architecture, and test strategy.<br>**Memory**: `ledger` ADRs + `journal` planning learnings. |
+| **2** | `develop` | Language developer (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer`, `powershell-writer`) | `load-memory`, `save-memory`, `troubleshoot-and-fix`, `sql-connector` (ephemeral SQLite `:memory:`) | Code implements plan contracts, passes unit/integration tests, zero unhandled errors, passes over-engineering self-checks.<br>**Memory**: `sidecar` active WIP + `journal` implementation lessons. |
+| **3** | `codereview` | `code-reviewer` | `load-memory`, `save-memory`, `python-linter`, `design-pattern-detector`, `caching-queues-reviewer` | Clean code conventions, robust error handling, edge-case coverage, queue/cache resilience, zero P0/P1 issues.<br>**Memory**: `journal` review findings & edge-case traps. |
+| **4** | `complexitychecks` | `algorithmic-complexity-analyzer` | `load-memory`, `save-memory`, `trace-code-context`, `sql-executor` (`explain_query`) | Asymptotic time & space efficiency verified, zero hidden quadratic loops, zero unbounded recursion, zero unindexed $O(N)$ full table scans.<br>**Memory**: `journal` Big-O optimizations. |
+| **5** | `architecturechecks` | `detect-overengineering` | `load-memory`, `save-memory`, `design-pattern-detector`, `trace-code-context` | No premature abstractions, zero YAGNI violations, layer depth <= 3, low overengineering risk score (< 40).<br>**Memory**: `ledger` architectural baselines + `journal` YAGNI learnings. |
+| **6** | `halucinationchecks` | `scan-halucinated-tests` | `load-memory`, `save-memory`, `trace-code-context` | Zero phantom symbols, all test mock targets verified against ground truth, valid imports.<br>**Memory**: `journal` mock corrections. |
+| **7** | `securitychecks` | `github-security-scanner-hook`, `api-security` | `load-memory`, `save-memory`, `detect-secrets`, `semgrep`, `sql-connector` (`audit_query_safety`) | Zero leaked credentials/API keys, zero high/critical OWASP vulnerabilities, verified token/cryptographic hygiene, zero destructive SQL.<br>**Memory**: `ledger` security invariants + `journal` vulnerability mitigations. |
 
 ---
 
@@ -154,9 +154,13 @@ UPSTREAM STAGE ARTIFACTS:
 
 BOUNDS & CONSTRAINTS:
 1. Focus exclusively on the {STAGE} objectives.
-2. Execute the primary skill: {PRIMARY_SKILL}.
-3. Record findings using:
-   python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage {STAGE} --status PASSED --summary "<summary>"
+2. Memory:
+   - Check useful context: load_memory(category=...) or search_memory(...)
+   - Track output & learnings: save_memory(category=..., summary=..., learnings=...)
+3. Execute the primary skill: {PRIMARY_SKILL}.
+4. Record findings using the repository virtual environment:
+   Windows: .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage {STAGE} --status PASSED --summary "<summary>"
+   POSIX:   .venv/bin/python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage {STAGE} --status PASSED --summary "<summary>"
 ```
 
 ---
@@ -203,6 +207,8 @@ To prevent token waste, cyclic hallucinations, and churn on insoluble defects:
 
 The orchestrator integrates the following specialized skills across stages:
 
+- [Save Memory](file:///.github/skills/save-memory/SKILL.md) — Persist high-signal project memory into `project-memory` (`ledger`, `sidecar`, `journal`).
+- [Load Memory](file:///.github/skills/load-memory/SKILL.md) — Retrieve project memory and hybrid semantic search without context bloat.
 - [Architectural Planning](file:///.github/skills/architectural-planning/SKILL.md) — System design, interface contracts, and ADR creation.
 - [API Security](file:///.github/skills/api-security/SKILL.md) — Universal API authentication, token security, and cryptographic audit.
 - [Python API Writer](file:///.github/skills/python-api-writer/SKILL.md) — Production-grade FastAPI, Django, and Django Ninja endpoint engineering.

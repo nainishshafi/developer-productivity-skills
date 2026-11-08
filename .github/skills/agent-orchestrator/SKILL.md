@@ -1,8 +1,8 @@
 ---
 name: agent-orchestrator
 description: >-
-  Orchestrates an end-to-end multi-agent development lifecycle across seven quality stages: plan -> develop -> codereview -> complexitychecks -> architecturechecks -> halucinationchecks -> securitychecks. Coordinates sub-agent handoffs, manages stage-isolated context, provides structured verification guidance across quality gates, and integrates isolated testbed remediation (troubleshoot-and-fix). Use when asked to "orchestrate a feature", "run full development pipeline", "plan-develop-review", "agent orchestrator", "orchestrate subagents", or "run full lifecycle checks".
-version: 1.2.0
+  Orchestrates an end-to-end multi-agent development lifecycle across seven quality stages: plan -> develop -> codereview -> complexitychecks -> architecturechecks -> halucinationchecks -> securitychecks. Coordinates sub-agent handoffs, manages stage-isolated context, tracks sub-agent outputs via save-memory (ledger, sidecar, journal), selectively loads relevant context across quality gates via load-memory, provides structured verification guidance, and integrates isolated testbed remediation (troubleshoot-and-fix). Use when asked to "orchestrate a feature", "run full development pipeline", "plan-develop-review", "agent orchestrator", "orchestrate subagents", or "run full lifecycle checks".
+version: 1.3.0
 ---
 
 # Agent Orchestrator
@@ -11,13 +11,20 @@ The **Agent Orchestrator** is an automated multi-agent workflow conductor that c
 
 ```
 [1. Plan] ──> [2. Develop] ──> [3. Code Review] ──> [4. Complexity Checks] ──> [5. Architecture Checks] ──> [6. Hallucination Checks] ──> [7. Security Checks]
-                                        │                      │                           │                         │
-                                        └──────────────────────┴─────────────┬─────────────┴─────────────────────────┘
+    │               │                 │                      │                           │                         │                          │
+    ▼               ▼                 ▼                      ▼                           ▼                         ▼                          ▼
+┌──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   PROJECT MEMORY BUS (project-memory MCP via save-memory & load-memory)                                          │
+│  • ledger: Architectural truths, interface contracts, schema strategies, and non-negotiable security invariants                                 │
+│  • sidecar: Active task state, sub-agent WIP handoffs, modified files list, and pending defect fixes                                            │
+│  • journal: Stage execution recaps containing BOTH distilled work summary AND mandatory learnings / traps avoided                                │
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                                             │
                                                                              ▼
                                                            [Remediation: troubleshoot-and-fix]
 ```
 
-At each stage, the orchestrator invokes the correct domain skill, packages bounded context for the specialized sub-agent, and evaluates explicit quality gates before proceeding.
+At each stage, the orchestrator invokes the specialized domain sub-agent, packages bounded context, tracks sub-agent outputs via **`save-memory`**, selectively retrieves useful context for downstream agents via **`load-memory`**, and evaluates explicit quality gates before proceeding.
 
 ---
 
@@ -25,6 +32,8 @@ At each stage, the orchestrator invokes the correct domain skill, packages bound
 
 - Building a new feature, service, or refactoring task requiring comprehensive verification.
 - Running multi-agent workflows where sub-agents require strictly scoped context (preventing context pollution).
+- Keeping track of sub-agent outputs, architectural decisions, and intermediate WIP using **`save-memory`**.
+- Selectively loading useful upstream decisions, contracts, and past bug learnings for downstream agents using **`load-memory`** and hybrid search.
 - Auditing algorithmic time and space complexity ($O(1) \dots O(2^n)$) and eliminating hidden quadratic loops or $O(N)$ database table scans.
 - Enforcing architectural standards, anti-pattern detection, and YAGNI compliance on generated code.
 - Verifying unit tests and mocks against source code to catch LLM hallucinations.
@@ -35,147 +44,266 @@ At each stage, the orchestrator invokes the correct domain skill, packages bound
 
 ## The 7 Pipeline Stages & Skill Mapping
 
-| # | Stage | Assigned Skill | Sub-Agent Role | Primary Responsibilities |
+| # | Stage | Assigned Skill | Sub-Agent Role | Primary Responsibilities & Memory Tracking |
 |---|---|---|---|---|
-| **1** | `plan` | `architectural-planning` | Architecture & Planning Specialist | Requirements decomposition, tech stack alignment, interface contracts, ADR creation. Supported by `llm-as-judge`, `api-security` (auth/topology), `caching-queues-reviewer` (queue/cache architecture), and `sql-executor` (schema/indexing strategy). |
-| **2** | `develop` | Language developer (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer`, `powershell-writer`) | Core Implementation Engineer | Production implementation, unit and integration tests, error handling, self-checks. Supported by `troubleshoot-and-fix` and `sql-connector` (ephemeral SQLite `:memory:` test fixtures). |
-| **3** | `codereview` | `code-reviewer` | Senior Code Reviewer | Multi-dimension code review (correctness, resilience, edge cases, clean code). Supported by linters and `caching-queues-reviewer` (Redis/Kafka/RabbitMQ PR review). |
-| **4** | `complexitychecks` | `algorithmic-complexity-analyzer` | Algorithmic Complexity Auditor | Asymptotic Big-O time and space complexity ($O(1) \dots O(2^n)$), hidden quadratic loops (`.includes()`, `in list`), recursion depth traps, and `sql-executor` (`explain_query`) for query execution plan complexity ($O(N)$ table scans). |
-| **5** | `architecturechecks` | `detect-overengineering` | Principal Architecture Auditor | Over-engineering detection, speculative generality (YAGNI), layer bloat, anti-patterns (`design-pattern-detector`), and language-specialist over-engineering self-checks. |
-| **6** | `halucinationchecks` | `scan-halucinated-tests` | Ground-Truth Verification Auditor | Cross-validating test assertions, mocks, and imports against real AST symbols (`trace-code-context`). |
-| **7** | `securitychecks` | `github-security-scanner-hook`, `api-security` | Application Security Auditor | Secret/credential scanning (`detect-secrets`), OWASP pattern analysis (`semgrep`), API auth audit (JWT/OAuth 2.1/mTLS), and `sql-connector` (`audit_query_safety` firewall). |
+| **1** | `plan` | `architectural-planning` | Architecture & Planning Specialist | Requirements decomposition, tech stack alignment, interface contracts, ADR creation. Supported by `llm-as-judge`, `api-security`, `caching-queues-reviewer`, `sql-executor`.<br>**Memory**: Load existing constraints via `load-memory`; track contracts in `ledger` & planning learnings in `journal` via `save-memory`. |
+| **2** | `develop` | Language developer (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer`, `powershell-writer`) | Core Implementation Engineer | Production implementation, unit/integration tests, error handling, self-checks. Supported by `legacy-code-modernization`, `troubleshoot-and-fix`, `sql-connector` (ephemeral SQLite `:memory:`).<br>**Memory**: Load contracts from `ledger` & active task from `sidecar`; track WIP in `sidecar` & implementation learnings in `journal`. |
+| **3** | `codereview` | `code-reviewer` | Senior Code Reviewer | Multi-dimension code review (correctness, resilience, edge cases, clean code). Supported by linters and `caching-queues-reviewer`.<br>**Memory**: Load WIP diff context from `sidecar`; search past review traps; track review findings in `journal`. |
+| **4** | `complexitychecks` | `algorithmic-complexity-analyzer` | Algorithmic Complexity Auditor | Asymptotic Big-O time and space complexity ($O(1) \dots O(2^n)$), hidden quadratic loops (`.includes()`, `in list`), recursion depth traps, and `sql-executor` (`explain_query`) for query execution plan complexity ($O(N)$ table scans).<br>**Memory**: Search memory for known query bottlenecks; record algorithmic efficiency learnings in `journal`. |
+| **5** | `architecturechecks` | `detect-overengineering` | Principal Architecture Auditor | Over-engineering detection, speculative generality (YAGNI), layer bloat, anti-patterns (`design-pattern-detector`), and language-specialist over-engineering self-checks.<br>**Memory**: Load architecture rules from `ledger`; record approved structural invariants in `ledger` & YAGNI learnings in `journal`. |
+| **6** | `halucinationchecks` | `scan-halucinated-tests` | Ground-Truth Verification Auditor | Cross-validating test assertions, mocks, and imports against real AST symbols (`trace-code-context`).<br>**Memory**: Load verified interface contracts from `ledger`; record mock drift corrections in `journal`. |
+| **7** | `securitychecks` | `github-security-scanner-hook`, `api-security` | Application Security Auditor | Secret/credential scanning (`detect-secrets`), OWASP pattern analysis (`semgrep`), API auth audit (JWT/OAuth 2.1/mTLS), and `sql-connector` (`audit_query_safety` firewall).<br>**Memory**: Load security baselines from `ledger`; persist permanent security rules in `ledger` & vulnerabilities avoided in `journal`. |
+
+---
+
+## Sub-Agent Memory Tracking & Selective Context Loading
+
+Monolithic agent sessions suffer from context pollution: thousands of tokens of intermediate trial-and-error outputs degrade the model's reasoning. The Orchestrator resolves this by treating the **`project-memory`** MCP server as a **shared memory bus**:
+
+```
+                       ┌──────────────────────────────────────────────┐
+                       │          Orchestrator Execution Hub          │
+                       └──────────────┬────────────────┬──────────────┘
+                                      │                │
+            save_memory(output)       ▼                ▼       load_memory(useful)
+       ┌─────────────────────────────────┐          ┌─────────────────────────────────┐
+       │      Sub-Agent Output Track     │          │    Selective Stage Loading      │
+       │                                 │          │                                 │
+       │  • ledger: Architectural truths │          │  • category: "ledger"           │
+       │  • sidecar: Active task state   │          │  • category: "sidecar"          │
+       │  • journal: Recaps + Learnings  │          │  • hybrid search (40% semantic) │
+       └─────────────────────────────────┘          └─────────────────────────────────┘
+```
+
+### 1. Tracking Sub-Agent Outputs (`save-memory`)
+
+Every sub-agent saves distilled, high-signal results into one of 3 strict categories:
+
+1. **`ledger` (Permanent Architectural Truths & Contracts)**:
+   - Persisted primarily during `plan`, `architecturechecks`, and `securitychecks`.
+   - Records non-negotiable constraints, database schema definitions, API signature contracts, authentication topologies, and security rules.
+   - Example:
+     ```json
+     {
+       "name": "save_memory",
+       "arguments": {
+         "category": "ledger",
+         "title": "ADR: User Authentication & Token Signature Standards",
+         "summary": "Mandated asymmetric RS256 JWT tokens with public key rotation, HttpOnly SameSite=Strict session cookies, and PKCE on OAuth 2.1 authorization code flow.",
+         "learnings": "Symmetric HS256 secrets in multi-service architectures increase leak blast radius; RS256 enables verification without sharing signing keys.",
+         "tags": ["architecture", "auth", "jwt", "adr", "security"]
+       }
+     }
+     ```
+
+2. **`sidecar` (Active WIP & Sub-Agent Handoff State)**:
+   - Persisted during `develop`, `codereview`, and `troubleshoot-and-fix`.
+   - Records current WIP status, modified files list, open review items, or active bug reproduction status.
+   - Keeps immediate downstream sub-agents informed without dragging raw logs into the prompt.
+
+3. **`journal` (Stage Recaps with Mandatory Learnings)**:
+   - Persisted at the completion of **every** stage.
+   - **Strict Requirement**: Must include **both** `summary` (what the stage accomplished) and **`learnings`** (specific traps discovered or mistakes avoided).
+   - Example:
+     ```json
+     {
+       "name": "save_memory",
+       "arguments": {
+         "category": "journal",
+         "title": "Stage 4 (complexitychecks): Optimized Batch Membership Lookup",
+         "summary": "Detected and resolved O(N^2) quadratic loop in batch permission validator by replacing array.includes() with a Set lookup.",
+         "learnings": "Array.prototype.includes() inside loops turns O(N) operations into O(N^2); always convert lookups over large lists into Set or Map before iterating.",
+         "tags": ["complexity", "quadratic-loop", "stage-4", "big-o", "learnings"]
+       }
+     }
+     ```
+
+### 2. Selectively Loading Useful Context (`load-memory`)
+
+Downstream sub-agents must never receive raw upstream transcripts. Instead, the orchestrator selectively queries memory:
+
+1. **Targeted Category Retrieval**:
+   - Call `load_memory(category="ledger")` to retrieve core architecture rules and interface contracts before implementation (`develop`) or architecture checks (`architecturechecks`).
+   - Call `load_memory(category="sidecar")` to pick up active WIP details before reviewing (`codereview`) or remediating (`troubleshoot-and-fix`).
+
+2. **Domain-Specific Hybrid Search (40% Semantic + 60% Lexical)**:
+   - Call `search_memory(query="...", limit=5)` to pull domain-specific past lessons and mistakes avoided on demand:
+     - In `develop`: `search_memory("sqlite in-memory fixtures testbed")`
+     - In `codereview`: `search_memory("cache stampede redis distributed lock")`
+     - In `complexitychecks`: `search_memory("quadratic loop includes scan explain_query")`
+     - In `halucinationchecks`: `search_memory("phantom mock symbols ground truth")`
+     - In `securitychecks`: `search_memory("child_process spawn shell command injection")`
+     - In `troubleshoot-and-fix`: `search_memory("<error message or exception name>")`
+
+3. **Post-Pipeline WIP Flush**:
+   - Once all 7 stages pass and final delivery is verified, call `clear_sidecar` via `manage-memory` / `load-memory` to purge transient task state while preserving permanent `ledger` and `journal` entries.
 
 ---
 
 ## Context Handoff Protocol
 
-Sub-agents must never be given unbounded raw context. The orchestrator isolates stage execution using the **Context Manager**:
+Sub-agents are executed in isolated contexts. State and bounded handoff payloads are managed by the Context Manager.
+
+> [!IMPORTANT]
+> **Always run the Context Manager using the repository virtual environment:**
+> - Windows: `.\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py <command>`
+> - POSIX: `.venv/bin/python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py <command>`
 
 ```bash
 # Initialize a new pipeline run
-python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py init --task "<task-description>"
+.\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py init --task "<task-description>"
 
 # Generate bounded context handoff payload for a stage
-python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py handoff --stage <stage-name>
+.\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py handoff --stage <stage-name>
 
 # Record stage completion and quality gate verdict
-python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage <stage-name> --status PASSED --summary "<summary>"
+.\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage <stage-name> --status PASSED --summary "<summary>"
 
 # Inspect pipeline status
-python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py status
+.\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py status
 
 # Generate final delivery report
-python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py report
+.\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py report
 ```
-
-*(Note: In environments with virtualenv configured, run with `.venv/Scripts/python` or `.venv/bin/python`).*
 
 ---
 
 ## Step-by-Step Execution Workflow
 
 ### Step 1: Initialize Pipeline
-1. Run `orchestrator-context-manager.py init --task "<task>"` to generate a run directory under `.orchestrator/runs/<run-id>/`.
-2. Inspect workspace conventions and relevant memories (`load-memory` if available).
+1. Run `.\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py init --task "<task>"`.
+2. Inspect workspace conventions and relevant memories:
+   - Call `load_memory(category="ledger")` to retrieve permanent architectural rules.
+   - Call `load_memory(category="sidecar")` to check for active WIP or recent task handoffs.
 
 ### Step 2: Stage 1 — `plan`
-1. Invoke sub-agent with role `Architecture & Planning Specialist`.
-2. Activate skill `architectural-planning`.
-3. Produce system design, interface contracts, and list of files to create/modify. Consult `api-security` for token/auth architectures, `caching-queues-reviewer` for message broker and cache topologies, and `sql-executor` for data modeling, partitioning, and indexing strategies. Use `llm-as-judge` if evaluating trade-offs between competing architectures.
-4. Record verdict:
+1. **Load Context**: Retrieve existing architecture decisions via `load_memory(category="ledger")` and past planning traps via `load_memory(category="journal", limit=3)`.
+2. **Execute**: Invoke sub-agent with role `Architecture & Planning Specialist` and skill `architectural-planning`.
+   - Produce system design, interface contracts, and list of files to create/modify.
+   - Consult `api-security` for auth topologies, `caching-queues-reviewer` for queue/cache resilience, `sql-executor` for indexing and schemas, and `llm-as-judge` for trade-off evaluation.
+3. **Save Sub-Agent Output**:
+   - Save interface contracts to `ledger`: `save_memory(category="ledger", title="ADR: ...", summary="...", learnings="...")`.
+   - Record planning learnings to `journal`: `save_memory(category="journal", title="Stage 1 (plan) Recap", summary="...", learnings="...")`.
+4. **Record Gate**:
    ```bash
-   python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage plan --status PASSED --summary "Plan approved: contract defined" --artifact "plan.md"
+   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage plan --status PASSED --summary "Plan approved: contracts defined" --artifact "plan.md"
    ```
 
 ### Step 3: Stage 2 — `develop`
-1. Generate handoff context: `orchestrator-context-manager.py handoff --stage develop`.
-2. Pass bounded context (contracts, specifications, target files) to the implementation sub-agent.
-3. Activate relevant language skill (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer`, or `powershell-writer` for automation scripts and modules). For database testing, utilize `sql-connector` with ephemeral SQLite (`:memory:`) to seed fixtures without external dependencies. Run the language specialist's embedded Over-Engineering Self-Checks.
-4. Write production code and automated tests. Run test runner to verify green test status.
-5. Record verdict:
+1. **Load Context**: Generate handoff payload (`handoff --stage develop`).
+   - Call `load_memory(category="ledger")` to pull the interface contracts and schema requirements established in `plan`.
+   - Call `search_memory("<target-technology> gotchas pitfalls")` to retrieve past mistakes avoided.
+2. **Execute**: Activate language developer skill (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer`, or `powershell-writer`).
+   - For database fixtures, use `sql-connector` with ephemeral SQLite (`:memory:`) to seed fixtures without external dependencies.
+   - Run language-specialist Over-Engineering Self-Checks. Write production code and automated tests.
+3. **Save Sub-Agent Output**:
+   - Save active state to `sidecar`: `save_memory(category="sidecar", title="WIP: Feature Implementation", summary="Touched files: [...]. All unit tests passing.", learnings="...")`.
+   - Save implementation lessons to `journal`: `save_memory(category="journal", title="Stage 2 (develop) Recap", summary="...", learnings="...")`.
+4. **Record Gate**:
    ```bash
-   python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage develop --status PASSED --summary "All unit tests passing"
+   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage develop --status PASSED --summary "All unit tests passing"
    ```
 
 ### Step 4: Stage 3 — `codereview`
-1. Generate handoff context: `orchestrator-context-manager.py handoff --stage codereview`.
-2. Invoke reviewer sub-agent to inspect git diff or modified files.
-3. Activate skill `code-reviewer` (supported by `python-linter` or relevant language linters). When reviewing caching or queue implementations (Redis, Kafka, RabbitMQ), activate `caching-queues-reviewer` to audit cache stampede, consumer idempotency, and partition key distribution.
-4. Review against the 7 dimensions: logic correctness, error boundaries, edge cases, test quality, security, performance, and style.
-5. Record verdict:
+1. **Load Context**: Generate handoff payload (`handoff --stage codereview`).
+   - Call `load_memory(category="sidecar")` to inspect the list of modified files and implementation notes.
+   - Call `search_memory("code review patterns edge cases")` to review past review misses.
+2. **Execute**: Invoke reviewer sub-agent with skill `code-reviewer` (supported by `python-linter`, `design-pattern-detector`).
+   - If PR touches queues or cache, activate `caching-queues-reviewer` to audit stampede protection and consumer idempotency.
+   - Review against the 7 dimensions: logic correctness, error boundaries, edge cases, test quality, security, performance, and clean code.
+3. **Save Sub-Agent Output**:
+   - Save review findings to `journal`: `save_memory(category="journal", title="Stage 3 (codereview) Findings", summary="...", learnings="...")`.
+4. **Record Gate**:
    ```bash
-   python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage codereview --status PASSED --summary "Clean code review: 0 blocking issues"
+   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage codereview --status PASSED --summary "Clean code review: 0 blocking issues"
    ```
 
 ### Step 5: Stage 4 — `complexitychecks`
-1. Generate handoff context: `orchestrator-context-manager.py handoff --stage complexitychecks`.
-2. Activate skill `algorithmic-complexity-analyzer`.
-3. Audit worst-case time and space complexity:
-   - Verify absence of hidden quadratic loops (e.g. `array.includes()` or `in list` inside loops).
-   - Check queue operations for array shift antipatterns.
-   - Audit recursive functions for stack depth traps and missing memoization.
-   - Inspect database queries with `sql-executor` (`explain_query`) to identify $O(N)$ unindexed full table scans, Cartesian joins, and N+1 query patterns.
-4. Verify no `[P0]` or `[P1]` complexity blockers exist.
-5. Record verdict:
+1. **Load Context**: Generate handoff payload (`handoff --stage complexitychecks`).
+   - Call `search_memory("quadratic loop complexity bottleneck full table scan")` to recall relevant algorithmic traps.
+2. **Execute**: Activate skill `algorithmic-complexity-analyzer`.
+   - Audit worst-case Big-O time and space complexity ($O(1) \dots O(2^n)$).
+   - Check for hidden quadratic loops (`array.includes()`, `in list` inside loops).
+   - Check for array `.shift()` / queue-draining antipatterns and recursion depth traps.
+   - Inspect database queries with `sql-executor` (`explain_query`) for unindexed $O(N)$ table scans.
+3. **Save Sub-Agent Output**:
+   - Save complexity optimizations to `journal`: `save_memory(category="journal", title="Stage 4 (complexitychecks) Audit", summary="...", learnings="...")`.
+4. **Record Gate**:
    ```bash
-   python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage complexitychecks --status PASSED --summary "Complexity verified: O(n) time, O(1) auxiliary space"
+   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage complexitychecks --status PASSED --summary "Complexity verified: O(n) time, O(1) auxiliary space"
    ```
 
 ### Step 6: Stage 5 — `architecturechecks`
-1. Generate handoff context: `orchestrator-context-manager.py handoff --stage architecturechecks`.
-2. Activate skill `detect-overengineering` and `design-pattern-detector`.
-3. Check for premature abstractions, layer bloat, trampoline methods, and YAGNI violations, verifying alignment with language specialist anti-bloat guardrails.
-4. Verify over-engineering risk score is LOW (< 40).
-5. Record verdict:
+1. **Load Context**: Generate handoff payload (`handoff --stage architecturechecks`).
+   - Call `load_memory(category="ledger")` to compare implemented classes against architectural contracts and layering rules.
+2. **Execute**: Activate skills `detect-overengineering` and `design-pattern-detector`.
+   - Check for premature abstractions, layer bloat (layer depth > 3), trampoline methods, and YAGNI violations.
+   - Verify over-engineering risk score is LOW (< 40).
+3. **Save Sub-Agent Output**:
+   - Save accepted structural conventions to `ledger`: `save_memory(category="ledger", title="Architectural Standard: ...", summary="...", learnings="...")`.
+   - Save YAGNI learnings to `journal`: `save_memory(category="journal", title="Stage 5 (architecturechecks) Audit", summary="...", learnings="...")`.
+4. **Record Gate**:
    ```bash
-   python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage architecturechecks --status PASSED --summary "Low over-engineering risk: score 12/100"
+   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage architecturechecks --status PASSED --summary "Low over-engineering risk: score 12/100"
    ```
 
 ### Step 7: Stage 6 — `halucinationchecks`
-1. Generate handoff context: `orchestrator-context-manager.py handoff --stage halucinationchecks`.
-2. Activate skill `scan-halucinated-tests`.
-3. Cross-reference all test imports, assertions, method calls, and mocks against real ground truth.
-4. Verify 0 phantom symbols or hallucinated methods exist.
-5. Record verdict:
+1. **Load Context**: Generate handoff payload (`handoff --stage halucinationchecks`).
+   - Call `load_memory(category="ledger")` to retrieve verified contracts and symbol declarations from `plan` and `develop`.
+2. **Execute**: Activate skill `scan-halucinated-tests` (supported by `trace-code-context`).
+   - Cross-reference all test imports, assertions, method calls, and mocks against ground-truth AST source symbols.
+   - Verify 0 phantom symbols or hallucinated methods exist.
+3. **Save Sub-Agent Output**:
+   - Save mock verification learnings to `journal`: `save_memory(category="journal", title="Stage 6 (halucinationchecks) Audit", summary="...", learnings="...")`.
+4. **Record Gate**:
    ```bash
-   python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage halucinationchecks --status PASSED --summary "0 hallucinated symbols detected"
+   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage halucinationchecks --status PASSED --summary "0 hallucinated symbols detected"
    ```
 
 ### Step 8: Stage 7 — `securitychecks`
-1. Generate handoff context: `orchestrator-context-manager.py handoff --stage securitychecks`.
-2. Activate skill `github-security-scanner-hook` and `api-security`.
-3. Run `detect-secrets` scan for credentials, private keys, and tokens.
-4. Run `semgrep` scan for OWASP injection flaws (command injection, path traversal, SQLi, XSS).
-5. Audit API authentication and cryptographic hygiene with `api-security` (JWT RS256/ES256, OAuth 2.1 PKCE, session cookie flags, mTLS).
-6. Verify database operations with `sql-connector` (`audit_query_safety`) to guarantee zero destructive SQL (`DROP TABLE`, `DELETE *`).
-7. Record verdict:
+1. **Load Context**: Generate handoff payload (`handoff --stage securitychecks`).
+   - Call `load_memory(category="ledger")` to inspect required security invariants and cryptographic baselines.
+2. **Execute**: Activate skills `github-security-scanner-hook` and `api-security`.
+   - Run `detect-secrets` scan for credentials, private keys, and tokens.
+   - Run `semgrep` scan for OWASP injection flaws (command injection, path traversal, SQLi, XSS).
+   - Audit API auth and cryptographic hygiene with `api-security` (JWT RS256/ES256, OAuth 2.1 PKCE, session cookie flags, mTLS).
+   - Verify database operations with `sql-connector` (`audit_query_safety`) to guarantee zero destructive SQL (`DROP TABLE`, `DELETE *`).
+3. **Save Sub-Agent Output**:
+   - Save permanent security rules to `ledger`: `save_memory(category="ledger", title="Security Baseline: ...", summary="...", learnings="...")`.
+   - Save security scan learnings to `journal`: `save_memory(category="journal", title="Stage 7 (securitychecks) Audit", summary="...", learnings="...")`.
+4. **Record Gate**:
    ```bash
-   python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage securitychecks --status PASSED --summary "Security gate passed: 0 secrets, 0 vulnerabilities"
+   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage securitychecks --status PASSED --summary "Security gate passed: 0 secrets, 0 vulnerabilities"
    ```
 
-### Step 9: Final Delivery & Reporting
-1. Run `python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py report`.
-2. Present the user with the consolidated stage audit report and verified deliverables.
+### Step 9: Final Delivery & Cleanup
+1. Run `.\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py report`.
+2. Call `clear_sidecar` via `manage-memory` / `load-memory` to flush transient task WIP, preserving permanent `ledger` and `journal` entries.
+3. Present the user with the consolidated stage audit report and verified deliverables.
 
 ---
 
 ## Remediation Feedback Loop with `troubleshoot-and-fix`
 
 If any quality gate fails (`FAILED` or `BLOCKED`):
-1. **Record the Failure**: The orchestrator records the defect delta with specific file paths, line numbers, and failure diagnostics.
-2. **Isolate with `troubleshoot-and-fix`**:
-   - For failing tests, runtime exceptions, or broken contracts, activate **`troubleshoot-and-fix`**. For remote cluster or container integration failures, activate **`remote-pod-log-analyzer`** to inspect container crash logs (`--previous`), exit codes (137 OOMKilled), and host journals.
+1. **Save Failure State to `sidecar`**: Save the failing stage diagnostics, file paths, and failure messages into `sidecar` so the remediation agent picks up immediate context.
+2. **Search for Past Fixes**: Call `search_memory("<error or exception name>")` to check if a similar bug was previously encountered and resolved.
+3. **Isolate with `troubleshoot-and-fix`**:
+   - Activate **`troubleshoot-and-fix`**. For remote cluster or container integration failures, activate **`remote-pod-log-analyzer`**.
    - Generate an isolated reproduction harness (`scripts/isolate-runner.js` or `scripts/isolate-runner.py`) to systematically reproduce the defect outside monolithic project dependencies.
    - Verify the fix inside the reproduction sandbox before porting the patch back.
-3. **Respect the 3-Iteration Circuit Breaker**: If `troubleshoot-and-fix` fails to resolve the defect within its 3-iteration budget, do not loop indefinitely or burn tokens. Halt the pipeline immediately, revert unverified code churn, and surface the **Out of Options Summary** directly to the user for guidance.
-4. **Re-evaluate Stages**: Once verified, re-run the affected pipeline stages until all quality gates pass.
+4. **Respect the 3-Iteration Circuit Breaker**: If `troubleshoot-and-fix` fails to resolve the defect within its 3-iteration budget, do not loop indefinitely or burn tokens. Halt the pipeline immediately, revert unverified code churn, and surface the **Out of Options Summary** directly to the user for guidance.
+5. **Re-evaluate Stages**: Once verified, re-run the affected pipeline stages until all quality gates pass, and record the remediation learnings in `journal`.
 
 ---
 
 ## References
 
+- [Save Memory](file:///.github/skills/save-memory/SKILL.md) — Persist high-signal project memory into `project-memory` (`ledger`, `sidecar`, `journal`).
+- [Load Memory](file:///.github/skills/load-memory/SKILL.md) — Retrieve project memory and hybrid semantic search without context bloat.
 - [Agent Orchestrator Reference Guide](file:///.github/skills/agent-orchestrator/references/agent-orchestrator-reference.md) — Architectural patterns, sub-agent prompts, and gate policies.
-- Context Manager Script: `.github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py`
+- [Context Manager Script](file:///.github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py) — Stage execution state and handoff manager.
+- [Architectural Planning](file:///.github/skills/architectural-planning/SKILL.md) — System design, interface contracts, and ADR creation.
 - [API Security Audit](file:///.github/skills/api-security/SKILL.md) — Universal API authentication, token security, and cryptographic audit.
 - [Python API Writer](file:///.github/skills/python-api-writer/SKILL.md) — Production-grade FastAPI, Django, and Django Ninja endpoint engineering.
 - [PowerShell Writer](file:///.github/skills/powershell-writer/SKILL.md) — Production-grade PowerShell scripts, advanced cmdlets, modules, and Pester v5 tests.
