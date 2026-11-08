@@ -292,3 +292,4 @@ Write the generated document to `ARCHITECTURE.md` in the project root (or user-c
 ## Reference Materials
 
 - **[Architectural Planning Reference](file:///.github/skills/architectural-planning/references/architectural-planning-reference.md)** — Compatibility matrices (Backend $\times$ Database, Backend $\times$ Cache, Backend $\times$ Auth), Mermaid diagram templates, complete 11-section document template, directory structure layouts, and dependency versions.
+- **[Architecture Books & Best Practices Literature](file:///.github/skills/architectural-planning/references/architecture-books-and-best-practices.md)** — Comprehensive bibliography and architectural decision heuristics synthesized from seminal literature: Kleppmann (*DDIA*), Richards & Ford (*Architecture Hard Parts*), Sam Newman (*Monolith to Microservices*), Michael Nygard (*Release It!*), Eric Evans (*DDD*), and Dan McKinley (*Choose Boring Technology*).
