@@ -21,6 +21,7 @@ These skills provide ready-made workflows for modern software engineering — sp
 | [`java-developer`](#java-developer) | **Language Specialist** | Java 17/21/25, Spring Boot 3+, Virtual Threads, Low-Latency, Spring Batch | `"write java code"` |
 | [`csharp-developer`](#csharp-developer) | **Language Specialist** | C# 12/13, .NET 8/9, Minimal APIs, MVVM/WPF, EF Core | `"write c# code"` |
 | [`code-reviewer`](#code-reviewer) | **Architecture & Quality** | 7-dimension senior review ([P0] Blocker to [P3] Nit) | `"review code"` |
+| [`api-security`](#api-security) | **Architecture & Quality** | JWT, OAuth 2.1 PKCE, session cookies, API keys, mTLS, HMAC | `"review api security"` |
 | [`algorithmic-complexity-analyzer`](#algorithmic-complexity-analyzer) | **Architecture & Quality** | Big-O time/space audits ($O(1) \dots O(2^n)$), hidden loop traps | `"check time complexity"` |
 | [`caching-queues-reviewer`](#caching-queues-reviewer) | **Architecture & Quality** | Redis, Kafka, Lua scripts, stampede defense, multi-language caching | `"review caching code"` |
 | [`detect-overengineering`](#detect-overengineering) | **Architecture & Quality** | YAGNI audits, layer bloat, trampoline pass-throughs | `"check for over-engineering"` |
@@ -89,6 +90,10 @@ Comprehensive architectural and engineering guidance for modern C# (C# 12 & 13, 
 ### `code-reviewer`
 Senior-level code review across languages (Python, TypeScript/JavaScript, Java, Go, C#). Audits changes across 7 dimensions: correctness, architecture (SOLID/DRY/KISS), error handling, test coverage, security defense, performance & memory hygiene, and readability. Standardizes findings into `[P0 - Blocker]`, `[P1 - Major]`, `[P2 - Minor]`, and `[P3 - Nit]` with concrete suggested fix diffs.
 - **Trigger phrases:** `"review code"`, `"code review"`, `"review pull request"`, `"audit code changes"`, `"code review checklist"`, `"review this diff"`.
+
+### `api-security`
+Universal, language-independent architectural and security review guidance for API authentication, token lifecycles, and cryptographic boundary defense. Covers JWT architecture (RS256/ES256, token rotation, revocation strategies), OAuth 2.1 & OpenID Connect (PKCE for SPAs/mobile, Client Credentials for M2M), stateful session tokens (HttpOnly, Secure, SameSite, CSRF defense), API key design (SHA-256 hashing, secret scanner prefixes), HMAC request signatures (timestamp drift, replay defense, constant-time compare), and Mutual TLS (mTLS).
+- **Trigger phrases:** `"review api security"`, `"jwt vs oauth"`, `"jwt vs session"`, `"api authentication best practices"`, `"implement pkce"`, `"webhook hmac signature"`, `"secure api keys"`, `"audit auth architecture"`.
 
 ### `algorithmic-complexity-analyzer`
 Language-independent asymptotic complexity auditing (Big-O). Audits worst-case time and auxiliary space complexity ($O(1)$, $O(\log n)$, $O(n)$, $O(n \log n)$, $O(n^2)$, $O(2^n)$), detects hidden quadratic traps (nested `includes`/`contains`, array `.shift()` in loops, string concatenation copies, unmemoized recursion), and provides concrete optimization strategies. Integrates with the `nodejs-executor` MCP server for empirical doubling hypothesis benchmarks ($T(2N)/T(N)$ ratio testing) with adaptive batching and sandbox safety.
@@ -249,6 +254,7 @@ developer-productivity-skills/
 ├── .github/
 │   └── skills/
 │       ├── agent-orchestrator/       # 7-stage multi-agent SDLC workflow
+│       ├── api-security/             # Universal API authentication & AppSec audit pack
 │       ├── algorithmic-complexity-analyzer/ # Language-agnostic Big-O analysis
 │       ├── architectural-planning/   # Interactive system architecture designer
 │       ├── caching-queues-reviewer/  # Redis, Kafka, Lua scripts & queue auditor

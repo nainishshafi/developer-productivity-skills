@@ -201,3 +201,4 @@ class CheckoutView(View):
 1. **Hidden Control Flow**: Do not use decorators to secretly mutate function arguments without documenting it; this creates confusing, un-debuggable "magic".
 2. **Double-Execution Trap in Retry Decorators**: Ensure functions wrapped with retry aspects are strictly **idempotent**. Retrying a non-idempotent operation (e.g. charging a credit card without an idempotency key) causes duplicate charges.
 3. **The FastAPI Signature Eraser**: When wrapping a FastAPI route handler with a custom decorator, always use `@functools.wraps(func)`. If FastAPI sees generic `*args, **kwargs`, it cannot generate query parameters in OpenAPI documentation.
+
