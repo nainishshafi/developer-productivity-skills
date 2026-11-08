@@ -258,3 +258,4 @@ class BulkTagAssignRequest(BaseModel):
     user_ids: Annotated[list[int], Field(min_length=1, max_length=100)]
     tag: Annotated[str, Field(min_length=2, max_length=30)]
 ```
+
