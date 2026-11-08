@@ -33,7 +33,7 @@ Options:
   --raw                      Extract full raw logs without filtering for ERROR/FATAL
   -h, --help                 Show this help message
 EOF
-    exit 1
+    exit "${1:-0}"
 }
 
 # Parse command line flags
@@ -48,14 +48,14 @@ while [[ $# -gt 0 ]]; do
         -o|--output-dir) OUTPUT_DIR="$2"; shift 2 ;;
         --previous) CHECK_PREVIOUS=true; shift ;;
         --raw) FILTER_ERRORS=false; shift ;;
-        -h|--help) print_usage ;;
-        *) echo "Error: Unknown argument '$1'"; print_usage ;;
+        -h|--help) print_usage 0 ;;
+        *) echo "Error: Unknown argument '$1'"; print_usage 1 ;;
     esac
 done
 
 if [[ -z "$POD_NAME" && -z "$LABEL_SELECTOR" ]]; then
     echo "Error: Must specify either --pod <name> or --label <selector>"
-    print_usage
+    print_usage 1
 fi
 
 mkdir -p "$OUTPUT_DIR"
@@ -146,3 +146,4 @@ done
 echo "========================================================"
 echo " Extraction Complete. Artifacts saved in $OUTPUT_DIR"
 echo "========================================================"
+

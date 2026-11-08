@@ -31,7 +31,7 @@ Options:
   -o, --output-dir <dir>       Local output directory (default: "./extracted-logs")
   --help                       Show this help message
 EOF
-    exit 1
+    exit "${1:-0}"
 }
 
 # Parse command line flags
@@ -45,19 +45,19 @@ while [[ $# -gt 0 ]]; do
         -s|--systemd) SYSTEMD_UNIT="$2"; shift 2 ;;
         --since) SINCE="$2"; shift 2 ;;
         -o|--output-dir) OUTPUT_DIR="$2"; shift 2 ;;
-        --help) print_usage ;;
-        *) echo "Error: Unknown argument '$1'"; print_usage ;;
+        --help) print_usage 0 ;;
+        *) echo "Error: Unknown argument '$1'"; print_usage 1 ;;
     esac
 done
 
 if [[ -z "$HOST" || -z "$USER" ]]; then
     echo "Error: Both --host and --user are required."
-    print_usage
+    print_usage 1
 fi
 
 if [[ -z "$LOG_PATH" && -z "$SYSTEMD_UNIT" ]]; then
     echo "Error: Must specify either --log-path <path> or --systemd <unit>."
-    print_usage
+    print_usage 1
 fi
 
 mkdir -p "$OUTPUT_DIR"
@@ -142,3 +142,4 @@ fi
 echo "========================================================"
 echo " Extraction Complete. Artifacts saved in $OUTPUT_DIR"
 echo "========================================================"
+
