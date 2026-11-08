@@ -80,6 +80,7 @@ The code reviewer organizes checklist standards into dedicated language director
 | **Java** | [Java Checklist](file:///.github/skills/code-reviewer/java/java-review-checklist.md) | [Spring Boot & JPA Data](file:///.github/skills/code-reviewer/java/spring-boot-and-data-review.md)<br>[Virtual Threads & JVM](file:///.github/skills/code-reviewer/java/concurrency-and-jvm-review.md) | [`java-developer`](file:///.github/skills/java-developer/SKILL.md) |
 | **C# (.NET)** | [C# Checklist](file:///.github/skills/code-reviewer/csharp/csharp-review-checklist.md) | [ASP.NET Core & EF Core](file:///.github/skills/code-reviewer/csharp/aspnet-and-efcore-review.md)<br>[Performance, Channels & Span](file:///.github/skills/code-reviewer/csharp/performance-and-runtime-review.md) | [`csharp-developer`](file:///.github/skills/csharp-developer/SKILL.md) |
 | **Go** | [Go Checklist](file:///.github/skills/code-reviewer/go/go-review-checklist.md) | [Concurrency, Channels & Runtime](file:///.github/skills/code-reviewer/go/concurrency-and-runtime-review.md) | — |
+| **PowerShell** | [PowerShell Checklist](file:///.github/skills/code-reviewer/powershell/powershell-review-checklist.md) | [Pipeline & Concurrency](file:///.github/skills/code-reviewer/powershell/pipeline-and-concurrency-review.md) | [`powershell-writer`](file:///.github/skills/powershell-writer/SKILL.md) |
 
 ---
 

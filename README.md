@@ -20,6 +20,7 @@ These skills provide ready-made workflows for modern software engineering — sp
 | [`react-developer`](#react-developer) | **Language Specialist** | React 18/19, Next.js RSC, Zustand, TanStack Query | `"write react code"` |
 | [`java-developer`](#java-developer) | **Language Specialist** | Java 17/21/25, Spring Boot 3+, Virtual Threads, Low-Latency, Spring Batch | `"write java code"` |
 | [`csharp-developer`](#csharp-developer) | **Language Specialist** | C# 12/13, .NET 8/9, Minimal APIs, MVVM/WPF, EF Core | `"write c# code"` |
+| [`powershell-writer`](#powershell-writer) | **Language Specialist** | Advanced cmdlets, object pipelines, Set-StrictMode, Pester v5, modules | `"write powershell script"` |
 | [`code-reviewer`](#code-reviewer) | **Architecture & Quality** | 7-dimension senior review ([P0] Blocker to [P3] Nit) | `"review code"` |
 | [`api-security`](#api-security) | **Architecture & Quality** | JWT, OAuth 2.1 PKCE, session cookies, API keys, mTLS, HMAC | `"review api security"` |
 | [`algorithmic-complexity-analyzer`](#algorithmic-complexity-analyzer) | **Architecture & Quality** | Big-O time/space audits ($O(1) \dots O(2^n)$), hidden loop traps | `"check time complexity"` |
@@ -85,6 +86,12 @@ Comprehensive architectural and engineering guidance for modern C# (C# 12 & 13, 
 - **Trigger phrases:** `"write c# code"`, `"develop c# service"`, `"c# dependency injection"`, `"c# design patterns"`, `"c# architecture best practices"`, `"minimal apis best practices"`, `"wpf mvvm guide"`, `"maui mvvm"`, `"ef core query optimization"`, `"polly resilience pipeline"`, `"c# span memory optimization"`.
 - **Supported runtimes:** .NET 8 LTS, .NET 9; C# 12, C# 13.
 
+### `powershell-writer`
+Staff-level architectural and engineering guidance for modern PowerShell automation, advanced cmdlets, and enterprise modules (PowerShell 7.4+ LTS & Windows PowerShell 5.1).
+- **Core Topics:** Advanced functions (`[CmdletBinding()]`, approved verbs from `Get-Verb`, pipeline streaming `begin`/`process`/`end`/`clean`, parameter validation attributes), defensive error handling (`$ErrorActionPreference = 'Stop'`, `Set-StrictMode -Version Latest`, `try/catch` with typed exceptions, `$LASTEXITCODE` validation), Anti-Bloat Guardrails (script vs. module decision matrix, eliminating the $O(N^2)$ array append antipattern `$arr += $item`), Object Pipeline streaming, `[PSCustomObject]` emission, calculated properties, parameter splatting (`@params`), REST APIs (`Invoke-RestMethod` vs. `Invoke-WebRequest`), JSON depth limits (`-Depth 10`), parallel concurrency (`ForEach-Object -Parallel`, `Start-ThreadJob`, `RunspacePool`, thread-safe synchronized hashtables), professional module architecture (`.psm1`, `.psd1` manifests, `Export-ModuleMember`, `Test-ModuleManifest`), script security (`Invoke-Expression` ban, `SecretManagement`, Constrained Language Mode), and unit testing with Pester v5 & PSScriptAnalyzer.
+- **Trigger phrases:** `"write powershell"`, `"write powershell script"`, `"powershell-writer"`, `"powershell cmdlet"`, `"create powershell module"`, `"ps1 script"`, `"pester test"`, `"powershell automation"`, `"powershell best practices"`, `"powershell error handling"`.
+- **Supported runtimes:** PowerShell 7.4+ LTS (Core), Windows PowerShell 5.1 (Desktop).
+
 ---
 
 ## 📐 2. Architecture, Quality & Review Skills
@@ -92,7 +99,7 @@ Comprehensive architectural and engineering guidance for modern C# (C# 12 & 13, 
 Review and audit skills operate on **pragmatic heuristics and evidence-driven severity tiers** rather than deterministic rules—evaluating findings within the context of project scale, team conventions, and operational trade-offs.
 
 ### `code-reviewer`
-Senior-level code review across languages (Python, TypeScript/JavaScript, Java, Go, C#). Audits changes across 7 dimensions: correctness, architecture (SOLID/DRY/KISS), error handling, test coverage, security defense, performance & memory hygiene, and readability. Standardizes findings into `[P0 - Blocker]`, `[P1 - Major]`, `[P2 - Minor]`, and `[P3 - Nit]` with concrete suggested fix diffs.
+Senior-level code review across languages (Python, TypeScript/JavaScript, React/Next.js, Java, C#, Go, SQL, PowerShell). Audits changes across 7 dimensions: correctness, architecture (SOLID/DRY/KISS), error handling, test coverage, security defense, performance & memory hygiene, and readability. Features dedicated language subdirectories with deep checklists. Standardizes findings into `[P0 - Blocker]`, `[P1 - Major]`, `[P2 - Minor]`, and `[P3 - Nit]` with concrete suggested fix diffs.
 - **Trigger phrases:** `"review code"`, `"code review"`, `"review pull request"`, `"audit code changes"`, `"code review checklist"`, `"review this diff"`.
 
 ### `api-security`
@@ -290,6 +297,7 @@ developer-productivity-skills/
 │       ├── load-memory/              # Hybrid memory retrieval skill
 │       ├── nodejs-executor/          # MCP wrapper skill for node execution
 │       ├── playwright-bdd-tester/    # Gherkin BDD & Playwright browser test automation
+│       ├── powershell-writer/        # Modern PowerShell 7+ & 5.1 automation pack
 │       ├── python-api-writer/        # FastAPI & Django API architecture pack
 │       ├── python-developer/         # Python 3.10-3.13, Pydantic v2, asyncio pack
 │       ├── python-linter/            # Automated Ruff & Mypy quality runner

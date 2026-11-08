@@ -43,7 +43,7 @@ The Orchestrator solves this through **Bounded Stage Handoffs**:
 | Stage | Name | Primary Skill | Supporting Skills | Gate Criteria |
 |---|---|---|---|---|
 | **1** | `plan` | `architectural-planning` | `trace-code-context`, `load-memory`, `llm-as-judge`, `api-security`, `caching-queues-reviewer`, `sql-executor` | Clear problem definition, component boundaries, API/contract specs, cache/queue architecture, and test strategy. |
-| **2** | `develop` | Language developer (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer`) | `load-memory`, `save-memory`, `troubleshoot-and-fix`, `sql-connector` (ephemeral SQLite `:memory:`) | Code implements plan contracts, passes unit/integration tests, zero unhandled errors, passes over-engineering self-checks. |
+| **2** | `develop` | Language developer (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer`, `powershell-writer`) | `load-memory`, `save-memory`, `troubleshoot-and-fix`, `sql-connector` (ephemeral SQLite `:memory:`) | Code implements plan contracts, passes unit/integration tests, zero unhandled errors, passes over-engineering self-checks. |
 | **3** | `codereview` | `code-reviewer` | `python-linter`, `design-pattern-detector`, `caching-queues-reviewer` | Clean code conventions, robust error handling, edge-case coverage, queue/cache resilience, zero P0/P1 issues. |
 | **4** | `complexitychecks` | `algorithmic-complexity-analyzer` | `trace-code-context`, `sql-executor` (`explain_query`) | Asymptotic time & space efficiency verified, zero hidden quadratic loops, zero unbounded recursion, zero unindexed $O(N)$ full table scans. |
 | **5** | `architecturechecks` | `detect-overengineering` | `design-pattern-detector`, `trace-code-context` | No premature abstractions, zero YAGNI violations, layer depth <= 3, low overengineering risk score (< 40). |
@@ -67,7 +67,7 @@ The Orchestrator solves this through **Bounded Stage Handoffs**:
 
 ### Stage 2: `develop`
 - **Objective:** Implement production-grade source code and automated tests strictly adhering to the planned contracts.
-- **Skill:** Language developer skill (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, or `python-api-writer` for FastAPI/Django/Ninja endpoints).
+- **Skill:** Language developer skill (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer` for FastAPI/Django/Ninja endpoints, or `powershell-writer` for automation scripts and modules).
 - **Testbed & Database Fixtures:** For database-backed components, utilize `sql-connector` with ephemeral SQLite (`:memory:`) to seed fixtures and run migrations in-memory without external infrastructure dependencies.
 - **Over-Engineering Self-Checks:** Developers run language-specific anti-bloat self-checks before advancing (limiting layer depth <= 3, avoiding single-use interfaces, and rejecting premature design patterns).
 - **Inputs:** `plan.md`, relevant existing source files, test dependencies.
@@ -206,6 +206,7 @@ The orchestrator integrates the following specialized skills across stages:
 - [Architectural Planning](file:///.github/skills/architectural-planning/SKILL.md) — System design, interface contracts, and ADR creation.
 - [API Security](file:///.github/skills/api-security/SKILL.md) — Universal API authentication, token security, and cryptographic audit.
 - [Python API Writer](file:///.github/skills/python-api-writer/SKILL.md) — Production-grade FastAPI, Django, and Django Ninja endpoint engineering.
+- [PowerShell Writer](file:///.github/skills/powershell-writer/SKILL.md) — Production-grade PowerShell scripts, advanced cmdlets, modules, and Pester v5 tests.
 - [Caching & Queues Reviewer](file:///.github/skills/caching-queues-reviewer/SKILL.md) — Redis, Kafka, and RabbitMQ architecture and code review.
 - [Algorithmic Complexity Analyzer](file:///.github/skills/algorithmic-complexity-analyzer/SKILL.md) — Big-O time and space complexity auditing.
 - [SQL Executor](file:///.github/skills/sql-executor/SKILL.md) — Multi-engine SQL query tuning, indexing, and validation.

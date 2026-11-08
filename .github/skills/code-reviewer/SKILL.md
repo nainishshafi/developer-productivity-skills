@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
-description: Conducts rigorous, senior-level code reviews across languages (Python, TypeScript/JavaScript, React/Next.js, Java, C#, Go, SQL). Audits code changes for logical correctness, edge-case coverage, error handling, security, maintainability, clean code principles, distributed caching/queues, database performance, and algorithmic efficiency. Use when asked to "review code", "code review", "review pull request", "audit code changes", "code review checklist", or "review this diff".
-version: 1.3.0
+description: Conducts rigorous, senior-level code reviews across languages (Python, TypeScript/JavaScript, React/Next.js, Java, C#, Go, SQL, PowerShell). Audits code changes for logical correctness, edge-case coverage, error handling, security, maintainability, clean code principles, distributed caching/queues, database performance, and algorithmic efficiency. Use when asked to "review code", "code review", "review pull request", "audit code changes", "code review checklist", or "review this diff".
+version: 1.4.0
 ---
 
 # Code Reviewer Skill
@@ -128,6 +128,7 @@ Navigate directly to dedicated language checklists and deep review modules match
 | **C# (.NET)** | [C# Checklist](file:///.github/skills/code-reviewer/csharp/csharp-review-checklist.md) | [ASP.NET Core & EF Core](file:///.github/skills/code-reviewer/csharp/aspnet-and-efcore-review.md)<br>[Performance, Channels & Span](file:///.github/skills/code-reviewer/csharp/performance-and-runtime-review.md) | [`csharp-developer`](file:///.github/skills/csharp-developer/SKILL.md) |
 | **Go** | [Go Checklist](file:///.github/skills/code-reviewer/go/go-review-checklist.md) | [Concurrency, Channels & Runtime](file:///.github/skills/code-reviewer/go/concurrency-and-runtime-review.md) | — |
 | **SQL** | [SQL Checklist](file:///.github/skills/code-reviewer/sql/sql-review-checklist.md) | [Indexing & Execution Plans](file:///.github/skills/code-reviewer/sql/indexing-and-execution-plans-review.md)<br>[Procedures, TVFs & Cursors](file:///.github/skills/code-reviewer/sql/procedures-tvfs-and-cursors-review.md)<br>[Analytics & Windowing](file:///.github/skills/code-reviewer/sql/analytics-and-windowing-review.md) | [`sql-executor`](file:///.github/skills/sql-executor/SKILL.md)<br>[`sql-connector`](file:///.github/skills/sql-connector/SKILL.md) |
+| **PowerShell** | [PowerShell Checklist](file:///.github/skills/code-reviewer/powershell/powershell-review-checklist.md) | [Pipeline & Concurrency](file:///.github/skills/code-reviewer/powershell/pipeline-and-concurrency-review.md) | [`powershell-writer`](file:///.github/skills/powershell-writer/SKILL.md) |
 
 ---
 

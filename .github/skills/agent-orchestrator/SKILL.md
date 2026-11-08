@@ -37,7 +37,7 @@ At each stage, the orchestrator invokes the correct domain skill, packages bound
 | # | Stage | Assigned Skill | Sub-Agent Role | Primary Responsibilities |
 |---|---|---|---|---|
 | **1** | `plan` | `architectural-planning` | Architecture & Planning Specialist | Requirements decomposition, tech stack alignment, interface contracts, ADR creation. Supported by `llm-as-judge`, `api-security` (auth/topology), `caching-queues-reviewer` (queue/cache architecture), and `sql-executor` (schema/indexing strategy). |
-| **2** | `develop` | Language developer (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer`) | Core Implementation Engineer | Production implementation, unit and integration tests, error handling, self-checks. Supported by `troubleshoot-and-fix` and `sql-connector` (ephemeral SQLite `:memory:` test fixtures). |
+| **2** | `develop` | Language developer (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer`, `powershell-writer`) | Core Implementation Engineer | Production implementation, unit and integration tests, error handling, self-checks. Supported by `troubleshoot-and-fix` and `sql-connector` (ephemeral SQLite `:memory:` test fixtures). |
 | **3** | `codereview` | `code-reviewer` | Senior Code Reviewer | Multi-dimension code review (correctness, resilience, edge cases, clean code). Supported by linters and `caching-queues-reviewer` (Redis/Kafka/RabbitMQ PR review). |
 | **4** | `complexitychecks` | `algorithmic-complexity-analyzer` | Algorithmic Complexity Auditor | Asymptotic Big-O time and space complexity ($O(1) \dots O(2^n)$), hidden quadratic loops (`.includes()`, `in list`), recursion depth traps, and `sql-executor` (`explain_query`) for query execution plan complexity ($O(N)$ table scans). |
 | **5** | `architecturechecks` | `detect-overengineering` | Principal Architecture Auditor | Over-engineering detection, speculative generality (YAGNI), layer bloat, anti-patterns (`design-pattern-detector`), and language-specialist over-engineering self-checks. |
@@ -89,7 +89,7 @@ python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py
 ### Step 3: Stage 2 — `develop`
 1. Generate handoff context: `orchestrator-context-manager.py handoff --stage develop`.
 2. Pass bounded context (contracts, specifications, target files) to the implementation sub-agent.
-3. Activate relevant language skill (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, or `python-api-writer` for FastAPI/Django endpoints). For database testing, utilize `sql-connector` with ephemeral SQLite (`:memory:`) to seed fixtures without external dependencies. Run the language specialist's embedded Over-Engineering Self-Checks.
+3. Activate relevant language skill (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer`, or `powershell-writer` for automation scripts and modules). For database testing, utilize `sql-connector` with ephemeral SQLite (`:memory:`) to seed fixtures without external dependencies. Run the language specialist's embedded Over-Engineering Self-Checks.
 4. Write production code and automated tests. Run test runner to verify green test status.
 5. Record verdict:
    ```bash
@@ -177,6 +177,7 @@ If any quality gate fails (`FAILED` or `BLOCKED`):
 - Context Manager Script: `.github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py`
 - [API Security Audit](file:///.github/skills/api-security/SKILL.md) — Universal API authentication, token security, and cryptographic audit.
 - [Python API Writer](file:///.github/skills/python-api-writer/SKILL.md) — Production-grade FastAPI, Django, and Django Ninja endpoint engineering.
+- [PowerShell Writer](file:///.github/skills/powershell-writer/SKILL.md) — Production-grade PowerShell scripts, advanced cmdlets, modules, and Pester v5 tests.
 - [Caching & Queues Reviewer](file:///.github/skills/caching-queues-reviewer/SKILL.md) — Redis, Kafka, and RabbitMQ architecture and code review.
 - [SQL Executor](file:///.github/skills/sql-executor/SKILL.md) — Multi-engine SQL query tuning, indexing, and validation.
 - [SQL Connector MCP Server](file:///.github/skills/sql-connector/SKILL.md) — Multi-database query and schema inspection with zero-tolerance SQL guardrails.
