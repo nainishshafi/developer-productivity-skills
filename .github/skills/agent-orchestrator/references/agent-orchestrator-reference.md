@@ -43,8 +43,8 @@ The Orchestrator solves this through **Bounded Stage Handoffs**:
 | Stage | Name | Primary Skill | Supporting Skills & Memory Bus | Gate Criteria |
 |---|---|---|---|---|
 | **1** | `plan` | `architectural-planning` | `load-memory`, `save-memory`, `trace-code-context`, `llm-as-judge`, `api-security`, `caching-queues-reviewer`, `sql-executor` | Clear problem definition, component boundaries, API/contract specs, cache/queue architecture, and test strategy.<br>**Memory**: `ledger` ADRs + `journal` planning learnings. |
-| **2** | `develop` | Language developer (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer`, `powershell-writer`) | `load-memory`, `save-memory`, `troubleshoot-and-fix`, `sql-connector` (ephemeral SQLite `:memory:`) | Code implements plan contracts, passes unit/integration tests, zero unhandled errors, passes over-engineering self-checks.<br>**Memory**: `sidecar` active WIP + `journal` implementation lessons. |
-| **3** | `codereview` | `code-reviewer` | `load-memory`, `save-memory`, `python-linter`, `design-pattern-detector`, `caching-queues-reviewer` | Clean code conventions, robust error handling, edge-case coverage, queue/cache resilience, zero P0/P1 issues.<br>**Memory**: `journal` review findings & edge-case traps. |
+| **2** | `develop` | Language developer (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer`, `powershell-writer`) | `detect-overengineering`, `load-memory`, `save-memory`, `troubleshoot-and-fix`, `sql-connector` (ephemeral SQLite `:memory:`) | Code implements plan contracts, passes unit/integration tests, zero unhandled errors, passes in-the-loop over-engineering checks.<br>**Memory**: `sidecar` active WIP + `journal` implementation lessons. |
+| **3** | `codereview` | `code-reviewer` | `detect-overengineering`, `load-memory`, `save-memory`, `python-linter`, `design-pattern-detector`, `caching-queues-reviewer` | Clean code conventions, robust error handling, edge-case coverage, queue/cache resilience, zero accidental complexity, zero P0/P1 issues.<br>**Memory**: `journal` review findings & edge-case traps. |
 | **4** | `complexitychecks` | `algorithmic-complexity-analyzer` | `load-memory`, `save-memory`, `trace-code-context`, `sql-executor` (`explain_query`) | Asymptotic time & space efficiency verified, zero hidden quadratic loops, zero unbounded recursion, zero unindexed $O(N)$ full table scans.<br>**Memory**: `journal` Big-O optimizations. |
 | **5** | `architecturechecks` | `detect-overengineering` | `load-memory`, `save-memory`, `design-pattern-detector`, `trace-code-context` | No premature abstractions, zero YAGNI violations, layer depth <= 3, low overengineering risk score (< 40).<br>**Memory**: `ledger` architectural baselines + `journal` YAGNI learnings. |
 | **6** | `halucinationchecks` | `scan-halucinated-tests` | `load-memory`, `save-memory`, `trace-code-context` | Zero phantom symbols, all test mock targets verified against ground truth, valid imports.<br>**Memory**: `journal` mock corrections. |
@@ -69,7 +69,7 @@ The Orchestrator solves this through **Bounded Stage Handoffs**:
 - **Objective:** Implement production-grade source code and automated tests strictly adhering to the planned contracts.
 - **Skill:** Language developer skill (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer` for FastAPI/Django/Ninja endpoints, or `powershell-writer` for automation scripts and modules).
 - **Testbed & Database Fixtures:** For database-backed components, utilize `sql-connector` with ephemeral SQLite (`:memory:`) to seed fixtures and run migrations in-memory without external infrastructure dependencies.
-- **Over-Engineering Self-Checks:** Developers run language-specific anti-bloat self-checks before advancing (limiting layer depth <= 3, avoiding single-use interfaces, and rejecting premature design patterns).
+- **Over-Engineering Self-Checks in the Loop:** Developers run language-specific anti-bloat self-checks and `check-overengineering` on modified files before submitting handoffs (limiting layer depth <= 3, avoiding single-use interfaces, and rejecting premature design patterns).
 - **Inputs:** `plan.md`, relevant existing source files, test dependencies.
 - **Outputs:** Working source code, unit and integration tests, verified test execution logs.
 - **Gate Check:** All automated test suites must compile and pass cleanly without skips or mocks of unverified symbols.
@@ -99,7 +99,7 @@ The Orchestrator solves this through **Bounded Stage Handoffs**:
 - **Gate Check:** No `[P0]` or `[P1]` complexity blockers; algorithms and queries match or exceed theoretical efficiency requirements.
 
 ### Stage 5: `architecturechecks`
-- **Objective:** Audit the code against over-engineering, unnecessary design patterns, and structural degradation.
+- **Objective:** Audit the code against over-engineering, unnecessary design patterns, and structural degradation using automated signal extraction.
 - **Skill:** `detect-overengineering`, `design-pattern-detector`, `trace-code-context`
 - **Inputs:** Modified classes, inheritance trees, interfaces, call-graphs.
 - **Checks:**
@@ -108,8 +108,12 @@ The Orchestrator solves this through **Bounded Stage Handoffs**:
   - God objects / God files (> 500 lines or > 15 public methods)
   - Over-engineering risk score < 40 (Low risk)
   - Language-specialist anti-bloat guardrails
+- **In-The-Loop Simplification:** If score >= 40, triggers the Simplification Loop:
+  1. Extract structural signals (`check-overengineering`).
+  2. Collapse redundant layers and delete trampoline methods.
+  3. Re-verify score < 40 before advancing.
 - **Outputs:** `.orchestrator/runs/<run-id>/stages/architecturechecks/architecture-audit.md`
-- **Gate Check:** Overengineering risk score classified as LOW or accepted by lead.
+- **Gate Check:** Overengineering risk score classified as LOW (< 40) or accepted by lead.
 
 ### Stage 6: `halucinationchecks`
 - **Objective:** Cross-validate newly written tests and mocks against the actual ground-truth source code.
@@ -189,6 +193,7 @@ If a gate fails at any verification stage (`codereview`, `complexitychecks`, `ar
                             ▼
 ┌────────────────────────────────────────────────────────┐
 │  Port verified patch back to source code               │
+│  Run `check-overengineering` to prevent Fix Bloat      │
 │  Re-run failed Gates until all stages are PASSED       │
 └────────────────────────────────────────────────────────┘
 ```

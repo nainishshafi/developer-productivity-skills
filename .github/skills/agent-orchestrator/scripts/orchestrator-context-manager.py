@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 r"""
-orchestrator-context-manager.py — Pipeline state, context handoff, and memory manager for agent-orchestrator.
+orchestrator-context-manager.py — Pipeline state, memory, and over-engineering audit manager for agent-orchestrator.
 
 Manages execution state, stage artifacts, memory tracking (save-memory / load-memory),
-and context packaging across the 7 SDLC stages:
+and in-the-loop over-engineering detection across the 7 SDLC stages:
 1. plan
 2. develop
 3. codereview
@@ -11,16 +11,15 @@ and context packaging across the 7 SDLC stages:
 5. architecturechecks
 6. halucinationchecks
 7. securitychecks
-
-Always execute with the repository virtual environment:
-    Windows: .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py <command>
-    POSIX:   .venv/bin/python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py <command>
+6. halucinationchecks
+7. securitychecks
 
 Usage:
     .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py init --task "Feature name or description"
     .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py status [--run-id <id>]
     .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py handoff --stage <stage> [--run-id <id>]
     .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage <stage> --status <PASSED|FAILED|BLOCKED|SKIPPED> --summary "Notes" [--run-id <id>]
+    .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py check-overengineering [--file <path> | --dir <dir> | --all] [--max-score <0-100>]
     .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py report [--run-id <id>]
 """
 
@@ -49,22 +48,22 @@ STAGE_SKILLS_MAP = {
         "supporting_skills": ["trace-code-context", "load-memory", "save-memory", "llm-as-judge", "api-security", "caching-queues-reviewer", "sql-executor"],
         "subagent_role": "Architecture & Planning Specialist",
         "description": "System design, requirements breakdown, component boundaries, and contract definition.",
-        "memory_load": "load_memory(category='ledger') to check architecture truths; load_memory(category='journal') for past design traps.",
-        "memory_save": "save_memory(category='ledger') for architecture decisions/contracts; save_memory(category='journal') for plan learnings.",
+        "memory_load": "load_memory(category='ledger') for architecture truths; load_memory(category='journal') for design traps.",
+        "memory_save": "save_memory(category='ledger') for ADRs/contracts; save_memory(category='journal') for plan learnings.",
     },
     "develop": {
         "primary_skill": "python-developer / typescript-developer / react-developer / java-developer / csharp-developer",
-        "supporting_skills": ["load-memory", "save-memory", "troubleshoot-and-fix", "legacy-code-modernization", "sql-connector"],
+        "supporting_skills": ["detect-overengineering", "load-memory", "save-memory", "troubleshoot-and-fix", "legacy-code-modernization", "sql-connector"],
         "subagent_role": "Core Implementation & Test Engineer",
-        "description": "Production code authoring, automated unit/integration tests, legacy code refactoring/modernization, and implementation of planned specs.",
+        "description": "Production code authoring, automated unit/integration tests, legacy code modernization, and embedded over-engineering checks in the loop.",
         "memory_load": "load_memory(category='ledger') for plan contracts; load_memory(category='sidecar') for active WIP; search_memory for domain traps.",
         "memory_save": "save_memory(category='sidecar') for WIP state & touched files; save_memory(category='journal') for implementation lessons.",
     },
     "codereview": {
         "primary_skill": "code-reviewer",
-        "supporting_skills": ["python-linter", "design-pattern-detector", "caching-queues-reviewer", "load-memory", "save-memory"],
+        "supporting_skills": ["detect-overengineering", "python-linter", "design-pattern-detector", "caching-queues-reviewer", "load-memory", "save-memory"],
         "subagent_role": "Senior Code Reviewer",
-        "description": "Code quality, readability, style conformance, idiomatic usage, error handling, and clean code inspection.",
+        "description": "Code quality, readability, style conformance, idiomatic usage, error handling, and in-the-loop over-engineering detection.",
         "memory_load": "load_memory(category='sidecar') for WIP context; search_memory for past review patterns and missed bugs.",
         "memory_save": "save_memory(category='journal') for review findings and traps detected.",
     },
@@ -78,7 +77,7 @@ STAGE_SKILLS_MAP = {
     },
     "architecturechecks": {
         "primary_skill": "detect-overengineering",
-        "supporting_skills": ["design-pattern-detector", "trace-code-context", "load-memory", "save-memory"],
+        "supporting_skills": ["detect-overengineering", "design-pattern-detector", "trace-code-context", "load-memory", "save-memory"],
         "subagent_role": "Principal Architecture Auditor",
         "description": "Structural analysis, detection of premature abstractions (YAGNI), layer bloat, anti-patterns, and dependency call-graphs.",
         "memory_load": "load_memory(category='ledger') for architecture rules; search_memory for past over-engineering traps.",
@@ -255,15 +254,9 @@ def cmd_handoff(args: argparse.Namespace) -> None:
 
     print("\n## Stage Instructions for Sub-Agent")
     print(f"1. Activate skill: `{stage_spec['primary_skill']}`.")
-    print("2. Memory Retrieval: Check useful past knowledge via load-memory / search_memory:")
-    print(f"   - Recommendation: {stage_spec.get('memory_load', 'load_memory() for relevant context.')}")
-    print("3. Focus strictly on this stage's scope. Do not regress upstream stage decisions.")
-    print("4. Write stage findings and generated files into the workspace.")
-    print("5. Sub-Agent Output Tracking (save-memory):")
-    print(f"   - Persist findings & learnings: {stage_spec.get('memory_save', 'save_memory(category=\'journal\')')}")
-    print(f"6. Record gate results with:")
-    print(f"   Windows: .\\.venv\\Scripts\\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage {stage} --status PASSED --summary \"<findings>\"")
-    print(f"   POSIX:   .venv/bin/python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage {stage} --status PASSED --summary \"<findings>\"")
+    print("2. Focus strictly on this stage's scope. Do not regress upstream stage decisions.")
+    print("3. Write stage findings and generated files into the workspace.")
+    print(f"4. Record results with: python orchestrator-context-manager.py record --stage {stage} --status PASSED --summary \"<findings>\"")
     print("# " + "=" * 60)
 
 
@@ -358,6 +351,72 @@ def cmd_report(args: argparse.Namespace) -> None:
     print(f"Report written to: {report_file}")
 
 
+def cmd_check_overengineering(args: argparse.Namespace) -> None:
+    extract_script = Path(".github/skills/detect-overengineering/scripts/extract-signals.py")
+    if not extract_script.exists():
+        print(f"Error: extract-signals.py not found at {extract_script}", file=sys.stderr)
+        sys.exit(1)
+
+    cmd = [sys.executable, str(extract_script)]
+    if args.file:
+        cmd.append(args.file)
+    elif args.dir:
+        cmd.extend(["--dir", args.dir])
+    elif args.all:
+        cmd.append("--all")
+    else:
+        print("Error: Specify --file <path>, --dir <dir>, or --all", file=sys.stderr)
+        sys.exit(1)
+
+    if args.force:
+        cmd.append("--force")
+
+    import subprocess
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"Extraction failed:\n{result.stderr}", file=sys.stderr)
+        sys.exit(result.returncode)
+
+    try:
+        data = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        print(result.stdout)
+        return
+
+    max_allowed = args.max_score
+    if isinstance(data, dict) and "files" in data:
+        items = data["files"]
+    elif isinstance(data, list):
+        items = data
+    else:
+        items = [data]
+
+    failed = []
+    print("=" * 70)
+    print("OVER-ENGINEERING IN-THE-LOOP AUDIT")
+    print(f"Max Allowed Risk Score: {max_allowed}/100")
+    print("=" * 70)
+    for item in items:
+        score = item.get("overengineering_score", 0)
+        severity = item.get("severity", "clean")
+        src = item.get("source_path", "unknown")
+        smells = item.get("smells", [])
+        status = "PASSED" if score < max_allowed else "FAILED"
+        print(f"[{status}] {src:<50} | Score: {score:>3}/100 | Severity: {severity}")
+        if score >= max_allowed:
+            failed.append(item)
+            for smell in smells:
+                print(f"   ⚠️  Line {smell.get('line', '?')}: {smell.get('name', 'Smell')} — {smell.get('description', '')}")
+
+    print("=" * 70)
+    if failed:
+        print(f"❌ Over-engineering gate FAILED: {len(failed)} file(s) exceed score threshold ({max_allowed}).")
+        print("Remediation Loop required: Simplify abstractions, eliminate 1:1 interfaces, or inline trampoline methods.")
+        sys.exit(1)
+    else:
+        print(f"✅ Over-engineering gate PASSED: All files within threshold (< {max_allowed}).")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Agent Orchestrator Pipeline & Context Manager")
     subparsers = parser.add_subparsers(dest="subcommand", required=True)
@@ -387,6 +446,14 @@ def main() -> None:
     p_report = subparsers.add_parser("report", help="Generate full markdown report")
     p_report.add_argument("--run-id", help="Optional run ID (defaults to latest)")
 
+    # check-overengineering
+    p_check_oe = subparsers.add_parser("check-overengineering", help="Audit files for over-engineering and accidental complexity in the loop")
+    p_check_oe.add_argument("--file", help="Path to single source file to audit")
+    p_check_oe.add_argument("--dir", help="Directory of source files to audit")
+    p_check_oe.add_argument("--all", action="store_true", help="Analyze all source files in repository")
+    p_check_oe.add_argument("--max-score", type=int, default=40, help="Maximum allowable over-engineering score (default: 40)")
+    p_check_oe.add_argument("--force", action="store_true", help="Force re-analysis even if cached report is up to date")
+
     args = parser.parse_args()
 
     if args.subcommand == "init":
@@ -397,6 +464,8 @@ def main() -> None:
         cmd_handoff(args)
     elif args.subcommand == "record":
         cmd_record(args)
+    elif args.subcommand == "check-overengineering":
+        cmd_check_overengineering(args)
     elif args.subcommand == "report":
         cmd_report(args)
 

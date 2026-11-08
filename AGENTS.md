@@ -22,3 +22,13 @@
   - **`ledger`**: Permanent architectural decisions, conventions, and security policies.
   - **`sidecar`**: Active task state and WIP handoffs.
   - **`journal`**: Session and stage completion recaps requiring **BOTH** `summary` (work done) and `learnings` (mistakes made or avoided).
+
+---
+
+## In-The-Loop Over-Engineering Prevention
+
+- Always run `check-overengineering` (via `orchestrator-context-manager.py check-overengineering --file <path>`) or language-specific anti-bloat self-checks in the loop (during development, code review, and bug remediation).
+- Never introduce speculative generality (YAGNI), 1:1 single-implementation interfaces, redundant DTO layers, or trampoline pass-through methods.
+- Re-run `check-overengineering` during defect remediation to guarantee bug fixes do not introduce "fix bloat".
+
+
