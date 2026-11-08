@@ -24,6 +24,7 @@ These skills provide ready-made workflows for modern software engineering — sp
 | [`api-security`](#api-security) | **Architecture & Quality** | JWT, OAuth 2.1 PKCE, session cookies, API keys, mTLS, HMAC | `"review api security"` |
 | [`algorithmic-complexity-analyzer`](#algorithmic-complexity-analyzer) | **Architecture & Quality** | Big-O time/space audits ($O(1) \dots O(2^n)$), hidden loop traps | `"check time complexity"` |
 | [`caching-queues-reviewer`](#caching-queues-reviewer) | **Architecture & Quality** | Redis, Kafka, Lua scripts, stampede defense, multi-language caching | `"review caching code"` |
+| [`sql-executor`](#sql-executor) | **Architecture & Quality** | Cross-engine joins, index design, sargability, query tuning, data validation | `"write a sql join"` |
 | [`detect-overengineering`](#detect-overengineering) | **Architecture & Quality** | YAGNI audits, layer bloat, trampoline pass-throughs | `"check for over-engineering"` |
 | [`design-pattern-detector`](#design-pattern-detector) | **Architecture & Quality** | Structural AST extraction of design patterns & anti-patterns | `"detect design patterns"` |
 | [`architectural-planning`](#architectural-planning) | **Architecture & Quality** | Interactive system design, Mermaid specs & tech choices | `"plan my architecture"` |
@@ -111,6 +112,10 @@ Analyzes source code to detect premature abstractions, speculative generality (Y
 ### `caching-queues-reviewer`
 Comprehensive architectural guidance and code review auditing for caching, distributed memory systems, and message queues (Redis, Apache Kafka, RabbitMQ, Lua scripting, multi-tier HybridCache, and ecosystem drivers across JavaScript/TypeScript, Python, and C#/.NET). Audits code changes for cache stampede defense, eviction policies, atomic Lua operations, poison pill handling, Kafka partition skew, and offset commit hygiene.
 - **Trigger phrases:** `"review caching code"`, `"kafka vs redis"`, `"redis lua script"`, `"audit queue architecture"`, `"cache stampede defense"`, `"c# hybridcache"`, `"python redis celery"`, `"bullmq review"`.
+
+### `sql-executor`
+Practitioner guidance for querying, tuning, validating, and troubleshooting enterprise databases (SQL Server, Oracle, PostgreSQL, SQLite, MongoDB, MS Access, MySQL) via the `sql-connector` MCP server. Covers multi-engine joins, composite index ordering, covering indexes, execution plan tuning, sargability, data extraction validation, and SQL firewall troubleshooting.
+- **Trigger phrases:** `"write a sql join"`, `"optimize sql query"`, `"tune database index"`, `"validate extracted data"`, `"troubleshoot slow query"`, `"explain query plan"`, `"run database queries"`.
 
 ### `design-pattern-detector`
 Identifies design patterns (Singleton, Factory, Observer, Strategy, Builder, Decorator, Repository, Command, Template Method, Facade, Dependency Injection) and anti-patterns (God Object / God File, Long Method, Feature Envy) using structural AST extraction combined with contextual semantic reasoning.
@@ -294,6 +299,7 @@ developer-productivity-skills/
 │       ├── scan-repo-readme/         # Semantic repository README searcher
 │       ├── skill-creator/            # Modular & task skill scaffolding generator
 │       ├── sql-connector/            # Multi-database query & safety firewall skill
+│       ├── sql-executor/             # Multi-engine SQL tuning, joins & validation pack
 │       ├── sync-github-forks/        # Automated fork synchronization tool
 │       ├── trace-code-context/       # AST dependency & Mermaid graph generator
 │       └── troubleshoot-and-fix/     # Isolated reproduction testbed framework
