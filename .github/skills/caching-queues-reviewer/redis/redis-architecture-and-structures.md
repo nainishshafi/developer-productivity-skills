@@ -71,3 +71,4 @@ flowchart TD
 3. **Big Key Traps**:
    - Single keys containing > 10 MB or collections with > 50,000 items block Redis when allocated, read, or evicted.
    - Audit with `redis-cli --bigkeys` or `MEMORY USAGE <key>`.
+

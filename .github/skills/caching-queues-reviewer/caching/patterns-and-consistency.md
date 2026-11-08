@@ -98,3 +98,4 @@ When Redis memory exceeds `maxmemory`, the configured eviction policy dictates w
 | `volatile-lfu` | Least Frequently Used among keys with TTL (tracks counter hits). | Workloads with long-tail access patterns where sporadic spikes shouldn't evict steady hot keys. |
 | `allkeys-lfu` | Least Frequently Used across all keys. | Cache-only instances prioritizing frequently accessed records over recent bursts. |
 | `noeviction` | Returns an error `OOM command not allowed` when memory is full. | When Redis is used as a primary store, queue, or session store where data loss is intolerable. |
+

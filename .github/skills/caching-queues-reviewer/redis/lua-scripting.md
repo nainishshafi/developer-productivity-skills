@@ -142,3 +142,4 @@ Modern client libraries (`ioredis`, `redis-py`, `StackExchange.Redis`) handle `E
    - Use curly braces `{}` to force keys to the same slot:
      `KEYS[1] = "{order:1024}:lock"` and `KEYS[2] = "{order:1024}:history"`.
    - Accessing keys with different hash slots results in: `CROSSSLOT Keys in request don't hash to the same slot`.
+

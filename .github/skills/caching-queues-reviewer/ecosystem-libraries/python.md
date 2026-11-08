@@ -146,3 +146,4 @@ def run_consumer_loop():
     finally:
         consumer.close()
 ```
+

@@ -93,3 +93,4 @@ def get_user(user_id: str):
         user_cache[user_id] = query_db(user_id)
     return user_cache[user_id]
 ```
+
