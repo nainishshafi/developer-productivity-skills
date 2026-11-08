@@ -59,3 +59,4 @@ Sometimes third-party tools mix raw text and JSON in stdout:
 # Safely parse JSON lines, skipping unparseable raw text lines
 kubectl logs <pod-name> | jq -R 'fromjson? | select(.level == "error")'
 ```
+

@@ -104,7 +104,39 @@ kubectl port-forward <pod-name> -n prod 6060:6060
 
 ---
 
-## 5. References & Cross-Skill Links
+## 5. Automated Log Extraction Scripts
+
+The skill provides three production-grade extraction scripts in `scripts/`:
+
+### A. Kubernetes Pod Log Extractor (`extract-pod-logs.sh`)
+```bash
+# Extract logs from pod with previous crash detection and secret scrubbing
+./.github/skills/remote-pod-log-analyzer/scripts/extract-pod-logs.sh \
+  -n prod -p payment-service-59bc96489-v4k8l --previous --since 30m -o ./extracted-logs
+```
+Outputs:
+- `<ns>_<pod>_<timestamp>.log`: Full raw log stream
+- `<ns>_<pod>_<timestamp>_errors.log`: Filtered error context lines with secrets redacted
+- `<ns>_<pod>_<timestamp>_previous_crash.log`: Termination logs if container crashed
+- `<ns>_<pod>_<timestamp>_summary.txt`: Top 10 error frequency rankings
+
+### B. Remote Linux Host Extractor (`extract-remote-linux-logs.sh`)
+```bash
+# Query remote systemd service and inspect kernel OOM events over SSH
+./.github/skills/remote-pod-log-analyzer/scripts/extract-remote-linux-logs.sh \
+  -h 10.0.4.15 -u ubuntu -J ops@bastion.corp.net -s kubelet --since "1h" -o ./extracted-logs
+```
+
+### C. Cross-Platform PowerShell Extractor (`extract-remote-logs.ps1`)
+```powershell
+# Native PowerShell extraction for Windows / cross-platform environments
+pwsh ./.github/skills/remote-pod-log-analyzer/scripts/extract-remote-logs.ps1 `
+  -TargetType Pod -Namespace prod -LabelSelector 'app=order-api' -ExtractPrevious -Since "1h"
+```
+
+---
+
+## 6. References & Cross-Skill Links
 
 - [SSH Execution & Bastions](file:///.github/skills/remote-pod-log-analyzer/ssh-and-connectivity/ssh-execution-and-bastions.md)
 - [Pod Log Extraction](file:///.github/skills/remote-pod-log-analyzer/kubernetes-and-containers/pod-log-extraction.md)

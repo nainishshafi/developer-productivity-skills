@@ -46,6 +46,25 @@ Load the relevant module based on your task:
 
 ---
 
+## Automation Scripts
+
+Executable extraction tools located in `scripts/` to stream and extract troubleshooting logs directly to local files:
+
+- **`scripts/extract-pod-logs.sh`**: Shell script to extract pod logs via `kubectl`, pull `--previous` crash logs, filter error signatures, scrub secrets, and write a summary.
+  ```bash
+  ./.github/skills/remote-pod-log-analyzer/scripts/extract-pod-logs.sh -n prod -p order-service-xyz --previous --since 1h
+  ```
+- **`scripts/extract-remote-linux-logs.sh`**: Shell script to query remote Linux hosts over SSH (`journalctl`, remote log files, `dmesg -T` OOM events).
+  ```bash
+  ./.github/skills/remote-pod-log-analyzer/scripts/extract-remote-linux-logs.sh -h 10.0.4.15 -u ubuntu -s kubelet --since "30m"
+  ```
+- **`scripts/extract-remote-logs.ps1`**: Cross-platform PowerShell automation script supporting both Kubernetes pods and SSH Linux hosts natively.
+  ```powershell
+  pwsh ./.github/skills/remote-pod-log-analyzer/scripts/extract-remote-logs.ps1 -TargetType Pod -Namespace prod -PodName order-service-xyz -ExtractPrevious
+  ```
+
+---
+
 ## References
 
 - [Remote Pod Log Analyzer Reference Guide](file:///.github/skills/remote-pod-log-analyzer/references/remote-pod-log-analyzer-reference.md) — Master command cheatsheet and diagnostic flows.

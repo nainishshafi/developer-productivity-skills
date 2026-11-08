@@ -73,3 +73,4 @@ sed -n '/2026-11-08 10:15:00/,/2026-11-08 10:30:00/p' /var/log/app.log | grep 'E
 # Using awk for ISO-8601 timestamps
 awk '$1 >= "2026-11-08T10:15:00" && $1 <= "2026-11-08T10:30:00"' /var/log/app.log
 ```
+

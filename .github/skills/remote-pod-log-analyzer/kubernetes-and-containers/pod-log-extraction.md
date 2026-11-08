@@ -86,3 +86,4 @@ sudo crictl ps -a --name payment-service
 # Inspect logs of specific container ID
 sudo crictl logs --tail=100 <container-id>
 ```
+

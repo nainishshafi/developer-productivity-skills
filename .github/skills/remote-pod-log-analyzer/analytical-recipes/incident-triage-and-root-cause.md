@@ -66,3 +66,4 @@ awk '{print substr($4, 2, 17)}' /var/log/nginx/access.log | sort | uniq -c
 # Top 10 user agents triggering 404 / 403 (bot scanner detection)
 awk -F'"' '$3 ~ / 40[34] / { print $6 }' /var/log/nginx/access.log | sort | uniq -c | sort -rn | head -n 10
 ```
+

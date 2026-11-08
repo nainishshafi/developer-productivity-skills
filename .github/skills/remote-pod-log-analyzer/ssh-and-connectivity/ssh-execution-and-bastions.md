@@ -94,3 +94,4 @@ journalctl -u kubelet --since "1 hour ago" -p err..alert --no-pager | \
 EOF
 ```
 *Note: Quoting `'EOF'` ensures variables (`$i`, `$NF`) are evaluated on the **remote server**, not locally.*
+
