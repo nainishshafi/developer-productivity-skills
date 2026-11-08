@@ -20,6 +20,20 @@ Analyze source files and architectures to detect over-engineering, premature abs
 
 ---
 
+## Agent Guidance: Essential vs Accidental Complexity
+
+Over-engineering is context-dependent. The structural extractor generates signals and metrics, but the agent must evaluate them as **heuristics, not deterministic verdicts**:
+
+1. **Essential vs Accidental Complexity**: Essential complexity stems from the problem domain (e.g., banking compliance, distributed state, cryptography). Accidental complexity is introduced by speculative patterns, redundant layers, and premature generality.
+2. **Single-Implementation Interfaces**: Not all 1:1 interfaces are over-engineering. They are justified when serving as:
+   - Architectural ports/boundaries (Hexagonal/Clean Architecture).
+   - Mocking seams for external I/O (payment gateways, cloud storage, databases).
+   - Flag as over-engineering only when they exist purely out of habit for internal trivial services with no test boundary or polymorphism benefit.
+3. **Builders & Factories**: Justified when constructing complex immutable objects with invariant validation or multi-step configuration. Discourage when simple constructors, object literals, or keyword arguments are sufficient.
+4. **Layer Indirection**: Distinct layers (controller $\to$ service $\to$ repository) are healthy in growing applications, but become accidental complexity when 3+ layers simply forward identical arguments with zero business logic or transformation (trampoline methods).
+
+---
+
 ## Prerequisites
 
 - Python 3.8+ available on PATH or in `.venv`

@@ -181,3 +181,4 @@ When instantiating millions of domain objects, the storage mechanism drastically
 | **`dict`** | Mutable | None | $\approx 230$ MB | Fast | Dynamic schema-free JSON payloads |
 
 > **Production Rule**: Use **Pydantic v2** at the API edge to validate incoming JSON payloads, but convert immediately to `@dataclass(slots=True, frozen=True)` for internal business domain processing to cut memory footprint by $4\times$.
+
