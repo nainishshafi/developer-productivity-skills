@@ -1,0 +1,47 @@
+{
+  "name": "sql-connector-mcp",
+  "version": "1.0.0",
+  "description": "Enterprise Model Context Protocol (MCP) server for multi-database querying (SQL Server, Oracle, PostgreSQL, SQLite, MongoDB, MS Access, MySQL) with zero-tolerance safety guardrails preventing DROP TABLE, unbounded DELETE/UPDATE, and destructive operations.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "sql",
+    "database",
+    "guardrails",
+    "sqlserver",
+    "oracle",
+    "postgres",
+    "sqlite",
+    "mongodb",
+    "msaccess"
+  ],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "sql-connector": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "pretest": "npm run build",
+    "start": "node --experimental-sqlite dist/index.js",
+    "dev": "node --experimental-sqlite --experimental-strip-types src/index.ts",
+    "test": "node --experimental-sqlite --experimental-strip-types tests/guardrails.test.ts && node --experimental-sqlite --experimental-strip-types tests/sqlite-adapter.test.ts && node --experimental-sqlite --experimental-strip-types tests/mcp-server.test.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

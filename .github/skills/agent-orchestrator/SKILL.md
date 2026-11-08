@@ -172,3 +172,4 @@ If any quality gate fails (`FAILED` or `BLOCKED`):
 
 - [Agent Orchestrator Reference Guide](file:///.github/skills/agent-orchestrator/references/agent-orchestrator-reference.md) — Architectural patterns, sub-agent prompts, and gate policies.
 - Context Manager Script: `.github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py`
+- [SQL Connector MCP Server](file:///.github/skills/sql-connector/SKILL.md) — Multi-database query and schema inspection with zero-tolerance destructive DDL/DML guardrails (`sql-connector`).

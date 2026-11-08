@@ -40,6 +40,7 @@ These skills provide ready-made workflows for modern software engineering — sp
 | [`save-memory`](#save-memory) | **Memory & Context** | Persists ledger, sidecar, and journal memories to SQLite | `"save memory"` |
 | [`load-memory`](#load-memory) | **Memory & Context** | Hybrid semantic (40%) + lexical (60%) memory retrieval | `"load memory"` |
 | [`nodejs-executor`](#nodejs-executor) | **Tooling & Automation** | Sandboxed JavaScript/TypeScript execution via MCP | `"run nodejs code"` |
+| [`sql-connector`](#sql-connector) | **Database & Tooling** | Multi-DB query & schema inspection with zero-tolerance destructive DDL/DML firewall | `"query database"` |
 
 ---
 
@@ -203,6 +204,10 @@ Retrieves concise memories using hybrid search ($0.40 \times \text{Semantic Cosi
 Evaluates JS/TS snippets and executes scripts via the `nodejs-executor` MCP server with multi-layered sandbox security and C++ permission model isolation.
 - **Trigger phrases:** `"run nodejs code"`, `"execute javascript"`, `"execute typescript"`, `"run js snippet"`, `"evaluate expression"`.
 
+### `sql-connector`
+Executes safe queries and discovers schemas across SQL Server, Oracle, PostgreSQL, SQLite, MongoDB, MS Access, and MySQL via the `sql-connector` MCP server. Zero-tolerance SQL firewall blocks `DROP TABLE`, `DELETE *`, and destructive mutations.
+- **Trigger phrases:** `"query database"`, `"connect to sql server"`, `"query postgres"`, `"query oracle"`, `"inspect database schema"`, `"connect to sqlite"`, `"query mongodb"`, `"connect to ms access"`, `"audit sql query safety"`.
+
 ---
 
 ## 🔌 Model Context Protocol (MCP) Servers
@@ -216,6 +221,10 @@ Reusable MCP servers located in `mcp/` providing protocol-compliant tool integra
 ### `project-memory` (`mcp/project-memory/`)
 - **Tools:** `save_memory`, `load_memory`, `search_memory`, `delete_memory`, `clear_sidecar`
 - **Features:** SQLite backend (`node:sqlite`), zero external C++ dependencies, anti-bloat filters, and hybrid semantic/lexical search.
+
+### `sql-connector` (`mcp/sql-connector/`)
+- **Tools:** `execute_query`, `list_tables`, `describe_table`, `explain_query`, `test_connection`, `audit_query_safety`
+- **Features:** Multi-database driver support (SQL Server, Oracle, PostgreSQL, SQLite, MongoDB, MS Access, MySQL), zero-tolerance destructive DDL/DML firewall (`DROP TABLE`, `DELETE *`, tautology blocking), auto row capping, and query timeout guardrails.
 
 ---
 
@@ -236,6 +245,10 @@ To register the MCP servers, add them to your MCP configuration (`.mcp.json` or 
     "project-memory": {
       "command": "node",
       "args": ["--experimental-sqlite", "<path-to-repo>/mcp/project-memory/dist/index.js"]
+    },
+    "sql-connector": {
+      "command": "node",
+      "args": ["--experimental-sqlite", "<path-to-repo>/mcp/sql-connector/dist/index.js"]
     }
   }
 }
@@ -252,7 +265,8 @@ Skills in `.github/skills/` are recognized as custom workspace instructions in C
 developer-productivity-skills/
 ├── mcp/
 │   ├── nodejs-executor/              # Sandboxed JS/TS execution MCP server
-│   └── project-memory/               # SQLite hybrid-search memory MCP server
+│   ├── project-memory/               # SQLite hybrid-search memory MCP server
+│   └── sql-connector/                # Multi-engine DB connector with SQL firewall
 ├── .github/
 │   └── skills/
 │       ├── agent-orchestrator/       # 7-stage multi-agent SDLC workflow
@@ -279,6 +293,7 @@ developer-productivity-skills/
 │       ├── scan-halucinated-tests/   # AST-based test hallucination scanner
 │       ├── scan-repo-readme/         # Semantic repository README searcher
 │       ├── skill-creator/            # Modular & task skill scaffolding generator
+│       ├── sql-connector/            # Multi-database query & safety firewall skill
 │       ├── sync-github-forks/        # Automated fork synchronization tool
 │       ├── trace-code-context/       # AST dependency & Mermaid graph generator
 │       └── troubleshoot-and-fix/     # Isolated reproduction testbed framework
