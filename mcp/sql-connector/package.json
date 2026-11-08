@@ -31,7 +31,8 @@
     "pretest": "npm run build",
     "start": "node --experimental-sqlite dist/index.js",
     "dev": "node --experimental-sqlite --experimental-strip-types src/index.ts",
-    "test": "node --experimental-sqlite --experimental-strip-types tests/guardrails.test.ts && node --experimental-sqlite --experimental-strip-types tests/sqlite-adapter.test.ts && node --experimental-sqlite --experimental-strip-types tests/mcp-server.test.ts"
+    "test": "node --experimental-sqlite --experimental-strip-types tests/guardrails.test.ts && node --experimental-sqlite --experimental-strip-types tests/sqlite-adapter.test.ts && node --experimental-sqlite --experimental-strip-types tests/mcp-server.test.ts",
+    "validate:skills": "node scripts/validate-frontmatter.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.6.0",
@@ -39,7 +40,8 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "yaml": "^2.9.1"
   },
   "engines": {
     "node": ">=22.0.0"

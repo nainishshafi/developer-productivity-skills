@@ -110,10 +110,10 @@ rules:
 
   - id: command-injection-js-spawn-shell
     pattern-either:
-      - pattern: spawn($CMD, $ARGS, {..., shell: true, ...})
-      - pattern: spawn($CMD, {..., shell: true, ...})
-      - pattern: child_process.spawn($CMD, $ARGS, {..., shell: true, ...})
-      - pattern: child_process.spawn($CMD, {..., shell: true, ...})
+      - pattern: 'spawn($CMD, $ARGS, {..., shell: true, ...})'
+      - pattern: 'spawn($CMD, {..., shell: true, ...})'
+      - pattern: 'child_process.spawn($CMD, $ARGS, {..., shell: true, ...})'
+      - pattern: 'child_process.spawn($CMD, {..., shell: true, ...})'
     message: >
       Command injection risk: child_process.spawn() called with shell: true.
       Spawning with shell: true passes commands through the system shell (cmd.exe or sh),
@@ -123,9 +123,9 @@ rules:
 
   - id: destructive-fs-deletion-js
     pattern-either:
-      - pattern: fs.rmSync($PATH, {..., recursive: true, ...})
-      - pattern: fs.rm($PATH, {..., recursive: true, ...})
-      - pattern: fs.promises.rm($PATH, {..., recursive: true, ...})
+      - pattern: 'fs.rmSync($PATH, {..., recursive: true, ...})'
+      - pattern: 'fs.rm($PATH, {..., recursive: true, ...})'
+      - pattern: 'fs.promises.rm($PATH, {..., recursive: true, ...})'
       - pattern: fs.rmdirSync($PATH, ...)
     message: >
       Destructive filesystem deletion: recursive rm or rmdir called.
@@ -136,11 +136,11 @@ rules:
 
   - id: secret-leak-env-inheritance-js
     pattern-either:
-      - pattern: spawn($CMD, $ARGS, {..., env: process.env, ...})
-      - pattern: spawn($CMD, {..., env: process.env, ...})
-      - pattern: exec($CMD, {..., env: process.env, ...})
-      - pattern: child_process.spawn($CMD, $ARGS, {..., env: process.env, ...})
-      - pattern: child_process.spawn($CMD, {..., env: process.env, ...})
+      - pattern: 'spawn($CMD, $ARGS, {..., env: process.env, ...})'
+      - pattern: 'spawn($CMD, {..., env: process.env, ...})'
+      - pattern: 'exec($CMD, {..., env: process.env, ...})'
+      - pattern: 'child_process.spawn($CMD, $ARGS, {..., env: process.env, ...})'
+      - pattern: 'child_process.spawn($CMD, {..., env: process.env, ...})'
     message: >
       Sensitive credential leak risk: process.env passed directly to child process.
       Host environment may contain API keys or tokens (AWS_*, GITHUB_*, *TOKEN*).
@@ -277,7 +277,7 @@ rules:
   # ---------------------------------------------------------------------------
 
   - id: hardcoded-local-user-path
-    pattern-regex: '(?i)(?:[a-zA-Z]:[\\/]|(?<=[ "\'\\/`]))(?:Users|home)[\\/][a-zA-Z0-9_.-]+[\\/]'
+    pattern-regex: '(?i)(?:[a-zA-Z]:[\\/]|(?<=[ "''\\/`]))(?:Users|home)[\\/][a-zA-Z0-9_.-]+[\\/]'
     paths:
       exclude:
         - "**/tests/**"

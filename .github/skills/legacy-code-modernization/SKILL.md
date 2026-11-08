@@ -1,6 +1,7 @@
 ---
 name: legacy-code-modernization
-description: Systematic, language-independent framework for safely refactoring and modernizing legacy codebases. Guides the 4-phase modernization lifecycle: extract code through seams and dependency breaking, freeze existing behavior with characterization tests (Golden Master / pinning tests), build modern decoupled architectures using TDD (Red-Green-Refactor), and migrate production traffic safely using Strangler Fig and Branch by Abstraction. Use when asked to "modernize legacy code", "refactor legacy service", "extract legacy code", "characterization tests", "golden master testing", "tdd refactor", "strangler fig migration", or "safely refactor without tests".
+description: >-
+  Systematic, language-independent framework for safely refactoring and modernizing legacy codebases. Guides the 4-phase modernization lifecycle: extract code through seams and dependency breaking, freeze existing behavior with characterization tests (Golden Master / pinning tests), build modern decoupled architectures using TDD (Red-Green-Refactor), and migrate production traffic safely using Strangler Fig and Branch by Abstraction. Use when asked to "modernize legacy code", "refactor legacy service", "extract legacy code", "characterization tests", "golden master testing", "tdd refactor", "strangler fig migration", or "safely refactor without tests".
 version: 1.0.0
 ---
 
