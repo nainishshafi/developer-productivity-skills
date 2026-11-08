@@ -213,5 +213,6 @@ The orchestrator integrates the following specialized skills across stages:
 - [SQL Connector MCP Server](file:///.github/skills/sql-connector/SKILL.md) — Multi-database query and schema inspection with zero-tolerance SQL guardrails.
 - [Detect Overengineering](file:///.github/skills/detect-overengineering/SKILL.md) — Anti-bloat heuristics and YAGNI auditing.
 - [Scan Hallucinated Tests](file:///.github/skills/scan-halucinated-tests/SKILL.md) — Ground-truth AST symbol verification for unit tests and mocks.
+- [Remote Pod Log Analyzer](file:///.github/skills/remote-pod-log-analyzer/SKILL.md) — Remote Linux and Kubernetes pod log analysis via SSH, kubectl, and streaming toolkit.
 - [GitHub Security Scanner Hook](file:///.github/skills/github-security-scanner-hook/SKILL.md) — Secret and OWASP vulnerability scanner.
 - [Troubleshoot and Fix](file:///.github/skills/troubleshoot-and-fix/SKILL.md) — Isolated testbed reproduction and 3-iteration circuit breaker remediation.

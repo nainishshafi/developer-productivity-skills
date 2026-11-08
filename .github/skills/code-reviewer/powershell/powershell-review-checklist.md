@@ -50,3 +50,4 @@ Senior-level review checklist for PowerShell scripts and modules, cross-referenc
 - [ ] **Checking `$LASTEXITCODE`**:
   - Does the script invoke native binaries (`git`, `docker`, `npm`, `kubectl`) without verifying `$LASTEXITCODE -eq 0`?
   - PowerShell does not throw on native executable failures by default.
+

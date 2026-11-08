@@ -163,7 +163,7 @@ python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py
 If any quality gate fails (`FAILED` or `BLOCKED`):
 1. **Record the Failure**: The orchestrator records the defect delta with specific file paths, line numbers, and failure diagnostics.
 2. **Isolate with `troubleshoot-and-fix`**:
-   - For failing tests, runtime exceptions, or broken contracts, activate **`troubleshoot-and-fix`**.
+   - For failing tests, runtime exceptions, or broken contracts, activate **`troubleshoot-and-fix`**. For remote cluster or container integration failures, activate **`remote-pod-log-analyzer`** to inspect container crash logs (`--previous`), exit codes (137 OOMKilled), and host journals.
    - Generate an isolated reproduction harness (`scripts/isolate-runner.js` or `scripts/isolate-runner.py`) to systematically reproduce the defect outside monolithic project dependencies.
    - Verify the fix inside the reproduction sandbox before porting the patch back.
 3. **Respect the 3-Iteration Circuit Breaker**: If `troubleshoot-and-fix` fails to resolve the defect within its 3-iteration budget, do not loop indefinitely or burn tokens. Halt the pipeline immediately, revert unverified code churn, and surface the **Out of Options Summary** directly to the user for guidance.
@@ -182,4 +182,5 @@ If any quality gate fails (`FAILED` or `BLOCKED`):
 - [SQL Executor](file:///.github/skills/sql-executor/SKILL.md) — Multi-engine SQL query tuning, indexing, and validation.
 - [SQL Connector MCP Server](file:///.github/skills/sql-connector/SKILL.md) — Multi-database query and schema inspection with zero-tolerance SQL guardrails.
 - [Detect Overengineering](file:///.github/skills/detect-overengineering/SKILL.md) — Anti-bloat heuristics and YAGNI auditing.
+- [Remote Pod Log Analyzer](file:///.github/skills/remote-pod-log-analyzer/SKILL.md) — Remote Linux and Kubernetes pod log analysis via SSH, kubectl, and streaming toolkit.
 - [Troubleshoot and Fix](file:///.github/skills/troubleshoot-and-fix/SKILL.md) — Isolated testbed reproduction and 3-iteration circuit breaker remediation.

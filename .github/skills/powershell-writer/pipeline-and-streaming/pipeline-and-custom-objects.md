@@ -110,3 +110,4 @@ Splatting also supports arrays for positional parameters:
 $copyParams = @('C:\Source\data.csv', 'D:\Backup\data.csv', $true)
 Copy-Item @copyParams # Binds to -Path, -Destination, -Force
 ```
+

@@ -32,6 +32,7 @@ These skills provide ready-made workflows for modern software engineering — sp
 | [`scan-halucinated-tests`](#scan-halucinated-tests) | **Architecture & Quality** | Cross-validates test symbols against AST ground truth | `"scan for hallucinated tests"` |
 | [`trace-code-context`](#trace-code-context) | **Architecture & Quality** | AST symbol extraction, callers/callees & Mermaid graph | `"trace code context"` |
 | [`playwright-bdd-tester`](#playwright-bdd-tester) | **Testing & Quality** | BDD Gherkin & Playwright browser test automation | `"write playwright tests"` |
+| [`remote-pod-log-analyzer`](#remote-pod-log-analyzer) | **Diagnostics** | Remote Linux & Kubernetes pod log analysis via SSH, kubectl, grep, awk, jq | `"analyze remote logs"` |
 | [`troubleshoot-and-fix`](#troubleshoot-and-fix) | **Diagnostics** | Isolated reproduction testbeds, 3-attempt circuit breaker & escalation summary | `"troubleshoot and fix"` |
 | [`legacy-code-modernization`](#legacy-code-modernization) | **Modernization** | 4-phase safe modernization (Extract $\to$ Pin $\to$ TDD $\to$ Strangler) | `"modernize legacy code"` |
 | [`skill-creator`](#skill-creator) | **Tooling & Automation** | Scaffolds modular knowledge-packs and task skills | `"create a new skill"` |
@@ -162,6 +163,11 @@ Built-in evaluation capability for evaluating and comparing LLM responses direct
 ---
 
 ## 🛠️ 4. Diagnostics, Debugging & Modernization
+
+### `remote-pod-log-analyzer`
+Operational framework for searching, streaming, and statistically analyzing remote Linux and Kubernetes pod logs over SSH and kubectl without downloading giant log files locally.
+- **Core Topics:** Non-interactive SSH execution (`-o BatchMode=yes`, `-o ConnectTimeout=5`), Bastion / Jump host hopping (`-J`), remote heredoc execution, Kubernetes pod log extraction (`kubectl logs -l app=foo`, multi-container `-c`, `--previous` for crashed pods, time-windowed `--since`), container crash exit code diagnosis (`137 OOMKilled`, `143 Terminated`, `127 Command Not Found`), node-level log inspection (`/var/log/pods/`, `crictl logs`), high-performance searching across raw and rotated gzipped archives (`grep`, `zgrep`, `ripgrep -z`), stream statistical parsing with `awk` (HTTP status distributions, P50/P95/P99 latency calculations, multiline stack trace grouping), structured JSON log analysis with `jq` (`select(.level == "error")`, distributed trace ID isolation), systemd journal filtering (`journalctl -u unit -p err`), kernel ring buffer inspection (`dmesg -T` for OOM-killer events), and production incident triage runbooks.
+- **Trigger phrases:** `"analyze remote logs"`, `"remote linux log analysis"`, `"remote pod log analysis"`, `"remote-linux-pod-log-analysis"`, `"kubectl logs triage"`, `"ssh log grep"`, `"debug pod crash"`, `"journalctl error analysis"`, `"parse nginx access logs"`, `"zgrep logs"`.
 
 ### `troubleshoot-and-fix`
 Universal diagnostic and repair framework for runtime crashes, exceptions, and logic errors. Enforces a strict 3-iteration circuit breaker to prevent infinite token-burning trial-and-error loops, escalating a structured out-of-options diagnostic summary when hypotheses fail. Extracts problematic logic and test fixtures into an isolated sandbox harness (`scripts/isolate-runner.js`, `scripts/isolate-runner.py`) to systematically reproduce and verify fixes before porting them back to source code.
@@ -302,6 +308,7 @@ developer-productivity-skills/
 │       ├── python-developer/         # Python 3.10-3.13, Pydantic v2, asyncio pack
 │       ├── python-linter/            # Automated Ruff & Mypy quality runner
 │       ├── react-developer/          # React 18/19, RSC, Zustand, Query pack
+│       ├── remote-pod-log-analyzer/  # Remote Linux & Kubernetes pod log analysis pack
 │       ├── save-memory/              # Structured memory persistence skill
 │       ├── scan-halucinated-tests/   # AST-based test hallucination scanner
 │       ├── scan-repo-readme/         # Semantic repository README searcher

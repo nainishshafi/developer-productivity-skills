@@ -102,3 +102,4 @@ if ($analysisResults) {
 - `PSUseDeclaredVarsMoreThanAssignments`: Detects dead/unused variables.
 - `PSUseApprovedVerbs`: Enforces standard cmdlet naming.
 - `PSAvoidUsingPositionalParameters`: Recommends explicit named parameters in scripts for maintainability.
+

@@ -121,3 +121,4 @@ if ($manifest) {
     Write-Host "Module manifest valid: $($manifest.Name) v$($manifest.Version)"
 }
 ```
+

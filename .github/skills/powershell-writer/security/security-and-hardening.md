@@ -63,3 +63,4 @@ In enterprise environments with AppLocker or Windows Defender Application Contro
 - CLM blocks direct .NET reflection, `Add-Type` compilation, and raw COM objects.
 - Write scripts using native cmdlets and approved .NET types (`[System.DateTime]`, `[System.Uri]`, `[math]`) rather than arbitrary C# reflection to ensure compatibility with CLM.
 - Be aware that **Script Block Logging (Event ID 4104)** captures the full text of all script blocks executed. Do not embed plaintext passwords in parameters or inline scripts.
+

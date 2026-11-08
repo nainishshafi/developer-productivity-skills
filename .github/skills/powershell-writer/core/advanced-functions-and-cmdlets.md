@@ -130,3 +130,4 @@ PowerShell pipelines process items one-at-a-time through streaming:
 - `ValueFromPipeline = $true`: The entire piped object binds to this parameter.
 - `ValueFromPipelineByPropertyName = $true`: The piped object's property with matching name binds to this parameter.
 - **Always provide `begin`, `process`, and `end` blocks** when writing functions that accept pipeline input. If omitted, the function body behaves as an `end` block and will only process the **last** piped element!
+

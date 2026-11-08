@@ -52,3 +52,4 @@ Before finalizing PowerShell code, run these 5 self-checks:
 5. **The Redundant Wrapper Check**:
    - Did you write a custom function that simply wraps a native cmdlet without adding validation, error handling, or transformations?
    - **Fix**: Use the native cmdlet directly or use a parameter alias.
+

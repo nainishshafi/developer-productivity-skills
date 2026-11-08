@@ -105,3 +105,4 @@ In PowerShell 7.4+, you can also enable `$PSNativeCommandUseErrorActionPreferenc
 - Use **`Write-Error`**:
   - Inside cmdlet `process` blocks when an individual piped item fails, but remaining items can still be safely processed.
   - Always provide `-Category`, `-TargetObject`, and `-ErrorAction` parameters.
+
