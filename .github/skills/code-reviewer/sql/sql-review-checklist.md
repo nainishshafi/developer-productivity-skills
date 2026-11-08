@@ -54,3 +54,4 @@ Senior-level review checklist for enterprise SQL across relational engines (SQL 
   - Are multiple tables updated in the exact same deterministic order across all application transactions?
 - [ ] **Isolation Levels**:
   - Is `READ COMMITTED` or `READ COMMITTED SNAPSHOT` (RCSI) used to prevent read queries from taking shared locks that block writers?
+

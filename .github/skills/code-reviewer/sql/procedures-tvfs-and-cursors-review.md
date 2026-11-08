@@ -52,3 +52,4 @@ Audit guide for stored procedures, table-valued functions, Oracle cursors, and t
   ```
 - [ ] **Cursor Deallocation**:
   - Are SQL Server cursors explicitly closed and deallocated (`CLOSE cur; DEALLOCATE cur;`)?
+

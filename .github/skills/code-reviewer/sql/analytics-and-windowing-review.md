@@ -32,3 +32,4 @@ Audit guide for SQL analytic functions, OLAP multidimensional aggregation, and m
 - [ ] **Native `PIVOT` vs. Conditional Aggregation**:
   - Is native `PIVOT` or conditional aggregation (`SUM(CASE WHEN category = 'A' THEN amount ELSE 0 END)`) used cleanly?
   - For cross-database portability (PostgreSQL, SQLite, MySQL), conditional aggregation with `CASE` is universally supported without proprietary extensions.
+

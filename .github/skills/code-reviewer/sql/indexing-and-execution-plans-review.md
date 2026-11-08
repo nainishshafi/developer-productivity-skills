@@ -62,3 +62,4 @@ Audit guide for query performance, execution plan analysis, index selection, and
   - Is `OFFSET 100000 ROWS FETCH NEXT 50 ROWS` used?
   - High offsets scan and discard 100,000 rows ($O(N)$ cost).
   - **Resolution**: Use Keyset (Cursor-based) pagination (`WHERE id > @last_seen_id ORDER BY id ASC LIMIT 50`) which runs in $O(1)$ time via index seek.
+
