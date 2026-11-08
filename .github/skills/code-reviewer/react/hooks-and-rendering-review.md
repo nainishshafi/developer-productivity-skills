@@ -57,3 +57,4 @@ Audit guide for React hooks, closures, re-rendering bottlenecks, and memoization
 - [ ] **DOM Node Explosion**:
   - Does the UI render lists with > 100 items directly without virtualization?
   - **Resolution**: Use TanStack Virtual (`@tanstack/react-virtual`) or `react-window` for large lists or tables.
+

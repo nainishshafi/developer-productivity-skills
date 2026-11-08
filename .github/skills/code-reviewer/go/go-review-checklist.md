@@ -40,3 +40,4 @@ Senior-level review checklist for modern Go (1.21+) microservices and tooling.
   - Use pointer receiver `(s *Service)` if the method mutates the struct or if the struct contains synchronization primitives (`sync.Mutex`).
   - Use value receiver `(p Point)` for small, immutable data structures.
   - Maintain consistency across all methods of a given type.
+

@@ -46,3 +46,4 @@ Audit guide for ASP.NET Core APIs, Entity Framework Core, Dapper, and database p
   - Are outgoing HTTP clients configured with resilience pipelines (Polly v8) using exponential backoff with jitter?
 - [ ] **Circuit Breakers**:
   - Do external API integrations trip circuit breakers when external services fail consistently?
+

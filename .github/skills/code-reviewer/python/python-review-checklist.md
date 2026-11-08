@@ -47,3 +47,4 @@ Staff-level review guidelines and checklist for modern Python (3.11+) applicatio
 - [ ] **Fixture Hygiene**: Are fixtures scoped appropriately (`function`, `module`, `session`) without leaking test state?
 - [ ] **Mock Verification**: Are mocks authentic AST symbols (`spec=Service`) rather than unconstrained magic mocks?
 - [ ] **Linter & Formatter**: Does the code pass `ruff check` and `ruff format` cleanly?
+

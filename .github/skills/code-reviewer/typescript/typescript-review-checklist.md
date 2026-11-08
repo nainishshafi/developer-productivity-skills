@@ -48,3 +48,4 @@ Senior-level review checklist for TypeScript codebases.
 - [ ] **ESLint & Prettier**: Does the code conform to strict ESLint configurations (`@typescript-eslint/recommended-type-checked`)?
 - [ ] **Test Coverage**: Are unit tests written in Vitest/Jest with high branch coverage?
 - [ ] **Mock Legitimacy**: Are test mocks validating against actual interface contracts (e.g. `mock<UserService>()`) rather than untyped objects?
+

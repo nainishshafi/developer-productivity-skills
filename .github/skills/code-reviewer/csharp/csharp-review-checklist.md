@@ -39,3 +39,4 @@ Senior-level review checklist for modern C# (12+) and .NET (8/9) applications, c
   - Is `.Any()` used to test for existence rather than `.Count() > 0`?
 - [ ] **Collection Expressions**:
   - Are modern collection expressions `[1, 2, 3]` used consistently?
+

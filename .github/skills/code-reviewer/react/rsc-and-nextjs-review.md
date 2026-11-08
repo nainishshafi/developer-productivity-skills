@@ -41,3 +41,4 @@ Audit guide for Next.js App Router, React Server Components (RSC), and Server Ac
   ```
 - [ ] **Suspense Boundaries**:
   - Are slow data dependencies wrapped in `<Suspense fallback={<Skeleton />}>` to enable streaming server rendering?
+

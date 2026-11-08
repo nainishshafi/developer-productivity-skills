@@ -86,6 +86,15 @@ For deep guidelines, consult the dedicated review modules in each language direc
 - **Error Wrapping:** Are errors wrapped with `fmt.Errorf("failed doing x: %w", err)` to preserve causal chains?
 - **Receiver Consistency:** Are struct methods consistent with pointer receivers `(s *Service)` vs value receivers `(s Service)` to avoid unintentional mutation or slice copying?
 
+### SQL Reviews
+*Detailed Modules: [SQL Checklist](file:///.github/skills/code-reviewer/sql/sql-review-checklist.md) | [Indexing & Execution Plans](file:///.github/skills/code-reviewer/sql/indexing-and-execution-plans-review.md) | [Procedures, TVFs & Cursors](file:///.github/skills/code-reviewer/sql/procedures-tvfs-and-cursors-review.md) | [Analytics & Windowing](file:///.github/skills/code-reviewer/sql/analytics-and-windowing-review.md)*
+- **Destructive SQL Guardrails:** Are `DROP TABLE`, `TRUNCATE`, or unconstrained `DELETE` statements absent?
+- **Parameterization:** Are queries strictly parameterized against SQL injection?
+- **NULL Semantics:** Is three-valued logic handled (`IS NULL` vs `= NULL`, `NOT IN` with nullable subqueries)?
+- **Execution Plans & SARGability:** Do execution plans avoid $O(N)$ full table scans? Are predicates SARGable (no functions on indexed columns)?
+- **Indexes:** Are specialized indexes (GIN, GiST, BRIN, covering `INCLUDE`) utilized where appropriate?
+- **Routines & Cursors:** Are inline TVFs preferred over multi-statement TVFs? Are cursors avoided or bounded with `BULK COLLECT LIMIT`?
+
 ---
 
 ## 3. Specialized Domain Review Guides

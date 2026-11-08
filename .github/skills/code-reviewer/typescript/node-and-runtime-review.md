@@ -46,3 +46,4 @@ Audit guide for Node.js backend runtimes, memory management, and event loop hygi
   - Does the service listen for `SIGTERM` and `SIGINT` to close active HTTP servers, drain queues, and close database connection pools?
 - [ ] **Unhandled Rejections**:
   - Does the process configure `process.on('unhandledRejection', ...)` and `process.on('uncaughtException', ...)`?
+

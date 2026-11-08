@@ -50,3 +50,4 @@ Audit guide for asynchronous patterns, Promises, concurrency limits, and cancell
   ```
 - [ ] **Cleanup on Cancellation**:
   - Do async listeners unbind and cleanup pending work when `signal.aborted` fires?
+

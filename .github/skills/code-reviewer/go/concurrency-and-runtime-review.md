@@ -47,3 +47,4 @@ Audit guide for Go goroutines, channels, synchronization, and runtime memory hyg
   - **Resolution**: Wrap the loop body in a helper function or close explicitly.
 - [ ] **`sync.Pool` for High-Throughput Buffers**:
   - Are temporary byte buffers pooled using `sync.Pool` in hot network/serialization paths to reduce GC pressure?
+

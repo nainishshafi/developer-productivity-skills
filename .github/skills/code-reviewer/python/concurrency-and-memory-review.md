@@ -46,3 +46,4 @@ Review guidelines for Python asynchronous programming, event loop safety, memory
   - Are assignments triggering `SettingWithCopyWarning`? Ensure explicit `.copy()` or indexing via `.loc[row, col] = val`.
 - [ ] **Memory Release in Long Batches**:
   - Are large dataframes deleted (`del df`) and garbage collected (`import gc; gc.collect()`) in batch pipelines?
+

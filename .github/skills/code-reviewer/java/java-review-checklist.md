@@ -47,3 +47,4 @@ Senior-level review checklist for modern Java (21+) applications, cross-referenc
 - [ ] **Catch Specifics**:
   - Are `catch (Exception e)` or `catch (Throwable t)` blocks avoiding swallowing unexpected runtime exceptions?
   - Do rethrown exceptions include the root cause (`throw new ServiceException("msg", e)`)?
+

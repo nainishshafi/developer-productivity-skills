@@ -56,3 +56,4 @@ Flag routes that execute direct database queries or instantiate ORM models witho
 - [ ] **Token Verification**: Are JWTs verified using asymmetric keys (RS256/ES256)? Is algorithm `none` rejected?
 - [ ] **Password Hashing**: Are passwords hashed using Argon2id or bcrypt with appropriate work factors?
 - [ ] **CORS Configuration**: Is `allow_origins=["*"]` forbidden in production with credentials enabled? Flag wildcard CORS with credentials as `[P0 - Blocker]`.
+

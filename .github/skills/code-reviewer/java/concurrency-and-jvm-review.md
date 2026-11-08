@@ -36,3 +36,4 @@ Audit guide for Java 21+ Virtual Threads (Project Loom), concurrency, and JVM re
   - **Resolution**: Use Guava `CacheBuilder` or Caffeine with size/time limits.
 - [ ] **Non-Static Inner Classes**:
   - Do inner classes hold an implicit reference to an outer class instance, preventing outer class garbage collection?
+

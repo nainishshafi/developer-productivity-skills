@@ -39,3 +39,4 @@ Audit guide for Spring Boot 3+, Spring Data JPA, Hibernate, and Transaction mana
   - Are properties validated using `@ConfigurationProperties` and Jakarta Validation annotations rather than loose `@Value` strings?
 - [ ] **Validation Layer**:
   - Are controller requests validated using `@Valid` with Jakarta annotations (`@NotNull`, `@Size`, `@Email`)?
+

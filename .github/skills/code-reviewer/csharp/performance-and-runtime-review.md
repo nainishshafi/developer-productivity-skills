@@ -54,3 +54,4 @@ Audit guide for C# memory allocations, cancellation propagation, channels, and c
   - Are background thread results marshaled to the UI thread via `Dispatcher.InvokeAsync()` before mutating observable collections?
 - [ ] **Event Unsubscribing**:
   - Are View event handlers unsubscribed when views are unloaded to prevent memory leaks?
+

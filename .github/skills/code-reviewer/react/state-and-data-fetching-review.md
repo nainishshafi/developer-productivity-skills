@@ -39,3 +39,4 @@ Audit guide for client state (Zustand, Redux) and server state (TanStack Query, 
   ```
 - [ ] **Redux Toolkit Slice Design**:
   - Are slices normalized using `createEntityAdapter` to prevent nested state mutation traps?
+

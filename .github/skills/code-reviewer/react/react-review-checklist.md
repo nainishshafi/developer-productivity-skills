@@ -34,3 +34,4 @@ Senior-level review checklist for React (v18 & v19) applications, cross-referenc
   - Are browser-only globals (`window`, `localStorage`, `document`) guarded against SSR execution by checking `typeof window !== 'undefined'` or executing inside `useEffect`?
 - [ ] **Hydration Mismatches**:
   - Are random IDs, timestamps, or locale formatting deterministic between server render and client hydration?
+
