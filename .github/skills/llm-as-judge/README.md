@@ -13,8 +13,39 @@ An **agent-native evaluation engine** that provides structured judgment protocol
 - **Bi-Directional Pairwise Comparisons**: Neutralizes position, recency, and verbosity bias when comparing two candidates.
 - **Anchored 1–5 Scoring Scales**: Concrete behavioral anchors (`5=Exemplary` to `1=Broken`) with automatic `[CRITICAL]` blocker gates.
 - **Claim-Level Grounding & RAG Audits**: Decomposes responses into atomic claims verified against retrieved source context.
-- **Multi-Agent Consensus Panels**: Arbitrates high-stakes decisions across independent evaluator lenses (`First-Principles`, `Pragmatic Systems`, `Adversarial Verifier`).
-- **Engineering Evaluator Archetypes (Pattern 7)**: Stress-tests proposals through specialized operational mindsets (Pessimist, Contrarian, Pragmatist, Specialist).
+- **3-Model Consensus Checks (Pattern 6)**: Arbitrates high-stakes decisions across 3 independent models/lenses (`Claude Sonnet`, `GPT-5.4`, `Gemini Pro`).
+- **Engineering Evaluator Archetypes (Pattern 7)**: Stress-tests proposals through specialized operational mindsets (`Pessimist`, `Contrarian`, `Pragmatist`, `Specialist`).
+
+---
+
+## 3-Model Consensus Check & Multi-Agent Evaluation
+
+For critical decisions (architectural selection, security audits, ambiguous requirements), invoke **3 independent models or evaluator lenses** to eliminate single-model blind spots:
+
+```
+You: "Evaluate this implementation with 3 models (Claude Sonnet, GPT-5.4, Gemini Pro) for consensus"
+
+Agent 1 (Claude Sonnet — First-Principles Lens): Score: 4.5/5 → Verdict: PASS
+Agent 2 (GPT-5.4 — Pragmatic Systems Lens):     Score: 4.0/5 → Verdict: PASS  
+Agent 3 (Gemini Pro — Adversarial Verifier):    Score: 3.5/5 → Verdict: PARTIAL (flags unhandled connection timeout)
+
+Consensus: Score: 4.0/5, PASS with remediation (Confidence: MEDIUM)
+Unique Insight (Agent 3): Socket timeout unhandled during connection handshake
+```
+
+### Why the 3-Model Check?
+- **Cross-Model Family Diversity**: Evaluating across distinct model families (Anthropic Claude, OpenAI GPT, Google Gemini) catches blind spots that a single model rationalizes.
+- **3 Orthogonal Evaluator Lenses**:
+  - **Judge 1 (Claude Sonnet — First-Principles & Completeness)**: Audits requirement satisfaction, logical soundness, and specification completeness from first principles.
+  - **Judge 2 (GPT-5.4 — Pragmatic Systems & Edge Cases)**: Audits runtime failure modes, operational risks, boundary conditions, and maintainability.
+  - **Judge 3 (Gemini Pro — Adversarial Verifier & Consistency)**: Executes two-phase verification—first evaluating independently, then stress-testing hidden assumptions and verifying internal score consistency.
+- **Execution Modes**:
+  1. **Subagent Panel Mode** (Antigravity / Claude Code with subagents): Spawns 3 isolated subagents in parallel with distinct lenses, collects JSON assessments, and synthesizes.
+  2. **Sequential Turn Mode** (Single-thread chat / Copilot): Invokes each evaluator persona sequentially using identical criteria before running the aggregator.
+- **Consensus Metrics**:
+  - **Unanimous Agreement (3/3 same verdict, score spread $\le 1.5$)**: `HIGH` confidence.
+  - **Majority Agreement (2/3 same verdict, no unmitigated `[CRITICAL]` blocker)**: `MEDIUM` confidence; surfaces the dissenting judge's exact finding.
+  - **Split Decision or Conflicting `[CRITICAL]` Flag**: `LOW` confidence; gates merge until human or orchestrator resolution.
 
 ---
 
@@ -34,11 +65,11 @@ When evaluating system proposals, architecture design records (ADRs), or complex
 ## When to Use
 
 Invoke this skill by asking your agent prompts such as:
+- *"Run a 3-model consensus check (Claude Sonnet, GPT-5.4, Gemini Pro) on this architectural change"*
 - *"Judge this implementation using the 4 Evaluator Archetypes (Pessimist, Contrarian, Pragmatist, Specialist)"*
 - *"Compare these two algorithms head-to-head with position bias checks"*
 - *"Is this RAG response grounded in the retrieved context? Identify unsupported claims."*
 - *"Score this technical proposal 1–5 on correctness, efficiency, and security with anchored rubrics"*
-- *"Run a 3-judge multi-agent consensus panel on this architectural change"*
 - *"Audit instruction and negative constraint compliance on this output"*
 
 ---
@@ -60,14 +91,23 @@ Invoke this skill by asking your agent prompts such as:
 
 ## Quick Start Examples
 
-### Example 1: Evaluator Archetypes Audit (Technical Proposal / Code)
+### Example 1: 3-Model Consensus Check
+```text
+You: "Run a 3-model consensus evaluation on this database migration design:
+- Judge 1 (Claude Sonnet Lens): First-principles correctness & specification completeness
+- Judge 2 (GPT-5.4 Lens): Pragmatic runtime failure modes & edge cases
+- Judge 3 (Gemini Pro Lens): Adversarial verification & hidden assumptions
+Synthesize findings into consensus metrics and verdict."
+```
+
+### Example 2: Evaluator Archetypes Audit
 ```text
 You: "Audit this proposed database worker change using the 4 Evaluator Archetypes:
 [paste code change or ADR]
 Evaluate through: Pessimist, Contrarian, Pragmatist, Specialist."
 ```
 
-### Example 2: Bi-Directional Pairwise Comparison
+### Example 3: Bi-Directional Pairwise Comparison
 ```text
 You: "Compare Option A and Option B for rate-limiting middleware.
 Perform a bi-directional check to eliminate position and length bias.
@@ -75,7 +115,7 @@ Option A: [code_a]
 Option B: [code_b]"
 ```
 
-### Example 3: Claim-Level Hallucination & RAG Grounding Audit
+### Example 4: Claim-Level Hallucination & RAG Grounding Audit
 ```text
 You: "Audit this generated answer for hallucinations against the retrieved context:
 Context: [source documents]
@@ -83,7 +123,7 @@ Answer: [candidate answer]
 Decompose into atomic claims and classify each as SUPPORTED, CONTRADICTED, or UNSUPPORTED."
 ```
 
-### Example 4: Atomic Rubric Evaluation
+### Example 5: Atomic Rubric Evaluation
 ```text
 You: "Score this TypeScript function using 4 atomic binary rubrics (YES / PARTIAL / NO):
 1. Does it guard against null/empty inputs?
@@ -117,7 +157,7 @@ Browse [`references/judge-templates.md`](file:///.github/skills/llm-as-judge/ref
 - **Template 4**: Pointwise Quality Dimension Scoring
 - **Template 5**: Code Quality & Architectural Merit Evaluation
 - **Template 6**: Instruction & Negative Constraint Compliance
-- **Template 7**: Multi-Agent Consensus Panel (3 Independent Lenses + Aggregator)
+- **Template 7**: Multi-Agent Consensus Panel (3 Independent Lenses: Claude, GPT, Gemini + Synthesis Aggregator)
 - **Template 8**: Safety, Policy & Toxicity Audit
 - **Template 9**: Evaluator Archetypes Panel (Pessimist, Contrarian, Pragmatist, Specialist)
 
@@ -133,11 +173,26 @@ Browse [`references/judge-templates.md`](file:///.github/skills/llm-as-judge/ref
 
 ---
 
+## Frequently Asked Questions (FAQ)
+
+**Q: What is the 3-model check and when should I use it?**  
+A: It combines 3 independent evaluations—either across different model families (`Claude Sonnet`, `GPT-5.4`, `Gemini Pro`) or using 3 distinct analytical lenses (`First-Principles`, `Pragmatic Systems`, `Adversarial Verifier`)—to eliminate single-model blind spots. Use it for high-stakes architecture selections, security evaluations, and complex trade-offs.
+
+**Q: How does the 3-model check run if my IDE only runs one model?**  
+A: In tools supporting subagents (Antigravity, Claude Code), it spawns 3 isolated subagent tasks concurrently. In single-model chats or GitHub Copilot, it runs in **Sequential Turn Mode**, where the agent sequentially assumes each evaluator lens before aggregating consensus.
+
+**Q: How do the 3-Model Check and the 4 Evaluator Archetypes relate?**  
+A: They complement each other:
+- The **3-Model Check (Pattern 6)** is an *arbitration protocol* (independent evaluations $\to$ agreement threshold $\to$ synthesis).
+- The **4 Evaluator Archetypes (Pattern 7)** are *domain-specific engineering lenses* (`Pessimist`, `Contrarian`, `Pragmatist`, `Specialist`) that provide the exact critical questions to ask when evaluating production code and architectural proposals.
+
+---
+
 ## Version History
 
 - **v1.5.0** (November 2026) — Added Pattern 7 Engineering Evaluator Archetypes (Pessimist, Contrarian, Pragmatist, Specialist), Template 9 multi-persona arbitration panels, and repository skill integration links.
 - **v1.4.0** (November 2026) — Critique-first output ordering, cognitive bias mitigation protocol (position, verbosity, scale compression), and standard anchored 1–5 scales.
-- **v1.3.0** (March 2026) — Improved sub-agent prompts with structured reasoning, confidence scoring, and richer aggregation analysis.
+- **v1.3.0** (March 2026) — Improved sub-agent prompts with structured reasoning, confidence scoring, and richer aggregation analysis (Claude Sonnet, GPT-5.4, Gemini Pro).
 - **v1.2.0** (March 2026) — Multi-agent sequential evaluation for consensus-based verdicts.
 - **v1.1.0** (March 2026) — Added rubric-based evaluation (primary), documented local repo sources.
 - **v1.0.0** (March 2026) — Initial agent-native evaluation framework without external APIs.
