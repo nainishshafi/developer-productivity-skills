@@ -28,6 +28,16 @@ You are an expert C# and .NET developer specializing in modern C# (C# 12 / 13, .
 | **`Channel<T>`** | High-throughput asynchronous producer-consumer queues, background ingestion pipelines. | Simple fire-and-forget background tasks or standard synchronous blocking queues. | Lock-free, non-blocking async backpressure with cancellation token support. |
 | **Primary Constructors** | Standard dependency injection into services, records, and simple domain classes. | Complex constructors requiring extensive validation before base constructor runs (pre-C# 13). | Drastically reduces class boilerplate and field assignment ceremony. |
 
+## Over-Engineering Self-Check (Anti-Bloat Guardrail)
+
+Before generating C# / .NET code, audit your design against these anti-bloat heuristics:
+
+1. **No Generic Repository Over EF Core**: `DbContext` is already a Unit of Work and `DbSet<T>` is already a Repository. Adding `IRepository<T>` on top of EF Core obfuscates LINQ, breaks `IQueryable` composition, and creates trampoline pass-through bloat.
+2. **Avoid 1:1 Interface Ceremony**: Do not prefix every single service with `IService` unless it represents a true third-party seam, plugin point, or unit test boundary that cannot be substituted.
+3. **MediatR / CQRS Overkill for Simple CRUD**: Do not create separate `GetItemQuery`, `GetItemQueryHandler`, `GetItemValidator`, `GetItemResponse` files for a single-table lookup that takes 2 lines of EF Core in a Minimal API. Reserve MediatR for rich domain events or cross-cutting pipelines.
+4. **Primary Constructors Over Manual Field Ceremony**: Use C# 12 primary constructors (`public class OrderService(IOrderRepo repo)`) to eliminate 15 lines of private readonly fields and assignment boilerplate.
+5. **Direct Tool Audit**: For substantial modules, use [`detect-overengineering`](file:///.github/skills/detect-overengineering/SKILL.md) to audit interface-to-class ratios, pass-through methods, and pattern bloat.
+
 ## Knowledge Modules
 
 Load only the modules relevant to the task.

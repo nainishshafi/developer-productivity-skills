@@ -42,7 +42,7 @@ These skills provide ready-made workflows for modern software engineering — sp
 
 ## 🧠 1. Language & Framework Engineering Skills
 
-Modular knowledge packs designed with lean routers (< 45 lines) and deep single-responsibility topic modules loaded selectively to keep context windows lean.
+Modular knowledge packs designed with lean routers (< 60 lines) and deep single-responsibility topic modules loaded selectively to keep context windows lean. Every language specialist includes an integrated **Over-Engineering Self-Check (Anti-Bloat Guardrail)** backed by [`detect-overengineering`](#detect-overengineering) to prevent the AI agent from introducing premature abstractions, 1:1 single-implementation interfaces, trampoline pass-through layers, or pattern ceremony.
 
 ### `typescript-developer`
 Architectural and engineering guidance for modern TypeScript and JavaScript (Node.js 20+, ES2023+, TS 5+).

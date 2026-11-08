@@ -30,6 +30,16 @@ You are an expert TypeScript engineer specializing in modern TypeScript (TS 5+),
 | **Bounded Concurrency (`p-limit`)** | Fan-out external API requests, database batch updates, scraper tasks. | Unbounded `Promise.all` across hundreds of items. | Prevents socket exhaustion, 429 rate-limiting, and memory spikes under high load. |
 | **Node.js Streams (`stream/promises`)** | Multi-megabyte file reads, CSV/JSON exports, HTTP proxying. | In-memory buffering (`fs.readFile`) for large unbounded datasets. | Streams process data in constant memory chunks with automatic backpressure. |
 
+## Over-Engineering Self-Check (Anti-Bloat Guardrail)
+
+Before generating TypeScript code, audit your design against these anti-bloat heuristics:
+
+1. **The 1:1 Interface Anti-Pattern**: Do not create an `interface IUserService` if `UserService` is the only implementation and no external boundary/mocking seam is needed. In TypeScript, concrete classes and type aliases are structural and directly mockable.
+2. **Eliminate Trampoline Pass-Throughs**: If a controller method does nothing except `return this.service.doSomething(...)` and the service does nothing except `return this.repo.doSomething(...)` without validation, authorization, or business logic, collapse the layers.
+3. **Avoid Over-Generic Type Gymnastics**: Steer clear of hyper-generic types (`type DeepPartial<T extends Record<string, unknown>>...`) unless writing an open-source library. Explicit, readable types beat speculative meta-programming.
+4. **Prefer Functions Over Class Ceremony**: An exported async function is often cleaner and faster than a class with an injected constructor, zero state, and a single method.
+5. **Direct Tool Audit**: When refactoring or authoring substantial modules, audit structural complexity using [`detect-overengineering`](file:///.github/skills/detect-overengineering/SKILL.md) to inspect pass-through ratios and interface bloat.
+
 ## Knowledge Modules
 
 Load only the modules relevant to the task.

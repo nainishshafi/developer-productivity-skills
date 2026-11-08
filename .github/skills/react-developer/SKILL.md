@@ -28,6 +28,16 @@ You are an expert React frontend architect specializing in modern React (React 1
 | **`useMemo` / `useCallback`** | Expensive CPU transformations (filtering large arrays), stable dependencies for `useEffect` or `React.memo`. | Trivial string concatenations, primitive computations, or handlers passed to native HTML elements (`<button>`). | Overhead of tracking dependency arrays and closure allocations can exceed the cost of re-computation. |
 | **Virtualization (`react-virtual`)** | Long lists, tables, or feeds with > 100 items rendered simultaneously. | Small lists (< 50 items) or simple paginated views. | Keeps DOM node counts constant, preventing browser layout thrashing and memory bloat. |
 
+## Over-Engineering Self-Check (Anti-Bloat Guardrail)
+
+Before generating React code, audit your design against these anti-bloat heuristics:
+
+1. **Avoid Micro-Component Splitting**: Do not split a 25-line component into 4 separate files (`ButtonWrapper`, `HeaderContainer`, `LabelText`, `CardFrame`) if they are only rendered together once. Keep local JSX together until reuse or distinct lifecycle concerns demand extraction.
+2. **No Premature Global Stores**: Do not reach for Zustand, Redux, or Context API for state that is only shared between two adjacent components or a parent and direct child. Use simple props or state lifting.
+3. **Custom Hook Overkill**: A custom hook that merely wraps a single `useState` call adds indirection without value. Write hooks only when bundling multi-step effects, lifecycle subscriptions, or complex state reducers.
+4. **Premature Memoization (`useCallback`/`useMemo`)**: Do not wrap every inline function or primitive expression in memoization hooks. The overhead of dependency array comparison and closure allocation often exceeds the render cost of simple elements.
+5. **Direct Tool Audit**: For substantial component trees, use [`detect-overengineering`](file:///.github/skills/detect-overengineering/SKILL.md) to inspect component bloat and accidental complexity.
+
 ## Knowledge Modules
 
 Load only the modules relevant to the task.

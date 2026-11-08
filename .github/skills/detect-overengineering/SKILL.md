@@ -17,6 +17,7 @@ Analyze source files and architectures to detect over-engineering, premature abs
 - Identifying YAGNI violations, single-implementation interfaces, and pass-through delegation.
 - Auditing new or legacy codebases for accidental complexity before adding features.
 - Quantifying boilerplates, builder ceremony, and anemic DTO layers.
+- Embedded anti-bloat guardrail for all language writer skills ([`typescript-developer`](file:///.github/skills/typescript-developer/SKILL.md), [`python-developer`](file:///.github/skills/python-developer/SKILL.md), [`java-developer`](file:///.github/skills/java-developer/SKILL.md), [`csharp-developer`](file:///.github/skills/csharp-developer/SKILL.md), [`react-developer`](file:///.github/skills/react-developer/SKILL.md)).
 
 ---
 

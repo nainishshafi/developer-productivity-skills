@@ -44,6 +44,18 @@ When writing or refactoring Java code, use this decision matrix to select the ri
 
 ---
 
+## Over-Engineering Self-Check (Anti-Bloat Guardrail)
+
+Before generating Java code, audit your design against these anti-bloat heuristics:
+
+1. **Ditch the Mandatory `Interface Foo` + `Class FooImpl`**: Unless you genuinely have multiple runtime implementations (e.g., `StripePaymentService` vs `MockPaymentService`) or require dynamic runtime proxies, inject the concrete `@Service FooService` directly. Modern Spring Boot handles concrete class injection cleanly.
+2. **No Builders for Records**: Java 16+ `record` types with canonical or compact constructors eliminate the need for verbose Lombok or manual `Builder` patterns for immutable data carriers.
+3. **Eliminate Anemic Pass-Through DTO Layers**: Avoid creating 4 identical classes (`Entity`, `DomainModel`, `ServiceDto`, `ControllerResponse`) that simply copy fields verbatim via getters and setters. Share records or query projections across internal boundaries where domain invariants do not differ.
+4. **Avoid Generic Repository on Top of Spring Data JPA**: `JpaRepository` is already a repository and Unit of Work abstraction. Wrapping it in an additional custom `GenericRepository<T>` adds zero value and creates trampoline bloat.
+5. **Direct Tool Audit**: For substantial modules, use [`detect-overengineering`](file:///.github/skills/detect-overengineering/SKILL.md) to audit class counts, pass-through method ratios, and interface bloat.
+
+---
+
 ## Knowledge Modules
 
 Load only the modules relevant to the task.
