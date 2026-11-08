@@ -37,6 +37,7 @@ Load the relevant module based on your task:
 | Domain | Description | Module File |
 |---|---|---|
 | **SSH & Bastions** | Non-interactive SSH flags, bastion hopping (`-J`), remote heredoc execution | [SSH Execution & Bastions](file:///.github/skills/remote-pod-log-analyzer/ssh-and-connectivity/ssh-execution-and-bastions.md) |
+| **Remote Staging Protocol** | Copying collector to remote `/tmp`, in-situ execution, copying back `.tar.gz`, cleanup | [Staging & Copy Protocol](file:///.github/skills/remote-pod-log-analyzer/ssh-and-connectivity/remote-staging-and-copy-protocol.md) |
 | **Kubernetes & Pods** | `kubectl logs`, multi-container, `--previous`, exit codes (137 OOMKilled), node logs | [Pod Log Extraction](file:///.github/skills/remote-pod-log-analyzer/kubernetes-and-containers/pod-log-extraction.md) |
 | **Grep & Ripgrep** | High-performance regex, context (`-C`), rotated `.gz` files (`zgrep`), time slicing | [Grep & Compressed Logs](file:///.github/skills/remote-pod-log-analyzer/log-processing-toolkit/grep-ripgrep-and-compressed.md) |
 | **Awk Stream Parsing** | Field extraction, status code distributions, latency percentiles (P95/P99), stack traces | [Awk & Stream Parsing](file:///.github/skills/remote-pod-log-analyzer/log-processing-toolkit/awk-and-stream-parsing.md) |
@@ -48,19 +49,20 @@ Load the relevant module based on your task:
 
 ## Automation Scripts
 
-Executable extraction tools located in `scripts/` to stream and extract troubleshooting logs directly to local files:
+Executable extraction tools located in `scripts/` following the **Remote Staging Protocol**:
 
-- **`scripts/extract-pod-logs.sh`**: Shell script to extract pod logs via `kubectl`, pull `--previous` crash logs, filter error signatures, scrub secrets, and write a summary.
-  ```bash
-  ./.github/skills/remote-pod-log-analyzer/scripts/extract-pod-logs.sh -n prod -p order-service-xyz --previous --since 1h
-  ```
-- **`scripts/extract-remote-linux-logs.sh`**: Shell script to query remote Linux hosts over SSH (`journalctl`, remote log files, `dmesg -T` OOM events).
+- **`scripts/remote-collector.sh`**: Standalone diagnostic worker script staged in `/tmp/` on the remote host or pod. Collects systemd priority errors, `/var/log/*`, `dmesg -T` OOM events, scrubs secrets, and packs into `/tmp/log-bundle-<timestamp>.tar.gz`.
+- **`scripts/extract-remote-linux-logs.sh`**: Shell runner that copies `remote-collector.sh` to remote host `/tmp/` via SCP, executes it remotely, copies the resulting `.tar.gz` bundle back to local `./extracted-logs/`, cleans up remote `/tmp`, and unpacks locally.
   ```bash
   ./.github/skills/remote-pod-log-analyzer/scripts/extract-remote-linux-logs.sh -h 10.0.4.15 -u ubuntu -s kubelet --since "30m"
   ```
-- **`scripts/extract-remote-logs.ps1`**: Cross-platform PowerShell automation script supporting both Kubernetes pods and SSH Linux hosts natively.
+- **`scripts/extract-pod-logs.sh`**: Shell runner that copies `remote-collector.sh` to pod `/tmp/` via `kubectl cp`, executes in-situ, copies back the bundle, and cleans up (automatically falling back to `kubectl logs` streaming for read-only/distroless pods).
+  ```bash
+  ./.github/skills/remote-pod-log-analyzer/scripts/extract-pod-logs.sh -n prod -p order-service-xyz --previous --since 1h
+  ```
+- **`scripts/extract-remote-logs.ps1`**: Cross-platform PowerShell automation script providing native in-situ remote staging, execution, copy-back, and cleanup for Windows environments.
   ```powershell
-  pwsh ./.github/skills/remote-pod-log-analyzer/scripts/extract-remote-logs.ps1 -TargetType Pod -Namespace prod -PodName order-service-xyz -ExtractPrevious
+  powershell -File ./.github/skills/remote-pod-log-analyzer/scripts/extract-remote-logs.ps1 -TargetType LinuxHost -RemoteHost 10.0.4.15 -User ubuntu -SystemdUnit kubelet -Since "1h"
   ```
 
 ---

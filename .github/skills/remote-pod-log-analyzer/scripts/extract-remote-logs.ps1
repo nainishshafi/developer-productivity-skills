@@ -2,8 +2,12 @@
 .SYNOPSIS
     Automated extraction and filtering of error/troubleshooting logs from Kubernetes pods and remote Linux hosts.
 .DESCRIPTION
-    Extracts live, historical, and previous crashed container logs via kubectl, or queries remote Linux hosts via SSH.
-    Filters error signatures, calculates frequency summaries, and writes sanitized artifacts to a local directory.
+    Staging & In-Situ Execution Protocol:
+    1. Copies 'remote-collector.sh' to remote host or pod in '/tmp' via SCP or 'kubectl cp'
+    2. Executes the collector locally in '/tmp' to process logs without network latency
+    3. Copies the resulting archive '/tmp/log-bundle-<timestamp>.tar.gz' back to local OutputDir
+    4. Automatically cleans up temporary files in remote '/tmp'
+    5. Falls back to 'kubectl logs' streaming if container lacks shell or cp support.
 .PARAMETER TargetType
     Target source type: 'Pod' or 'LinuxHost'.
 .PARAMETER PodName
@@ -33,9 +37,9 @@
 .PARAMETER OutputDir
     Local destination folder for extracted logs (default: './extracted-logs').
 .EXAMPLE
-    ./extract-remote-logs.ps1 -TargetType Pod -Namespace prod -PodName order-service-7b4f-x8k9 -ExtractPrevious
+    ./extract-remote-logs.ps1 -TargetType LinuxHost -RemoteHost 10.0.4.15 -User ubuntu -SystemdUnit kubelet -Since "1h"
 .EXAMPLE
-    ./extract-remote-logs.ps1 -TargetType LinuxHost -RemoteHost 10.0.4.15 -User ubuntu -SystemdUnit kubelet -Since "2h"
+    ./extract-remote-logs.ps1 -TargetType Pod -Namespace prod -PodName order-service-xyz -ExtractPrevious
 #>
 [CmdletBinding()]
 param(
@@ -89,31 +93,98 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+$collectorScript = Join-Path -Path $PSScriptRoot -ChildPath 'remote-collector.sh'
+if (-not (Test-Path -Path $collectorScript)) {
+    throw "Collector script not found at '$collectorScript'."
+}
+
 $timestamp = [System.DateTime]::UtcNow.ToString('yyyyMMdd_HHmmss\Z')
 if (-not (Test-Path -Path $OutputDir)) {
     New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 }
 
 Write-Host "========================================================" -ForegroundColor Cyan
-Write-Host " Remote Log Extraction Started ($TargetType Mode)" -ForegroundColor Cyan
+Write-Host " Remote Staging & In-Situ Log Extraction ($TargetType)" -ForegroundColor Cyan
 Write-Host " Output Directory: $OutputDir" -ForegroundColor Cyan
 Write-Host " Timestamp (UTC) : $timestamp" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
 
-if ($TargetType -eq 'Pod') {
-    $targetPods = [System.Collections.Generic.List[string]]::new()
+if ($TargetType -eq 'LinuxHost') {
+    if (-not $RemoteHost -or -not $User) {
+        throw "Both -RemoteHost and -User are required for TargetType 'LinuxHost'."
+    }
 
+    $sshOpts = [System.Collections.Generic.List[string]]::new()
+    $sshOpts.Add('-o'); $sshOpts.Add('BatchMode=yes')
+    $sshOpts.Add('-o'); $sshOpts.Add('ConnectTimeout=5')
+    $sshOpts.Add('-o'); $sshOpts.Add('StrictHostKeyChecking=accept-new')
+
+    if ($Bastion) {
+        $sshOpts.Add('-J'); $sshOpts.Add($Bastion)
+    }
+    if ($IdentityFile) {
+        $sshOpts.Add('-i'); $sshOpts.Add($IdentityFile)
+    }
+
+    $remoteScript = "/tmp/remote-collector-${timestamp}.sh"
+
+    # 1. Copy collector to remote /tmp
+    Write-Host "[1/5] Copying collector script to ${User}@${RemoteHost}:${remoteScript}..." -ForegroundColor Yellow
+    $scpArgs = $sshOpts.ToArray() + @($collectorScript, "${User}@${RemoteHost}:${remoteScript}")
+    & scp @scpArgs
+
+    # 2. Execute collector in-situ in /tmp
+    Write-Host "[2/5] Executing collector remotely in /tmp..." -ForegroundColor Yellow
+    $remoteCmd = "chmod +x '$remoteScript' && '$remoteScript' '$Since' '$LogPath' '$SystemdUnit'"
+    $sshArgs = $sshOpts.ToArray() + @('-T', "${User}@${RemoteHost}", $remoteCmd)
+    $execOutput = & ssh @sshArgs
+
+    $execOutput | Out-Host
+
+    $archiveLine = $execOutput | Select-String -Pattern 'READY_FOR_COPY:(.+)' | Select-Object -First 1
+    if (-not $archiveLine) {
+        Write-Error "Remote collector failed to produce archive."
+        & ssh @($sshOpts.ToArray() + @('-T', "${User}@${RemoteHost}", "rm -f '$remoteScript'"))
+        return
+    }
+
+    $remoteArchive = $archiveLine.Matches.Groups[1].Value.Trim()
+    $archiveName = [System.IO.Path]::GetFileName($remoteArchive)
+    $localArchive = Join-Path -Path $OutputDir -ChildPath $archiveName
+
+    # 3. Copy archive back to local OutputDir
+    Write-Host "[3/5] Copying bundle from remote to $localArchive..." -ForegroundColor Yellow
+    $fetchArgs = $sshOpts.ToArray() + @("${User}@${RemoteHost}:${remoteArchive}", $localArchive)
+    & scp @fetchArgs
+
+    # 4. Clean up remote /tmp
+    Write-Host "[4/5] Cleaning up remote /tmp artifacts..." -ForegroundColor Yellow
+    $cleanupCmd = "rm -f '$remoteScript' '$remoteArchive'"
+    $cleanArgs = $sshOpts.ToArray() + @('-T', "${User}@${RemoteHost}", $cleanupCmd)
+    & ssh @cleanArgs
+
+    # 5. Extract bundle locally
+    Write-Host "[5/5] Unpacking bundle locally..." -ForegroundColor Green
+    tar -xzf $localArchive -C $OutputDir
+
+    $extractDir = Join-Path -Path $OutputDir -ChildPath ($archiveName -replace '\.tar\.gz$', '')
+    $summaryFile = Join-Path -Path $extractDir -ChildPath 'summary.txt'
+    if (Test-Path -Path $summaryFile) {
+        Get-Content -Path $summaryFile | Out-Host
+    }
+
+    Write-Host "Done! Extracted files located at $extractDir" -ForegroundColor Cyan
+}
+elseif ($TargetType -eq 'Pod') {
+    $targetPods = [System.Collections.Generic.List[string]]::new()
     if ($PodName) {
         $targetPods.Add($PodName)
     }
     elseif ($LabelSelector) {
         Write-Host "[*] Discovering pods matching label '$LabelSelector'..."
         $discovered = kubectl get pods -n $Namespace -l $LabelSelector -o jsonpath='{.items[*].metadata.name}'
-        if (-not $discovered) {
-            throw "No pods found matching label '$LabelSelector' in namespace '$Namespace'."
-        }
-        foreach ($p in ($discovered -split '\s+')) {
-            if ($p) { $targetPods.Add($p) }
+        if ($discovered) {
+            foreach ($p in ($discovered -split '\s+')) { if ($p) { $targetPods.Add($p) } }
         }
     }
     else {
@@ -121,116 +192,77 @@ if ($TargetType -eq 'Pod') {
     }
 
     foreach ($pod in $targetPods) {
-        $prefix = Join-Path -Path $OutputDir -ChildPath "${Namespace}_${pod}_${timestamp}"
-        $logFile = "${prefix}.log"
-        $errFile = "${prefix}_errors.log"
+        $remoteScript = "/tmp/pod-collector-${timestamp}.sh"
+        $containerFlag = if ($Container) { @('-c', $Container) } else { @() }
+        $stagedSuccess = $false
 
-        Write-Host "[*] Extracting logs for pod: $pod..." -ForegroundColor Yellow
+        Write-Host "[*] Processing pod: $pod..." -ForegroundColor Yellow
 
-        $containerArgs = if ($Container) { @('-c', $Container) } else { @() }
-        $kubectlArgs = @('logs', $pod, '-n', $Namespace, "--since=$Since", '--tail=5000', '--timestamps') + $containerArgs
+        # Attempt in-situ copy & exec
+        try {
+            Write-Host "    Attempting in-situ collection via 'kubectl cp' to /tmp..."
+            $cpToArgs = @('cp', $collectorScript, "${Namespace}/${pod}:${remoteScript}") + $containerFlag
+            & kubectl @cpToArgs 2>$null
 
-        & kubectl @kubectlArgs | Out-File -FilePath $logFile -Encoding utf8
+            $execCmd = "chmod +x '$remoteScript' && '$remoteScript' '$Since'"
+            $execArgs = @('exec', $pod, '-n', $Namespace) + $containerFlag + @('--', '/bin/sh', '-c', $execCmd)
+            $execOutput = & kubectl @execArgs 2>$null
 
-        if (Test-Path -Path $logFile) {
-            $lineCount = (Get-Content -Path $logFile | Measure-Object).Count
-            Write-Host "    Saved $lineCount lines to $logFile" -ForegroundColor Green
+            $archiveLine = $execOutput | Select-String -Pattern 'READY_FOR_COPY:(.+)' | Select-Object -First 1
+            if ($archiveLine) {
+                $remoteArchive = $archiveLine.Matches.Groups[1].Value.Trim()
+                $archiveName = "${pod}_" + [System.IO.Path]::GetFileName($remoteArchive)
+                $localArchive = Join-Path -Path $OutputDir -ChildPath $archiveName
 
-            # Filter error lines
-            $errorLines = Select-String -Path $logFile -Pattern 'error|fatal|exception|panic|fail|killed|timeout' -Context 2, 2
-            if ($errorLines) {
-                $errorLines | ForEach-Object {
-                    $_.ToString() -replace 'Bearer [a-zA-Z0-9._-]+', 'Bearer [REDACTED]' `
-                                  -replace '(password|secret|token)=[^ &]+', '$1=[REDACTED]'
-                } | Out-File -FilePath $errFile -Encoding utf8
+                Write-Host "    Copying bundle from ${pod}:${remoteArchive} to local..."
+                $cpFromArgs = @('cp', "${Namespace}/${pod}:${remoteArchive}", $localArchive) + $containerFlag
+                & kubectl @cpFromArgs 2>$null
 
-                $errCount = (Get-Content -Path $errFile | Measure-Object).Count
-                Write-Host "    Extracted $errCount error lines to $errFile" -ForegroundColor Magenta
+                # Cleanup in pod
+                $cleanArgs = @('exec', $pod, '-n', $Namespace) + $containerFlag + @('--', 'rm', '-f', $remoteScript, $remoteArchive)
+                & kubectl @cleanArgs 2>$null
+
+                tar -xzf $localArchive -C $OutputDir
+                $stagedSuccess = $true
+                Write-Host "    In-situ collection succeeded: $localArchive" -ForegroundColor Green
             }
         }
+        catch {
+            $stagedSuccess = $false
+        }
 
-        # Check previous container if requested
-        if ($ExtractPrevious) {
-            $prevFile = "${prefix}_previous_crash.log"
-            Write-Host "[*] Checking previous crashed container logs (--previous)..." -ForegroundColor Yellow
-            $prevArgs = @('logs', $pod, '-n', $Namespace, '--previous', '--tail=5000', '--timestamps') + $containerArgs
+        # Fallback to streaming if cp/exec not supported
+        if (-not $stagedSuccess) {
+            Write-Host "    Falling back to 'kubectl logs' stream for $pod..." -ForegroundColor Yellow
+            $prefix = Join-Path -Path $OutputDir -ChildPath "${Namespace}_${pod}_${timestamp}"
+            $logFile = "${prefix}.log"
+            $errFile = "${prefix}_errors.log"
 
-            try {
-                & kubectl @prevArgs 2>$null | Out-File -FilePath $prevFile -Encoding utf8
-                if ((Get-Item -Path $prevFile).Length -gt 0) {
-                    Write-Host "    [!] Found crashed container logs: $prevFile" -ForegroundColor Red
-                }
-                else {
-                    Remove-Item -Path $prevFile -Force -ErrorAction SilentlyContinue
+            $logArgs = @('logs', $pod, '-n', $Namespace, "--since=$Since", '--tail=5000', '--timestamps') + $containerFlag
+            & kubectl @logArgs | Out-File -FilePath $logFile -Encoding utf8
+
+            if (Test-Path -Path $logFile) {
+                $errorLines = Select-String -Path $logFile -Pattern 'error|fatal|exception|panic|fail|killed' -Context 2, 2
+                if ($errorLines) {
+                    $errorLines | ForEach-Object {
+                        $_.ToString() -replace 'Bearer [a-zA-Z0-9._-]+', 'Bearer [REDACTED]' `
+                                      -replace '(password|secret|token)=[^ &]+', '$1=[REDACTED]'
+                    } | Out-File -FilePath $errFile -Encoding utf8
                 }
             }
-            catch {
-                # No previous container instance
+
+            if ($ExtractPrevious) {
+                $prevFile = "${prefix}_previous_crash.log"
+                $prevArgs = @('logs', $pod, '-n', $Namespace, '--previous', '--tail=5000', '--timestamps') + $containerFlag
+                try {
+                    & kubectl @prevArgs 2>$null | Out-File -FilePath $prevFile -Encoding utf8
+                }
+                catch { }
             }
         }
-    }
-}
-elseif ($TargetType -eq 'LinuxHost') {
-    if (-not $RemoteHost -or -not $User) {
-        throw "Both -RemoteHost and -User are required for TargetType 'LinuxHost'."
-    }
-
-    $prefix = Join-Path -Path $OutputDir -ChildPath "${RemoteHost}_${timestamp}"
-    $sshArgs = [System.Collections.Generic.List[string]]::new()
-    $sshArgs.Add('-o')
-    $sshArgs.Add('BatchMode=yes')
-    $sshArgs.Add('-o')
-    $sshArgs.Add('ConnectTimeout=5')
-    $sshArgs.Add('-o')
-    $sshArgs.Add('StrictHostKeyChecking=accept-new')
-    $sshArgs.Add('-T')
-
-    if ($Bastion) {
-        $sshArgs.Add('-J')
-        $sshArgs.Add($Bastion)
-    }
-    if ($IdentityFile) {
-        $sshArgs.Add('-i')
-        $sshArgs.Add($IdentityFile)
-    }
-
-    $sshArgs.Add("$User@$RemoteHost")
-
-    # 1. Systemd extraction
-    if ($SystemdUnit) {
-        $journalFile = "${prefix}_journal_${SystemdUnit}.log"
-        Write-Host "[*] Querying remote systemd unit '$SystemdUnit'..." -ForegroundColor Yellow
-        $cmd = "journalctl -u '$SystemdUnit' --since '$Since' -p err..emerg --no-pager"
-        $execArgs = $sshArgs.ToArray() + @($cmd)
-        & ssh @execArgs | Out-File -FilePath $journalFile -Encoding utf8
-        Write-Host "    Saved journal logs to $journalFile" -ForegroundColor Green
-    }
-
-    # 2. File extraction
-    if ($LogPath) {
-        $fileLog = "${prefix}_file.log"
-        Write-Host "[*] Querying remote log path '$LogPath'..." -ForegroundColor Yellow
-        $cmd = "zgrep -E -i -C 2 'error|fatal|exception|panic|fail' '$LogPath' | tail -n 5000"
-        $execArgs = $sshArgs.ToArray() + @($cmd)
-        & ssh @execArgs | Out-File -FilePath $fileLog -Encoding utf8
-        Write-Host "    Saved remote file errors to $fileLog" -ForegroundColor Green
-    }
-
-    # 3. Kernel OOM inspection
-    $dmesgFile = "${prefix}_dmesg_oom.log"
-    Write-Host "[*] Checking remote kernel for OOM killer events..." -ForegroundColor Yellow
-    $dmesgCmd = "dmesg -T | grep -iE 'killed process|oom-killer|out of memory' | tail -n 50"
-    $execArgs = $sshArgs.ToArray() + @($dmesgCmd)
-    & ssh @execArgs | Out-File -FilePath $dmesgFile -Encoding utf8
-    if ((Get-Item -Path $dmesgFile).Length -gt 0) {
-        Write-Host "    [!] Found kernel OOM events: $dmesgFile" -ForegroundColor Red
-    }
-    else {
-        Remove-Item -Path $dmesgFile -Force -ErrorAction SilentlyContinue
     }
 }
 
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host " Extraction Complete. Artifacts saved in $OutputDir" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
-

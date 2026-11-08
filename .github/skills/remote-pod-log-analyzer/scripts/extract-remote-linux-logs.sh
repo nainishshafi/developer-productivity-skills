@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
-# extract-remote-linux-logs.sh — Extract and filter error logs from remote Linux hosts over SSH
+# extract-remote-linux-logs.sh — Copies collector to remote /tmp, executes in-situ, copies back the bundle, and cleans up
 # Usage:
 #   ./extract-remote-linux-logs.sh -h <host> -u <user> [-J <bastion>] [-i <key>] [-p <log-path>] [-s <systemd-unit>]
 
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COLLECTOR_SCRIPT="${SCRIPT_DIR}/remote-collector.sh"
 
 # Defaults
 HOST=""
@@ -20,14 +23,21 @@ print_usage() {
     cat << 'EOF'
 Usage: extract-remote-linux-logs.sh [OPTIONS]
 
+Workflow:
+  1. Copies 'remote-collector.sh' to remote host '/tmp/remote-collector.sh' via SCP
+  2. Executes the collector remotely in '/tmp' to search logs, dmesg, and journalctl
+  3. Copies the resulting '/tmp/log-bundle-<timestamp>.tar.gz' back to local directory via SCP
+  4. Cleans up temporary collector and archive files on the remote host
+  5. Unpacks and displays the diagnostic summary locally
+
 Options:
   -h, --host <hostname/ip>     Remote Linux server hostname or IP address
   -u, --user <username>        SSH user
   -J, --bastion <bastion>      SSH jump host (e.g. "jumpuser@bastion.corp.net")
   -i, --identity <path>        Path to private SSH key
-  -p, --log-path <path>        Remote log file path (e.g. "/var/log/app.log" or "/var/log/nginx/error.log")
-  -s, --systemd <unit>         Systemd service unit to query via journalctl (e.g. "kubelet", "nginx")
-  --since <duration>           Time window (e.g. "30 minutes ago", "2 hours ago", default: "1h")
+  -p, --log-path <path>        Remote log file path (e.g. "/var/log/app.log")
+  -s, --systemd <unit>         Systemd service unit to query via journalctl (e.g. "kubelet")
+  --since <duration>           Time window (default: "1h")
   -o, --output-dir <dir>       Local output directory (default: "./extracted-logs")
   --help                       Show this help message
 EOF
@@ -55,22 +65,20 @@ if [[ -z "$HOST" || -z "$USER" ]]; then
     print_usage 1
 fi
 
-if [[ -z "$LOG_PATH" && -z "$SYSTEMD_UNIT" ]]; then
-    echo "Error: Must specify either --log-path <path> or --systemd <unit>."
-    print_usage 1
+if [[ ! -f "$COLLECTOR_SCRIPT" ]]; then
+    echo "Error: Local collector script '$COLLECTOR_SCRIPT' not found."
+    exit 1
 fi
 
 mkdir -p "$OUTPUT_DIR"
 TIMESTAMP=$(date -u +"%Y%m%d_%H%M%SZ")
-TARGET_PREFIX="${OUTPUT_DIR}/${HOST}_${TIMESTAMP}"
 
-# Build SSH options
+# Build SSH / SCP options
 SSH_OPTS=(
     "-o" "BatchMode=yes"
     "-o" "ConnectTimeout=${TIMEOUT}"
     "-o" "StrictHostKeyChecking=accept-new"
     "-o" "ServerAliveInterval=15"
-    "-T"
 )
 
 if [[ -n "$BASTION" ]]; then
@@ -82,64 +90,56 @@ if [[ -n "$IDENTITY_FILE" ]]; then
 fi
 
 echo "========================================================"
-echo " Remote Linux Log Extraction Started"
+echo " Remote Staging & In-Situ Log Extraction"
 echo " Target Host      : $USER@$HOST"
 echo " Jump Bastion     : ${BASTION:-None}"
-echo " Output Directory : $OUTPUT_DIR"
+echo " Local Output Dir : $OUTPUT_DIR"
 echo "========================================================"
 
-# Test connection
-echo "[*] Testing SSH connectivity..."
-if ! ssh "${SSH_OPTS[@]}" "${USER}@${HOST}" "uptime" >/dev/null 2>&1; then
-    echo "Error: Unable to connect to ${USER}@${HOST} over SSH."
+# Step 1: Copy collector script to remote /tmp
+REMOTE_SCRIPT="/tmp/remote-collector-${TIMESTAMP}.sh"
+echo "[1/5] Copying collector script to remote ${USER}@${HOST}:${REMOTE_SCRIPT}..."
+scp "${SSH_OPTS[@]}" "$COLLECTOR_SCRIPT" "${USER}@${HOST}:${REMOTE_SCRIPT}"
+
+# Step 2: Execute collector in /tmp on remote host
+echo "[2/5] Executing collector remotely in /tmp..."
+EXEC_OUTPUT=$(ssh "${SSH_OPTS[@]}" -T "${USER}@${HOST}" \
+    "chmod +x '$REMOTE_SCRIPT' && '$REMOTE_SCRIPT' '$SINCE' '$LOG_PATH' '$SYSTEMD_UNIT'")
+
+echo "$EXEC_OUTPUT"
+
+# Extract archive path from remote output marker
+REMOTE_ARCHIVE=$(echo "$EXEC_OUTPUT" | grep 'READY_FOR_COPY:' | tail -n 1 | cut -d':' -f2 | tr -d '\r\n')
+
+if [[ -z "$REMOTE_ARCHIVE" ]]; then
+    echo "Error: Remote collector failed to produce archive."
+    ssh "${SSH_OPTS[@]}" -T "${USER}@${HOST}" "rm -f '$REMOTE_SCRIPT'" || true
     exit 1
 fi
-echo "    Connected successfully."
 
-# 1. Systemd journal extraction if specified
-if [[ -n "$SYSTEMD_UNIT" ]]; then
-    JOURNAL_OUT="${TARGET_PREFIX}_journal_${SYSTEMD_UNIT}.log"
-    echo "[*] Querying journalctl for unit: $SYSTEMD_UNIT (since $SINCE)..."
-    ssh "${SSH_OPTS[@]}" "${USER}@${HOST}" \
-        "journalctl -u '$SYSTEMD_UNIT' --since '$SINCE' -p err..emerg --no-pager" > "$JOURNAL_OUT" 2>&1 || true
-    echo "    Saved $(wc -l < "$JOURNAL_OUT") lines to $JOURNAL_OUT"
-fi
+ARCHIVE_BASENAME=$(basename "$REMOTE_ARCHIVE")
+LOCAL_ARCHIVE="${OUTPUT_DIR}/${ARCHIVE_BASENAME}"
 
-# 2. File log extraction if specified
-if [[ -n "$LOG_PATH" ]]; then
-    FILE_OUT="${TARGET_PREFIX}_file.log"
-    echo "[*] Extracting and filtering remote log: $LOG_PATH..."
-    ssh "${SSH_OPTS[@]}" "${USER}@${HOST}" bash -s -- "$LOG_PATH" << 'EOF' > "$FILE_OUT" 2>&1 || true
-        TARGET_FILE="$1"
-        if [ ! -f "$TARGET_FILE" ]; then
-            echo "Error: Remote file '$TARGET_FILE' does not exist."
-            exit 1
-        fi
+# Step 3: Copy generated bundle back to local output directory
+echo "[3/5] Copying bundle from ${USER}@${HOST}:${REMOTE_ARCHIVE} to ${LOCAL_ARCHIVE}..."
+scp "${SSH_OPTS[@]}" "${USER}@${HOST}:${REMOTE_ARCHIVE}" "$LOCAL_ARCHIVE"
 
-        # Check if file is gzipped or raw
-        if [[ "$TARGET_FILE" == *.gz ]]; then
-            zgrep -E -i -C 2 'error|fatal|exception|panic|fail|killed' "$TARGET_FILE" | tail -n 5000
-        else
-            grep -E -i -C 2 'error|fatal|exception|panic|fail|killed' "$TARGET_FILE" | tail -n 5000
-        fi
-EOF
-    echo "    Saved $(wc -l < "$FILE_OUT") lines to $FILE_OUT"
-fi
+# Step 4: Clean up remote /tmp artifacts
+echo "[4/5] Cleaning up remote /tmp artifacts..."
+ssh "${SSH_OPTS[@]}" -T "${USER}@${HOST}" "rm -f '$REMOTE_SCRIPT' '$REMOTE_ARCHIVE'"
+echo "    Remote cleanup verified."
 
-# 3. Always inspect kernel dmesg for OOM-killer events
-DMESG_OUT="${TARGET_PREFIX}_dmesg_oom.log"
-echo "[*] Checking remote kernel dmesg for OOM killer events..."
-ssh "${SSH_OPTS[@]}" "${USER}@${HOST}" \
-    "dmesg -T | grep -iE 'killed process|oom-killer|out of memory' | tail -n 50" > "$DMESG_OUT" 2>&1 || true
+# Step 5: Unpack bundle locally and display summary
+echo "[5/5] Unpacking bundle locally..."
+LOCAL_EXTRACT_DIR="${OUTPUT_DIR}/${ARCHIVE_BASENAME%.tar.gz}"
+mkdir -p "$LOCAL_EXTRACT_DIR"
+tar -xzf "$LOCAL_ARCHIVE" -C "$OUTPUT_DIR"
 
-if [[ -s "$DMESG_OUT" ]]; then
-    echo "    [!] Found $(wc -l < "$DMESG_OUT") kernel OOM events: $DMESG_OUT"
-else
-    rm -f "$DMESG_OUT"
-    echo "    No kernel OOM events detected."
+if [[ -f "${LOCAL_EXTRACT_DIR}/summary.txt" ]]; then
+    echo ""
+    cat "${LOCAL_EXTRACT_DIR}/summary.txt"
 fi
 
 echo "========================================================"
-echo " Extraction Complete. Artifacts saved in $OUTPUT_DIR"
+echo " Success! Bundle copied and unpacked in: $LOCAL_EXTRACT_DIR"
 echo "========================================================"
-
