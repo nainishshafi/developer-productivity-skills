@@ -4,7 +4,7 @@ A curated suite of enterprise-grade AI skills and Model Context Protocol (MCP) s
 
 Designed as **architectural guidance, decision frameworks, and engineering heuristics for AI agents** rather than rigid or deterministic rules — empowering agents to respect existing codebase baselines, reason through real-world trade-offs, and deliver high-signal, pragmatic engineering solutions.
 
-These skills provide ready-made workflows for modern software engineering — spanning architectural planning, language-specific engineering knowledge packs, Big-O complexity analysis, multi-agent SDLC orchestration, security scanning, automated code review, and isolated debugging.
+These skills provide ready-made workflows for modern software engineering — spanning architectural planning, language-specific engineering knowledge packs, Big-O complexity analysis, multi-agent SDLC orchestration, memory persistence, in-the-loop over-engineering checks, security scanning, automated code review, and isolated debugging.
 
 ---
 
@@ -12,8 +12,8 @@ These skills provide ready-made workflows for modern software engineering — sp
 
 | Skill | Category | Core Purpose | Primary Trigger Phrase |
 |---|---|---|---|
-| [`agent-orchestrator`](#agent-orchestrator) | **Orchestration** | End-to-end 7-stage multi-agent SDLC coordination | `"orchestrate a feature"` |
-| [`llm-as-judge`](#llm-as-judge) | **Orchestration** | Rubric evaluations, pairwise ranking & consensus | `"judge this response"` |
+| [`agent-orchestrator`](#agent-orchestrator) | **Orchestration** | 7-stage multi-agent SDLC with memory tracking & in-the-loop over-engineering checks | `"orchestrate a feature"` |
+| [`llm-as-judge`](#llm-as-judge) | **Orchestration** | 4 evaluator styles (Pessimist, Contrarian, Pragmatist, Specialist), rubrics & consensus | `"judge this response"` |
 | [`typescript-developer`](#typescript-developer) | **Language Specialist** | Node.js, TS 5+, Zod, Drizzle/Prisma, event loop hygiene | `"write typescript code"` |
 | [`python-developer`](#python-developer) | **Language Specialist** | Python 3.10–3.13, Pydantic v2, asyncio, memory/GC | `"write python code"` |
 | [`python-api-writer`](#python-api-writer) | **Language Specialist** | FastAPI vs. Django, async event loop hygiene, Lifespan, Pydantic v2 | `"write python api"` |
@@ -26,14 +26,14 @@ These skills provide ready-made workflows for modern software engineering — sp
 | [`algorithmic-complexity-analyzer`](#algorithmic-complexity-analyzer) | **Architecture & Quality** | Big-O time/space audits ($O(1) \dots O(2^n)$), hidden loop traps | `"check time complexity"` |
 | [`caching-queues-reviewer`](#caching-queues-reviewer) | **Architecture & Quality** | Redis, Kafka, Lua scripts, stampede defense, multi-language caching | `"review caching code"` |
 | [`sql-executor`](#sql-executor) | **Architecture & Quality** | Cross-engine joins, GIN/GiST/BRIN indexes, CTEs, #temp tables, OLAP cubing, TVFs | `"write a sql join"` |
-| [`detect-overengineering`](#detect-overengineering) | **Architecture & Quality** | YAGNI audits, layer bloat, trampoline pass-throughs | `"check for over-engineering"` |
+| [`detect-overengineering`](#detect-overengineering) | **Architecture & Quality** | YAGNI audits, layer bloat, trampoline pass-throughs, in-the-loop checks | `"check for over-engineering"` |
 | [`design-pattern-detector`](#design-pattern-detector) | **Architecture & Quality** | Structural AST extraction of design patterns & anti-patterns | `"detect design patterns"` |
-| [`architectural-planning`](#architectural-planning) | **Architecture & Quality** | Interactive system design, Mermaid specs & tech choices | `"plan my architecture"` |
+| [`architectural-planning`](#architectural-planning) | **Architecture & Quality** | Interactive system design, Mermaid specs, ADRs & foundational book references | `"plan my architecture"` |
 | [`scan-halucinated-tests`](#scan-halucinated-tests) | **Architecture & Quality** | Cross-validates test symbols against AST ground truth | `"scan for hallucinated tests"` |
 | [`trace-code-context`](#trace-code-context) | **Architecture & Quality** | AST symbol extraction, callers/callees & Mermaid graph | `"trace code context"` |
 | [`playwright-bdd-tester`](#playwright-bdd-tester) | **Testing & Quality** | BDD Gherkin & Playwright browser test automation | `"write playwright tests"` |
 | [`remote-pod-log-analyzer`](#remote-pod-log-analyzer) | **Diagnostics** | Remote Linux & Kubernetes pod log analysis via SSH, kubectl, grep, awk, jq | `"analyze remote logs"` |
-| [`troubleshoot-and-fix`](#troubleshoot-and-fix) | **Diagnostics** | Isolated reproduction testbeds, 3-attempt circuit breaker & escalation summary | `"troubleshoot and fix"` |
+| [`troubleshoot-and-fix`](#troubleshoot-and-fix) | **Diagnostics** | Isolated reproduction testbeds, 3-attempt circuit breaker & anti-fix-bloat | `"troubleshoot and fix"` |
 | [`legacy-code-modernization`](#legacy-code-modernization) | **Modernization** | 4-phase safe modernization (Extract $\to$ Pin $\to$ TDD $\to$ Strangler) | `"modernize legacy code"` |
 | [`skill-creator`](#skill-creator) | **Tooling & Automation** | Scaffolds modular knowledge-packs and task skills | `"create a new skill"` |
 | [`github-security-scanner-hook`](#github-security-scanner-hook) | **Tooling & Automation** | Pre-commit secret scanning & Semgrep OWASP rules | `"scan for security vulnerabilities"` |
@@ -114,7 +114,7 @@ Language-independent asymptotic complexity auditing (Big-O). Audits worst-case t
 - **Empirical MCP Harness:** Available via `execute_code` in `nodejs-executor` or standalone at `.github/skills/algorithmic-complexity-analyzer/scripts/benchmark-harness.mjs`.
 
 ### `detect-overengineering`
-Analyzes source code to detect premature abstractions, speculative generality (YAGNI violations), layer bloat, and trampoline pass-through methods. Uses structural extraction to score over-engineering risk and output simplified refactoring diffs.
+Analyzes source code to detect premature abstractions, speculative generality (YAGNI violations), layer bloat, and trampoline pass-through methods. Uses structural AST/regex extraction to score over-engineering risk (0–100) and outputs simplified refactoring diffs. Embedded directly **in the loop** across development, code review, architecture gates, and bug remediation.
 - **Trigger phrases:** `"check for over-engineering"`, `"detect over-engineering"`, `"find over-engineered code"`, `"simplify this code"`, `"audit for over-engineering"`, `"check yagni violations"`.
 
 ### `caching-queues-reviewer`
@@ -130,7 +130,7 @@ Identifies design patterns (Singleton, Factory, Observer, Strategy, Builder, Dec
 - **Trigger phrases:** `"detect design patterns"`, `"find patterns in this file"`, `"analyze code for patterns"`, `"check for anti-patterns"`, `"detect dependency injection"`, `"is this a singleton"`, `"detect god object"`.
 
 ### `architectural-planning`
-Interactively guides architecture design for new or existing applications. Recommends compatible technologies across frontend, backend, persistence, caching, messaging, and deployment, outputting Mermaid diagrams, component breakdowns, data models, and API topologies.
+Interactively guides architecture design for new or existing applications. Recommends compatible technologies across frontend, backend, persistence, caching, messaging, and deployment, outputting Mermaid diagrams, component breakdowns, data models, and API topologies. Includes comprehensive references to foundational architecture literature (Kleppmann, Nygard, Newman, Richards/Ford, Evans, Fowler, Beck) in `references/architecture-books-and-best-practices.md`.
 - **Trigger phrases:** `"plan my architecture"`, `"design system architecture"`, `"create an architecture document"`, `"help me choose a tech stack"`, `"system design"`.
 
 ### `scan-halucinated-tests`
@@ -153,11 +153,25 @@ Architectural and engineering guidance for Behavior-Driven Development (BDD) and
 ### `agent-orchestrator`
 Automates and coordinates end-to-end multi-agent software engineering workflows across seven quality stages:
 `plan` $\to$ `develop` $\to$ `codereview` $\to$ `complexitychecks` $\to$ `architecturechecks` $\to$ `halucinationchecks` $\to$ `securitychecks`.
-Manages bounded context handoffs to prevent context pollution in sub-agents, integrates `troubleshoot-and-fix` for isolated reproduction testbeds during remediation, and enforces quality gates with closed-loop feedback.
+
+**Key Capabilities:**
+- **Project Memory Bus:** Uses `project-memory` (`save-memory` and `load-memory`) to track sub-agent outputs across stages without context window bloat:
+  - `ledger`: Permanent architectural constraints, API contracts, and security policies.
+  - `sidecar`: Active task state, sub-agent WIP handoffs, and pending defect fixes.
+  - `journal`: Stage execution recaps containing BOTH distilled work summary AND mandatory learnings / traps avoided.
+- **In-The-Loop Over-Engineering Detection:** Embeds `detect-overengineering` across development self-checks, code review diff audits, architecture gates (triggering an automated simplification loop when score $\ge 40$), and defect remediation (anti-fix-bloat guardrail).
+- **Remediation & Circuit Breaker:** Integrates `troubleshoot-and-fix` with an isolated reproduction testbed and strict 3-iteration circuit breaker.
+- **CLI Context Manager:** `.\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py` manages run state, stage handoff payloads, and `check-overengineering` audits.
 - **Trigger phrases:** `"orchestrate a feature"`, `"run full development pipeline"`, `"plan-develop-review"`, `"agent orchestrator"`, `"run full lifecycle checks"`.
 
 ### `llm-as-judge`
-Built-in evaluation capability for evaluating and comparing LLM responses directly within reasoning workflows without external API dependencies. Supports single-agent rubric evaluation, pairwise ranking, hallucination scoring, and multi-agent consensus.
+Built-in evaluation capability for evaluating and comparing LLM responses directly within reasoning workflows without external API dependencies.
+- **The 4 Evaluator Archetypes & Styles:**
+  1. **The Pessimist (Failure Mode & Blast Radius):** Evaluates catastrophic edge cases, cascading timeouts, missing circuit breakers, and unhandled exceptions.
+  2. **The Contrarian (Velocity & Fast Feedback Cycles):** Challenges speculative abstraction, premature generalization, and bureaucratic delays, favoring lightweight observable rollouts.
+  3. **The Pragmatist (Production Reality & ROI):** Balances ideal architecture against migration cost, team cognitive load, operational complexity, and technical debt.
+  4. **The Specialist (Domain Purity & Standards):** Enforces strict domain compliance, cryptographic hygiene, type safety, and framework conventions.
+- **Consensus & Multi-Judge:** 3-model consensus (Lead Judge, Skeptic, Domain Specialist), pairwise comparisons, rubric evaluations, and hallucination auditing.
 - **Trigger phrases:** `"judge this response"`, `"compare these responses"`, `"evaluate response quality"`, `"score this output"`, `"rate this response"`.
 
 ---
@@ -170,7 +184,7 @@ Operational framework for searching, streaming, and statistically analyzing remo
 - **Trigger phrases:** `"analyze remote logs"`, `"remote linux log analysis"`, `"remote pod log analysis"`, `"remote-linux-pod-log-analysis"`, `"kubectl logs triage"`, `"ssh log grep"`, `"debug pod crash"`, `"journalctl error analysis"`, `"parse nginx access logs"`, `"zgrep logs"`.
 
 ### `troubleshoot-and-fix`
-Universal diagnostic and repair framework for runtime crashes, exceptions, and logic errors. Enforces a strict 3-iteration circuit breaker to prevent infinite token-burning trial-and-error loops, escalating a structured out-of-options diagnostic summary when hypotheses fail. Extracts problematic logic and test fixtures into an isolated sandbox harness (`scripts/isolate-runner.js`, `scripts/isolate-runner.py`) to systematically reproduce and verify fixes before porting them back to source code.
+Universal diagnostic and repair framework for runtime crashes, exceptions, and logic errors. Enforces a strict 3-iteration circuit breaker to prevent infinite token-burning trial-and-error loops, escalating a structured out-of-options diagnostic summary when hypotheses fail. Extracts problematic logic and test fixtures into an isolated sandbox harness (`scripts/isolate-runner.js`, `scripts/isolate-runner.py`) to systematically reproduce and verify fixes before porting them back to source code, enforcing in-the-loop over-engineering checks to prevent fix bloat.
 - **Trigger phrases:** `"troubleshoot and fix"`, `"debug this error"`, `"fix this bug"`, `"solve runtime exception"`, `"diagnose issue"`, `"reproduce and fix bug"`.
 
 ### `legacy-code-modernization`
@@ -238,15 +252,32 @@ Reusable MCP servers located in `mcp/` providing protocol-compliant tool integra
 
 ### `project-memory` (`mcp/project-memory/`)
 - **Tools:** `save_memory`, `load_memory`, `search_memory`, `delete_memory`, `clear_sidecar`
-- **Features:** SQLite backend (`node:sqlite`), zero external C++ dependencies, anti-bloat filters, and hybrid semantic/lexical search.
+- **Features:** SQLite backend (`node:sqlite`), zero external C++ dependencies, anti-bloat filters, and hybrid semantic/lexical search ($40\% \text{ semantic} + 60\% \text{ lexical}$).
+- **Database Location:** `.project-memory/memory.db`.
 
 ### `sql-connector` (`mcp/sql-connector/`)
 - **Tools:** `execute_query`, `list_tables`, `describe_table`, `explain_query`, `test_connection`, `audit_query_safety`
-- **Features:** Multi-database driver support (SQL Server, Oracle, PostgreSQL, SQLite, MongoDB, MS Access, MySQL), zero-tolerance destructive DDL/DML firewall (`DROP TABLE`, `DELETE *`, tautology blocking), auto row capping, and query timeout guardrails.
+- **Features:** Multi-database driver support (SQL Server, Oracle, PostgreSQL, SQLite via built-in `node:sqlite`, MongoDB, MS Access, MySQL), zero-tolerance destructive DDL/DML firewall (`DROP TABLE`, `DELETE *`, tautology blocking), auto row capping, query timeout guardrails, and automated repository-wide YAML frontmatter validator (`npm run validate:skills`).
 
 ---
 
 ## 🚀 Usage & Setup
+
+### Python Environment Standard (STRICT)
+
+> [!IMPORTANT]
+> **Always use the local virtual environment for running Python scripts in this workspace:**
+> - **Windows (PowerShell / CMD):** `.\.venv\Scripts\python.exe <script> <args>`
+> - **Linux / macOS (Bash / Zsh):** `.venv/bin/python <script> <args>`
+>
+> Bare `python` triggers WindowsApp store redirection stubs in sandboxes, and `py` launcher fallbacks can fail. Using `.\.venv\Scripts\python.exe` ensures 100% reliable execution.
+
+### Skills Automated Validation
+
+Validate all 32 `SKILL.md` frontmatter headers and YAML rules across the repository:
+```bash
+npm run validate:skills --prefix mcp/sql-connector
+```
 
 ### Claude Code & Antigravity
 Skills are discovered automatically from `.github/skills/`. Simply type any trigger phrase in your chat session.
@@ -281,25 +312,26 @@ Skills in `.github/skills/` are recognized as custom workspace instructions in C
 
 ```text
 developer-productivity-skills/
+├── AGENTS.md                         # Project agent guidelines & .venv execution standard
 ├── mcp/
 │   ├── nodejs-executor/              # Sandboxed JS/TS execution MCP server
 │   ├── project-memory/               # SQLite hybrid-search memory MCP server
-│   └── sql-connector/                # Multi-engine DB connector with SQL firewall
+│   └── sql-connector/                # Multi-engine DB connector with SQL firewall & frontmatter validator
 ├── .github/
 │   └── skills/
-│       ├── agent-orchestrator/       # 7-stage multi-agent SDLC workflow
+│       ├── agent-orchestrator/       # 7-stage multi-agent SDLC workflow with memory bus & in-the-loop OE checks
 │       ├── api-security/             # Universal API authentication & AppSec audit pack
 │       ├── algorithmic-complexity-analyzer/ # Language-agnostic Big-O analysis
-│       ├── architectural-planning/   # Interactive system architecture designer
+│       ├── architectural-planning/   # Interactive system architecture designer & book references
 │       ├── caching-queues-reviewer/  # Redis, Kafka, Lua scripts & queue auditor
 │       ├── code-reviewer/            # 7-dimension code reviewer ([P0] to [P3])
 │       ├── csharp-developer/         # Modern C# 12/13, .NET 8/9, Minimal APIs, MVVM pack
 │       ├── design-pattern-detector/  # AST design pattern & anti-pattern detector
-│       ├── detect-overengineering/   # YAGNI & complexity risk auditor
+│       ├── detect-overengineering/   # YAGNI & complexity risk auditor with extract-signals.py
 │       ├── github-security-scanner-hook/ # Pre-commit secret & Semgrep scanner
 │       ├── java-developer/           # Modern Java 17/21/25 & Spring Boot 3+ pack
 │       ├── legacy-code-modernization/ # Safe 4-phase refactoring & migration framework
-│       ├── llm-as-judge/             # Multi-agent response evaluation & ranking
+│       ├── llm-as-judge/             # 4 Evaluator Archetypes & multi-agent response evaluation
 │       ├── load-memory/              # Hybrid memory retrieval skill
 │       ├── nodejs-executor/          # MCP wrapper skill for node execution
 │       ├── playwright-bdd-tester/    # Gherkin BDD & Playwright browser test automation
@@ -317,6 +349,6 @@ developer-productivity-skills/
 │       ├── sql-executor/             # Multi-engine SQL tuning, joins & validation pack
 │       ├── sync-github-forks/        # Automated fork synchronization tool
 │       ├── trace-code-context/       # AST dependency & Mermaid graph generator
-│       └── troubleshoot-and-fix/     # Isolated reproduction testbed framework
+│       └── troubleshoot-and-fix/     # Isolated reproduction testbed framework with circuit breaker
 └── README.md
 ```
