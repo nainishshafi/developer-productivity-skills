@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
-description: Conducts rigorous, senior-level code reviews across languages (Python, TypeScript/JavaScript, Java, C#, Go). Audits code changes for logical correctness, edge-case coverage, error handling, security, maintainability, clean code principles, distributed caching/queues, database performance, and algorithmic efficiency. Use when asked to "review code", "code review", "review pull request", "audit code changes", "code review checklist", or "review this diff".
-version: 1.1.0
+description: Conducts rigorous, senior-level code reviews across languages (Python, TypeScript/JavaScript, React/Next.js, Java, C#, Go). Audits code changes for logical correctness, edge-case coverage, error handling, security, maintainability, clean code principles, distributed caching/queues, database performance, and algorithmic efficiency. Use when asked to "review code", "code review", "review pull request", "audit code changes", "code review checklist", or "review this diff".
+version: 1.2.0
 ---
 
 # Code Reviewer Skill
@@ -112,6 +112,21 @@ Structure review feedback clearly:
 +   }
 ```
 ```
+
+---
+
+## Language-Specific Review Modules
+
+Navigate directly to dedicated language checklists and deep review modules matching the codebase technology:
+
+| Language / Framework | Core Review Checklist | Specialized Deep Modules | Corresponding Developer Skill |
+|---|---|---|---|
+| **Python** | [Python Checklist](file:///.github/skills/code-reviewer/python/python-review-checklist.md) | [Web & API Review (FastAPI/Django)](file:///.github/skills/code-reviewer/python/web-api-review.md)<br>[Concurrency & Memory](file:///.github/skills/code-reviewer/python/concurrency-and-memory-review.md) | [`python-developer`](file:///.github/skills/python-developer/SKILL.md)<br>[`python-api-writer`](file:///.github/skills/python-api-writer/SKILL.md) |
+| **TypeScript / Node** | [TypeScript Checklist](file:///.github/skills/code-reviewer/typescript/typescript-review-checklist.md) | [Node & Runtime Memory](file:///.github/skills/code-reviewer/typescript/node-and-runtime-review.md)<br>[Async & Concurrency](file:///.github/skills/code-reviewer/typescript/async-and-concurrency-review.md) | [`typescript-developer`](file:///.github/skills/typescript-developer/SKILL.md) |
+| **React / Next.js** | [React Checklist](file:///.github/skills/code-reviewer/react/react-review-checklist.md) | [Hooks & Rendering Performance](file:///.github/skills/code-reviewer/react/hooks-and-rendering-review.md)<br>[State & Data Fetching (Zustand/Query)](file:///.github/skills/code-reviewer/react/state-and-data-fetching-review.md)<br>[RSC & Next.js](file:///.github/skills/code-reviewer/react/rsc-and-nextjs-review.md) | [`react-developer`](file:///.github/skills/react-developer/SKILL.md) |
+| **Java** | [Java Checklist](file:///.github/skills/code-reviewer/java/java-review-checklist.md) | [Spring Boot & JPA / Hibernate](file:///.github/skills/code-reviewer/java/spring-boot-and-data-review.md)<br>[Virtual Threads & JVM Memory](file:///.github/skills/code-reviewer/java/concurrency-and-jvm-review.md) | [`java-developer`](file:///.github/skills/java-developer/SKILL.md) |
+| **C# (.NET)** | [C# Checklist](file:///.github/skills/code-reviewer/csharp/csharp-review-checklist.md) | [ASP.NET Core & EF Core](file:///.github/skills/code-reviewer/csharp/aspnet-and-efcore-review.md)<br>[Performance, Channels & Span](file:///.github/skills/code-reviewer/csharp/performance-and-runtime-review.md) | [`csharp-developer`](file:///.github/skills/csharp-developer/SKILL.md) |
+| **Go** | [Go Checklist](file:///.github/skills/code-reviewer/go/go-review-checklist.md) | [Concurrency, Channels & Runtime](file:///.github/skills/code-reviewer/go/concurrency-and-runtime-review.md) | — |
 
 ---
 

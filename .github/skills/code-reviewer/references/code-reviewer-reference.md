@@ -32,7 +32,10 @@ A senior code reviewer approaches code with a specific lens and consciously avoi
 
 ## 2. Language-Specific Review Checklist Matrices
 
+For deep guidelines, consult the dedicated review modules in each language directory.
+
 ### Python Reviews
+*Detailed Modules: [Python Checklist](file:///.github/skills/code-reviewer/python/python-review-checklist.md) | [Web API Review](file:///.github/skills/code-reviewer/python/web-api-review.md) | [Concurrency & Memory](file:///.github/skills/code-reviewer/python/concurrency-and-memory-review.md)*
 - **Typing:** Are return types and parameter types annotated? Are `Optional[T]` or `T | None` used where `None` can be returned?
 - **Collections & Caching:** Are dict lookups using `.get()` or catching `KeyError`? Are `@functools.lru_cache` calls bounded with an explicit `maxsize`?
 - **Async & Event Loop:** Is `asyncio.sleep()` called instead of blocking `time.sleep()`? Are CPU-bound or sync operations offloaded with `asyncio.to_thread()`?
@@ -41,6 +44,7 @@ A senior code reviewer approaches code with a specific lens and consciously avoi
 - **Memory & References:** Are circular references avoided or decoupled via `weakref`? Are generators (`yield`) used for large dataset iteration?
 
 ### TypeScript / JavaScript Reviews
+*Detailed Modules: [TypeScript Checklist](file:///.github/skills/code-reviewer/typescript/typescript-review-checklist.md) | [Node & Runtime Memory](file:///.github/skills/code-reviewer/typescript/node-and-runtime-review.md) | [Async & Concurrency](file:///.github/skills/code-reviewer/typescript/async-and-concurrency-review.md)*
 - **Strict Typing:** Is `any` used? (Flag as P1). Is `as Type` force-casting without validation?
 - **Equality:** Is `===` used instead of `==`?
 - **Async & Concurrency:** Are promises awaited or chained? Are there unhandled floating promises? Is `Promise.all` bounded using concurrency throttling (`p-limit`)?
@@ -48,7 +52,16 @@ A senior code reviewer approaches code with a specific lens and consciously avoi
 - **Closure & Scope Hygiene:** Do callbacks or event handlers accidentally retain large outer objects or request contexts?
 - **Memory & Resource Hygiene:** Are event listeners, intervals, and observers cleaned up (using `AbortSignal`, `.off()`, or `clearInterval`)? Are caches bounded (LRU) rather than unbounded `Map`/`Set`? Are large files streamed rather than buffered in RAM?
 
+### React Reviews
+*Detailed Modules: [React Checklist](file:///.github/skills/code-reviewer/react/react-review-checklist.md) | [Hooks & Rendering](file:///.github/skills/code-reviewer/react/hooks-and-rendering-review.md) | [State & Fetching](file:///.github/skills/code-reviewer/react/state-and-data-fetching-review.md) | [RSC & Next.js](file:///.github/skills/code-reviewer/react/rsc-and-nextjs-review.md)*
+- **Pure Render Functions:** Are component bodies pure and free from mutations, random IDs, or side-effects during render?
+- **Exhaustive Dependencies:** Do `useEffect`, `useCallback`, and `useMemo` declare all referenced variables in their dependency arrays?
+- **State Architecture:** Is derived state calculated on-the-fly rather than synced via redundant `useEffect` + `useState` pairs?
+- **Server vs. Client Components:** Are interactive elements isolated to leaf client components (`'use client'`) while layouts/pages remain Server Components?
+- **Server Actions:** Are `'use server'` mutations properly authenticating callers and validating schema inputs with Zod?
+
 ### Java Reviews
+*Detailed Modules: [Java Checklist](file:///.github/skills/code-reviewer/java/java-review-checklist.md) | [Spring Boot & Data](file:///.github/skills/code-reviewer/java/spring-boot-and-data-review.md) | [Virtual Threads & JVM](file:///.github/skills/code-reviewer/java/concurrency-and-jvm-review.md)*
 - **Null Safety:** Are `Optional<T>` methods used properly without blind `.get()` calls?
 - **Immutability:** Are DTOs using Java Records (`record User(...)`)?
 - **Streams & Memory:** Are stream operations side-effect free? Are large result sets streamed / paginated rather than collected into large heap lists?
@@ -57,6 +70,7 @@ A senior code reviewer approaches code with a specific lens and consciously avoi
 - **Transactions & Resources:** Are `@Transactional` methods public and called from outside the class instance? Are all `AutoCloseable` resources managed in `try-with-resources`?
 
 ### C# (.NET) Reviews
+*Detailed Modules: [C# Checklist](file:///.github/skills/code-reviewer/csharp/csharp-review-checklist.md) | [ASP.NET & EF Core](file:///.github/skills/code-reviewer/csharp/aspnet-and-efcore-review.md) | [Performance & Runtime](file:///.github/skills/code-reviewer/csharp/performance-and-runtime-review.md)*
 - **Cancellation Propagation:** Do all async methods accept and forward `CancellationToken cancellationToken = default` down to I/O calls?
 - **Resource Cleanup:** Are `IDisposable` and `IAsyncDisposable` objects handled with `using` or `await using` declarations?
 - **Async Avoidance of `async void`:** Are all async methods returning `Task` or `Task<T>`, never `async void` (except top-level UI event handlers)?
@@ -65,6 +79,7 @@ A senior code reviewer approaches code with a specific lens and consciously avoi
 - **Memory Allocation:** Are hot path string or buffer operations using `Span<T>`, `ReadOnlySpan<T>`, or `ArrayPool<T>` instead of allocating heap arrays?
 
 ### Go Reviews
+*Detailed Modules: [Go Checklist](file:///.github/skills/code-reviewer/go/go-review-checklist.md) | [Concurrency & Runtime](file:///.github/skills/code-reviewer/go/concurrency-and-runtime-review.md)*
 - **Context Propagation:** Is `ctx context.Context` the first argument of all I/O or RPC functions and forwarded down?
 - **Goroutine Leaks:** Does every spawned goroutine have a guaranteed exit path via context cancellation, closed channel, or timeout?
 - **Defer in Loops:** Are `defer f.Close()` calls placed inside long-running loops instead of calling explicitly or wrapping in a helper function?
