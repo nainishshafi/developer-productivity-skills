@@ -94,3 +94,4 @@ kubectl exec <pod-name> -n <namespace> [-c <container>] -- \
 If a container image is minimal/distroless (lacking `tar` or `/bin/sh`) or has a read-only root filesystem (`readOnlyRootFilesystem: true`):
 - `kubectl cp` returns a non-zero exit code.
 - The automated script seamlessly falls back to streaming `kubectl logs --since=1h --timestamps` and `kubectl logs --previous`.
+
