@@ -16,6 +16,7 @@ These skills provide ready-made workflows for modern software engineering — sp
 | [`llm-as-judge`](#llm-as-judge) | **Orchestration** | Rubric evaluations, pairwise ranking & consensus | `"judge this response"` |
 | [`typescript-developer`](#typescript-developer) | **Language Specialist** | Node.js, TS 5+, Zod, Drizzle/Prisma, event loop hygiene | `"write typescript code"` |
 | [`python-developer`](#python-developer) | **Language Specialist** | Python 3.10–3.13, Pydantic v2, asyncio, memory/GC | `"write python code"` |
+| [`python-api-writer`](#python-api-writer) | **Language Specialist** | FastAPI vs. Django, async event loop hygiene, Lifespan, Pydantic v2 | `"write python api"` |
 | [`react-developer`](#react-developer) | **Language Specialist** | React 18/19, Next.js RSC, Zustand, TanStack Query | `"write react code"` |
 | [`java-developer`](#java-developer) | **Language Specialist** | Java 17/21/25, Spring Boot 3+, Virtual Threads, Low-Latency, Spring Batch | `"write java code"` |
 | [`csharp-developer`](#csharp-developer) | **Language Specialist** | C# 12/13, .NET 8/9, Minimal APIs, MVVM/WPF, EF Core | `"write c# code"` |
@@ -56,6 +57,12 @@ Architectural and engineering guidance for modern Python development (3.10–3.1
 - **Core Topics:** Dependency Injection (structural subtyping via `typing.Protocol`, FastAPI `Depends`, dependency overrides, `dependency-injector` containers), Pythonic Design Patterns (Strategy via callables, Factory classmethods, Decorator with `functools.wraps`, Adapter, Repository/UnitOfWork), Data Engine Selection (NumPy homogeneous SIMD arrays vs. Polars multithreaded Apache Arrow DataFrames vs. legacy Pandas), Built-in Collection Optimization (`deque` for FIFO/sliding windows, `heapq` for priority queues, `set` for $O(1)$ membership, `array.array`, `@dataclass(slots=True)`), Hexagonal & service-repository architectures, Pydantic v2 enterprise validation (`ConfigDict`, `@field_validator`, `@model_validator`, `TypeAdapter`, `pydantic-settings`), memory cycle prevention (`weakref`), late-binding closure fixes, and non-blocking `asyncio` (`asyncio.TaskGroup`, `asyncio.to_thread`).
 - **Trigger phrases:** `"write python code"`, `"develop python service"`, `"python dependency injection"`, `"python design patterns"`, `"numpy vs polars"`, `"python data structures"`, `"polars dataframe"`, `"python architecture best practices"`, `"design python backend"`, `"pytest guidelines"`, `"modern python patterns"`, `"refactor python"`.
 - **Supported versions:** Python 3.10, 3.11, 3.12, 3.13.
+
+### `python-api-writer`
+Architectural and engineering guidance for building modern Python APIs with FastAPI and Django (including Django REST Framework and Django Ninja).
+- **Core Topics:** Framework selection (FastAPI vs Django trade-offs), Lifespan context managers (`@asynccontextmanager`), modular `APIRouter` composition, Dependency Injection (`Depends`), Django service layer pattern, QuerySet optimization (`select_related`, `prefetch_related`, `only`, `defer`), SQLAlchemy 2.0 async eager loading (`joinedload`, `selectinload`), connection pool sizing, async event loop hygiene (preventing blocking calls in `async def`), JWT/session auth, CORS defense, rate limiting, and automated testing (`httpx.AsyncClient` & `pytest-django`).
+- **Trigger phrases:** `"write python api"`, `"fastapi best practices"`, `"django api best practices"`, `"fastapi vs django"`, `"django ninja"`, `"fastapi dependency injection"`, `"build python backend"`, `"design python api"`.
+- **Supported frameworks:** FastAPI, Django 4.2/5+, Django REST Framework (DRF), Django Ninja.
 
 ### `react-developer`
 Architectural and engineering guidance for modern React (React 18 & 19, Next.js App Router, Vite, React Server Components).
@@ -256,6 +263,7 @@ developer-productivity-skills/
 │       ├── load-memory/              # Hybrid memory retrieval skill
 │       ├── nodejs-executor/          # MCP wrapper skill for node execution
 │       ├── playwright-bdd-tester/    # Gherkin BDD & Playwright browser test automation
+│       ├── python-api-writer/        # FastAPI & Django API architecture pack
 │       ├── python-developer/         # Python 3.10-3.13, Pydantic v2, asyncio pack
 │       ├── python-linter/            # Automated Ruff & Mypy quality runner
 │       ├── react-developer/          # React 18/19, RSC, Zustand, Query pack
