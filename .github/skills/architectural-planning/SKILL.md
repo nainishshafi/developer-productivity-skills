@@ -1,332 +1,294 @@
 ---
 name: architectural-planning
-description: Use when the user asks to "plan my architecture", "design system architecture",
-  "create an architecture document", "help me choose a tech stack", "what technologies
-  should I use", "generate an architecture diagram", "plan my project structure",
-  "recommend a database for my project", "design my API layer", "create a system design",
-  "architecture planning", "tech stack recommendation", or wants interactive guidance
-  to design and document a software system's architecture with technology recommendations.
-version: 1.1.0
+description: Interactive architectural design and technology stack planning skill for Antigravity, Claude Code, and GitHub Copilot. Guides users through structured architectural decisions, recommends battle-tested technology combinations across layers, evaluates trade-offs, and generates comprehensive architecture documents (ARCHITECTURE.md / ADRs) with valid Mermaid diagrams. Use when asked to "plan my architecture", "design system architecture", "create an architecture document", "help me choose a tech stack", "what technologies should I use", "generate an architecture diagram", "plan my project structure", "recommend a database", "design my API layer", "create a system design", "architecture planning", "tech stack recommendation", or "write an ADR".
+version: 1.2.0
 ---
 
 # Architectural Planning
 
-Interactively guide the user through architectural decisions for a new or existing software project. Asks structured questions to understand requirements, recommends compatible technologies for each layer, and generates a comprehensive architecture document with Mermaid diagrams, component breakdowns, and a recommended project directory layout.
-
-**Approach:** Step-by-step interactive questionnaire using your environment's question tool (`ask_question` in Antigravity, `AskUserQuestion` in Claude Code, or structured multiple-choice prompts in Copilot Chat), with technology-specific suggestions informed by the compatibility matrices in `references/architectural-planning-reference.md`. When evaluating competing architecture trade-offs, pair with [`llm-as-judge`](file:///.github/skills/llm-as-judge/SKILL.md). Once a stack is selected, delegate implementation conventions to the matching language specialist skill ([`java-developer`](file:///.github/skills/java-developer/SKILL.md), [`typescript-developer`](file:///.github/skills/typescript-developer/SKILL.md), [`python-developer`](file:///.github/skills/python-developer/SKILL.md), [`react-developer`](file:///.github/skills/react-developer/SKILL.md), [`csharp-developer`](file:///.github/skills/csharp-developer/SKILL.md)).
-
-## Prerequisites
-
-- No tools or dependencies required
-- Works for any project type (greenfield or existing)
-- Interactive session (`ask_question` / `AskUserQuestion` or conversational choice)
-
-## Workflow
-
-### Step 1 — Understand the Project
-
-Use AskUserQuestion to ask the following. Ask both questions in a single AskUserQuestion call (multi-question).
-
-**Question 1 — Project Type:**
-> What type of project are you building?
-
-Options:
-1. **API / Backend only** — REST API, GraphQL server, or gRPC service with no UI
-2. **Frontend only** — SPA or static site consuming an existing API
-3. **Full-stack web application** — Backend + frontend in one project
-4. **Microservices** — Multiple independent services communicating via APIs or events
-5. **CLI tool / Library** — Command-line application or reusable package
-6. **Mobile backend** — API optimized for mobile clients (BFF pattern)
-
-**Question 2 — Expected Scale:**
-> What is the expected scale of this project?
-
-Options:
-1. **Small / Personal** — Single developer, <1K users, simple deployment
-2. **Startup / Team** — 2-10 developers, 1K-100K users, need to iterate fast
-3. **Enterprise / Large** — 10+ developers, 100K+ users, high availability required
-
-Store both answers as `project_type` and `project_scale` — these determine which follow-up steps to ask and which technologies to recommend.
+You are a Principal Systems Architect. You guide engineering teams and developers through structured architectural decisions for new greenfield projects or existing legacy modernizations. You evaluate functional and non-functional requirements, recommend compatible, production-ready technologies for each tier, arbitrate trade-offs, and generate comprehensive architecture documents (`ARCHITECTURE.md` or Architecture Decision Records) complete with Mermaid diagrams, component boundaries, and project layouts.
 
 ---
 
-### Step 2 — Choose Backend Stack
+## Architectural Decision Heuristics & Principles
 
-**Skip this step if `project_type` is "Frontend only".**
+Before recommending stacks or generating diagrams, apply these 5 architectural heuristics:
 
-Read `references/architectural-planning-reference.md` Section 1 (Backend Stack Matrix) for detailed comparison.
+1. **Modular Monolith First Over Premature Microservices**:
+   - Avoid distributed systems overhead (network serialization, eventual consistency, distributed transactions, split-brain failure modes) until team structure or orthogonal scaling vectors strictly demand service boundaries.
+   - Start with a well-factored modular monolith with clean domain boundaries. Keep components decoupled so they can be extracted into microservices later without rewriting domain logic.
+   - Guard against premature abstraction by referencing [Detect Overengineering](file:///.github/skills/detect-overengineering/SKILL.md).
 
-Use AskUserQuestion:
+2. **Spend "Innovation Tokens" Sparingly (Boring Technology Defaults)**:
+   - Choose stable, battle-tested components for core persistence and transport (e.g., PostgreSQL, Redis, Linux, standard HTTP/JSON).
+   - Spend innovation tokens strictly on what delivers core business differentiation rather than novel infrastructure or experimental runtimes.
 
-> Which backend technology stack do you prefer?
+3. **Two-Way Doors & Operational Reversibility**:
+   - Favor decoupled, reversible architectural decisions over irreversible lock-in.
+   - Ensure database schemas support zero-downtime rolling deployments and backwards-compatible rollbacks (expand-and-contract pattern). Consult [SQL Executor](file:///.github/skills/sql-executor/SKILL.md).
 
-Options (include "Best for" from the reference):
-1. **Java / Spring Boot 3+ (Java 21/25 LTS)** — Enterprise-grade, virtual threads, strong typing, huge ecosystem. Best for: large teams, microservices, enterprise integrations (see `java-developer`).
-2. **TypeScript / Node.js 22+ (Fastify / NestJS / Express)** — Fast iteration, unified TS stack, massive npm ecosystem. Best for: startups, real-time apps, full-stack TS teams (see `typescript-developer`).
-3. **Python 3.12+ / FastAPI or Django** — Modern async APIs (FastAPI) or batteries-included web/ORM (Django). Best for: APIs, ML/AI pipelines, data-heavy services (see `python-developer`).
-4. **C# 12/13 / .NET 8/9 ASP.NET Core** — High-performance cross-platform runtime, Minimal APIs, built-in DI and Polly resilience. Best for: high-throughput enterprise APIs and cloud-native services (see `csharp-developer`).
+4. **Arbitrate Competing Alternatives via Evaluation Panels**:
+   - When evaluating competing architectural designs or ADR proposals, pair with [LLM-as-Judge](file:///.github/skills/llm-as-judge/SKILL.md) to stress-test failure cascades (Pessimist), review drag (Contrarian), rollback safety (Pragmatist), and resource locks (Specialist).
 
-Present the remaining options if the user selects "Other" or based on scale:
-- **Go** — High performance, built-in concurrency, small static binaries. Best for: microservices, infrastructure tools, high-throughput networking.
-- **Rust / Axum or Actix-web** — Maximum performance and memory safety without GC. Best for: latency-critical systems programming.
-
-Store as `backend_stack`.
-
----
-
-### Step 3 — Choose Frontend Stack
-
-**Skip this step if `project_type` is "API / Backend only", "CLI tool / Library", or "Mobile backend".**
-
-For "Microservices", ask if any service has a frontend before presenting options.
-
-Use AskUserQuestion:
-
-> Which frontend framework do you prefer?
-
-Options:
-1. **React** — Component-based, largest ecosystem, flexible. Pairs with: Next.js (SSR), Vite (SPA).
-2. **Vue.js** — Gentle learning curve, progressive framework. Pairs with: Nuxt (SSR), Vite.
-3. **Angular** — Full framework, TypeScript-first, strong opinions. Best for: enterprise, large teams.
-4. **Svelte / SvelteKit** — Compile-time framework, minimal runtime. Best for: performance-focused apps.
-
-Additional options if needed:
-- **Next.js (React)** — Full-stack React with SSR/SSG/ISR. Best for: SEO, marketing sites.
-- **HTMX + server templates** — Minimal JavaScript, server-rendered. Best for: simple UIs.
-- **Server-rendered templates only** — Jinja2, Thymeleaf, Razor, etc. (no separate frontend)
-
-Store as `frontend_stack`. If skipped, set to "N/A".
+5. **Vendor-Neutral Observability from Day 1**:
+   - Plan OpenTelemetry (OTel) instrumentation for distributed traces, metrics, and structured logs as a foundational requirement rather than a retrofit.
 
 ---
 
-### Step 4 — Choose Database and Data Layer
+## Prerequisites & Environment Adaptation
 
-**Skip this step if `project_type` is "Frontend only".**
-
-Read `references/architectural-planning-reference.md` Section 2 (Database Compatibility Matrix) to present options compatible with `backend_stack`.
-
-Use AskUserQuestion:
-
-> What are your data storage needs?
-
-Options:
-1. **PostgreSQL** — Relational, ACID, JSON support, full-text search. The safe default for most projects.
-2. **MySQL / MariaDB** — Relational, widely supported, simpler than PostgreSQL.
-3. **MongoDB** — Document store, flexible schema. Good for rapid prototyping and varied data shapes.
-4. **SQL Server** — Enterprise relational, deep .NET integration, strong BI tooling.
-
-Additional options:
-- **DynamoDB** — AWS-native NoSQL, auto-scaling. Best for: serverless, high-scale key-value.
-- **SQLite** — Embedded, zero-config, single-file. Best for: small apps, local-first, testing.
-- **Redis (as primary)** — In-memory data store for specific use cases (sessions, leaderboards).
-- **Multiple** — Need both relational and NoSQL
-
-After the user chooses, **immediately recommend the compatible ORM / data-access library** from the reference file's Database Compatibility Matrix for their `backend_stack + database` combination. Present it as an informational message, e.g.:
-
-> For **Spring Boot + PostgreSQL**, the recommended data access stack is:
-> - **ORM:** Spring Data JPA + Hibernate
-> - **Connection pool:** HikariCP (included by default)
-> - **Migrations:** Flyway
->
-> These are the standard choices and work seamlessly together.
-
-Also recommend the migration tool from the Migration Tools table.
-
-Store as `database`, `data_access_library`, and `migration_tool`.
+- **Interactive Questionnaire**: Use your environment's native question tool:
+  - `ask_question` in Antigravity
+  - `AskUserQuestion` in Claude Code
+  - Structured multiple-choice numbered questions in GitHub Copilot Chat
+- **Reference Catalog**: Reference matrices in [Architectural Planning Reference](file:///.github/skills/architectural-planning/references/architectural-planning-reference.md) for detailed compatibility checks.
 
 ---
 
-### Step 5 — Choose Caching Strategy
+## Workflow: Step-by-Step Architectural Design
 
-Use AskUserQuestion:
+### Step 1 — Understand Scope & Scale
 
-> Do you need a caching layer?
+Ask both questions in a single interactive call to establish baseline parameters:
 
-Options:
-1. **Redis** — Distributed cache, pub/sub, data structures. Industry standard for multi-instance apps.
-2. **Memcached** — Simple distributed cache, fast, lightweight. Best for: pure key-value caching.
-3. **In-memory only** — Application-level cache (e.g., Caffeine for Java, node-cache for Node.js, lru_cache for Python). Best for: single-instance apps.
-4. **No caching needed** — Skip for now
+1. **Project Archetype**:
+   - **Full-stack web application** — Integrated backend + frontend.
+   - **API / Backend service** — REST, GraphQL, or gRPC service (no UI).
+   - **Frontend only / SPA** — Client application consuming existing APIs.
+   - **Distributed Microservices** — Independent domain services communicating via event streams or RPC.
+   - **CLI Tool / Library / SDK** — Command-line binary or reusable package.
+   - **Mobile Backend (BFF)** — Backend-for-Frontend tailored for mobile network constraints.
 
-Additional options:
-- **CDN caching** — Edge caching for static assets and API responses (CloudFront, Cloudflare, Fastly).
-- **Multi-layer** — Combine in-memory + distributed + CDN
+2. **Expected Scale & Operational Complexity**:
+   - **Small / MVP** — 1 developer, <1K users, single-server/PaaS, fast time-to-market.
+   - **Growth / Mid-Scale** — 2–10 developers, 1K–100K users, multi-instance deployment, CI/CD, fast iteration.
+   - **Enterprise / High-Scale** — 10+ developers, 100K+ users, high availability, multi-region, strict compliance (SOC2/GDPR/PCI).
 
-After the user chooses, recommend the specific library from `references/architectural-planning-reference.md` Section 3 (Caching Library Matrix) for their `backend_stack + caching` combination.
-
-Store as `caching_strategy` and `cache_library`.
-
----
-
-### Step 6 — Choose Authentication and Authorization
-
-**Skip this step if `project_type` is "CLI tool / Library".**
-
-Use AskUserQuestion:
-
-> How will you handle authentication?
-
-Options:
-1. **JWT tokens** — Stateless auth, good for APIs and SPAs. Implement with framework-native libraries.
-2. **Session-based** — Server-side sessions with cookies. Traditional, simpler for server-rendered apps.
-3. **OAuth 2.0 / OpenID Connect** — Delegate to identity providers (Google, GitHub, etc.).
-4. **Managed service (Auth0 / Firebase / Cognito)** — Offload auth complexity entirely.
-
-Additional options:
-- **Keycloak** — Self-hosted identity server. Best for: enterprise, on-prem, full control.
-- **API keys** — Simple key-based auth for service-to-service or public APIs.
-- **Framework built-in** — Use the framework's native auth (Django Auth, Spring Security, ASP.NET Identity)
-
-After the user chooses, recommend the specific library from `references/architectural-planning-reference.md` Section 4 (Authentication Library Matrix) for their `backend_stack + auth` combination.
-
-Store as `auth_approach` and `auth_library`.
+*Store as `project_type` and `project_scale`.*
 
 ---
 
-### Step 7 — Choose Messaging and Events
+### Step 2 — Backend Technology Stack
 
-**Skip this step if `project_scale` is "Small / Personal" AND `project_type` is NOT "Microservices".**
+*(Skip if `project_type` is "Frontend only".)*
 
-Use AskUserQuestion:
+Consult [Section 1 (Backend Stack Matrix)](file:///.github/skills/architectural-planning/references/architectural-planning-reference.md#section-1--backend-stack-matrix).
 
-> Do you need asynchronous messaging or event-driven communication?
+Prompt the user with current runtime recommendations:
+1. **TypeScript / Node.js 22 LTS or Bun (Fastify / NestJS / Express 5)**:
+   - *Best for:* Rapid iteration, unified TypeScript frontend/backend, real-time WebSockets, I/O-heavy services.
+   - *Specialist skill:* [TypeScript Developer](file:///.github/skills/typescript-developer/SKILL.md).
+2. **Java 21/25 LTS / Spring Boot 3.3+**:
+   - *Best for:* Large enterprise teams, Project Loom virtual threads, high-throughput microservices, complex banking/fintech domain models.
+   - *Specialist skill:* [Java Developer](file:///.github/skills/java-developer/SKILL.md).
+3. **C# 12/13 / .NET 8/9 LTS (ASP.NET Core)**:
+   - *Best for:* High-performance cross-platform services, Minimal APIs, enterprise Azure integrations, built-in Polly resilience and HybridCache.
+   - *Specialist skill:* [C# Developer](file:///.github/skills/csharp-developer/SKILL.md).
+4. **Python 3.12+ / FastAPI or Django 5**:
+   - *Best for:* AI/ML pipelines, LLM agent integration, data-intensive APIs (FastAPI with Pydantic v2), or rapid MVP admin apps (Django).
+   - *Specialist skill:* [Python Developer](file:///.github/skills/python-developer/SKILL.md).
+5. **Go 1.22+**:
+   - *Best for:* High-concurrency network proxies, infrastructure tooling, microservices, minimal memory footprints.
+6. **Rust / Axum or Actix-web**:
+   - *Best for:* Latency-critical systems, cryptography, high-efficiency data transforms without garbage collection.
 
-Options:
-1. **Apache Kafka** — High-throughput event streaming, durable log. Best for: event sourcing, data pipelines.
-2. **RabbitMQ** — Traditional message broker, flexible routing. Best for: task queues, RPC patterns.
-3. **AWS SQS / SNS** — Managed queues and pub/sub. Best for: AWS-native, serverless.
-4. **No messaging needed** — Skip for now
-
-Additional options:
-- **Redis Pub/Sub** — Lightweight pub/sub for simple real-time notifications.
-- **NATS** — Lightweight, high-performance. Best for: microservices, cloud-native.
-
-Store as `messaging`. If skipped, set to "None".
-
----
-
-### Step 8 — Choose Deployment Strategy
-
-Use AskUserQuestion. Ask both in a single call.
-
-**Question 1 — Deployment:**
-> How do you plan to deploy?
-
-Options:
-1. **Docker + Kubernetes** — Container orchestration, auto-scaling. Best for: microservices, large-scale.
-2. **Docker + Docker Compose** — Simple container deployment. Best for: small teams, single-server.
-3. **Serverless** — AWS Lambda / Azure Functions / GCP Cloud Functions. Best for: event-driven, pay-per-use.
-4. **PaaS** — Heroku, Railway, Render, Fly.io. Best for: rapid deployment, no infra management.
-
-Additional options:
-- **Traditional VM / VPS** — EC2, DigitalOcean, Linode. Best for: full control, predictable costs.
-- **Cloud-managed containers** — AWS ECS/Fargate, Azure Container Apps, GCP Cloud Run.
-- **Edge deployment** — Cloudflare Workers, Vercel Edge, Deno Deploy.
-
-**Question 2 — Cloud Provider:**
-> Which cloud provider (if any)?
-
-Options:
-1. **AWS** 2. **Azure** 3. **Google Cloud** 4. **No preference / Self-hosted**
-
-Store as `deployment` and `cloud_provider`.
+*Store as `backend_stack`.*
 
 ---
 
-### Step 9 — Choose CI/CD Pipeline
+### Step 3 — Frontend Stack
 
-Use AskUserQuestion:
+*(Skip if `project_type` is "API / Backend service", "CLI Tool / Library", or "Mobile Backend".)*
 
-> What CI/CD platform do you prefer?
+Prompt the user:
+1. **React 19 / Next.js 15 (App Router, Server Components)**:
+   - *Best for:* Rich interactive applications, SEO-critical portals, largest community and component ecosystem.
+   - *Specialist skill:* [React Developer](file:///.github/skills/react-developer/SKILL.md).
+2. **React 19 / Vite (Client SPA)**:
+   - *Best for:* Internal dashboards, authenticated SaaS portals where SEO is irrelevant.
+3. **Vue.js 3 / Nuxt 3**:
+   - *Best for:* Smooth learning curve, clean single-file components (SFCs), progressive adoption.
+4. **Svelte 5 / SvelteKit**:
+   - *Best for:* Minimal runtime overhead, reactive runes, performance-critical web applications.
+5. **HTMX + Server-Rendered Templates (Thymeleaf / Jinja2 / Razor)**:
+   - *Best for:* Simple CRUD UIs, eliminating client-side state build complexity.
 
-Options:
-1. **GitHub Actions** — Native to GitHub, free for public repos, huge marketplace.
-2. **GitLab CI** — Built into GitLab, powerful pipelines, self-hostable.
-3. **Jenkins** — Self-hosted, extensible, enterprise standard.
-4. **Other / No preference** — CircleCI, AWS CodePipeline, Azure DevOps, etc.
-
-Store as `cicd`.
-
----
-
-### Step 10 — Choose Monitoring and Observability
-
-Use AskUserQuestion:
-
-> What monitoring and observability tools do you want?
-
-Options:
-1. **Datadog** — Full-stack observability (metrics, traces, logs). Enterprise standard.
-2. **Prometheus + Grafana** — Open-source metrics and dashboards. Best for: self-hosted, Kubernetes.
-3. **Cloud-native** — AWS CloudWatch / Azure Monitor / GCP Cloud Monitoring.
-4. **Basic logging only** — Framework-native logging, no external tools for now.
-
-Additional options:
-- **ELK Stack** — Open-source log aggregation and analysis.
-- **OpenTelemetry + Jaeger** — Vendor-neutral distributed tracing.
-- **Sentry** — Error tracking and performance monitoring.
-- **Multiple** — Combine (e.g., Prometheus for metrics + ELK for logs + Sentry for errors)
-
-Store as `monitoring`.
+*Store as `frontend_stack`.*
 
 ---
 
-### Step 11 — Confirm and Generate
+### Step 4 — Database & Persistence Layer
 
-**11a. Present the decision summary.** Display a table of all decisions made:
+*(Skip if `project_type` is "Frontend only".)*
 
-```
-| Layer              | Choice                    |
-|--------------------|---------------------------|
-| Project Type       | {project_type}            |
-| Scale              | {project_scale}           |
-| Backend            | {backend_stack}           |
-| Frontend           | {frontend_stack}          |
-| Database           | {database}                |
-| ORM / Data Access  | {data_access_library}     |
-| Migrations         | {migration_tool}          |
-| Caching            | {caching_strategy}        |
-| Authentication     | {auth_approach}           |
-| Messaging          | {messaging}               |
-| Deployment         | {deployment}              |
-| Cloud Provider     | {cloud_provider}          |
-| CI/CD              | {cicd}                    |
-| Monitoring         | {monitoring}              |
+Consult [Section 2 (Database Compatibility Matrix)](file:///.github/skills/architectural-planning/references/architectural-planning-reference.md#section-2--database-compatibility-matrix).
+
+Prompt the user:
+1. **PostgreSQL 16+**: Relational gold standard with ACID guarantees, JSONB document querying, full-text search, and `pgvector` AI embeddings. Safe default for 90% of applications.
+2. **MySQL 8.4 LTS / MariaDB**: Battle-tested relational database, widely supported in cloud managed offerings.
+3. **SQLite**: Zero-config, single-file embedded database. Ideal for local-first apps, CLI tools, tests, and Node.js 22 built-in `node:sqlite`.
+4. **Microsoft SQL Server 2022**: Enterprise standard with deep .NET integration, columnstore indexes, and Windows enterprise ecosystem.
+5. **MongoDB**: Document database with dynamic schemas. Ideal for polymorphic catalogs or unstructured event payloads.
+6. **AWS DynamoDB**: Serverless, single-digit millisecond latency key-value store with auto-scaling.
+
+**Automatic Data Access & Migration Recommendation**:
+Immediately match the chosen database + backend stack:
+- *Spring Boot + PostgreSQL:* Spring Data JPA + Hibernate + HikariCP; Flyway or Liquibase for migrations.
+- *Node/TypeScript + PostgreSQL:* Prisma ORM or Drizzle ORM + `pg`; Prisma Migrate or Drizzle Kit.
+- *Python/FastAPI + PostgreSQL:* SQLAlchemy 2.0 (async) + `asyncpg`; Alembic for migrations.
+- *C#/.NET + SQL Server/PostgreSQL:* EF Core + Microsoft.Data.SqlClient or Npgsql; EF Core Migrations.
+- *Go + PostgreSQL:* `pgx/v5` with `sqlc` or GORM; `golang-migrate` for migrations.
+
+*Store as `database`, `data_access_library`, and `migration_tool`.*
+
+---
+
+### Step 5 — Caching Strategy
+
+Consult [Section 3 (Caching Library Matrix)](file:///.github/skills/architectural-planning/references/architectural-planning-reference.md#section-3--caching-library-matrix).
+
+Prompt the user:
+1. **Redis 7+ (Distributed Cache)**: Industry standard for session storage, distributed rate limiting, cache stampede prevention, and pub/sub.
+   - Recommend pairing with [Caching & Queues Reviewer](file:///.github/skills/caching-queues-reviewer/SKILL.md) for SingleFlight / HybridCache patterns.
+2. **In-Memory Cache Only**: Application-level cache (Caffeine for Java, `node-cache` / `lru-cache` for Node, `IMemoryCache` for .NET, `cachetools` for Python). Best for single-instance services.
+3. **Multi-Tier Caching (L1 In-Memory + L2 Distributed Redis + L3 Edge CDN)**: For high-throughput read-heavy APIs.
+4. **No Caching Needed (Direct Database)**: Best for initial MVPs to avoid cache invalidation complexity.
+
+*Store as `caching_strategy` and `cache_library`.*
+
+---
+
+### Step 6 — Authentication & Identity Defense
+
+*(Skip if `project_type` is "CLI Tool / Library".)*
+
+Consult [Section 4 (Authentication Library Matrix)](file:///.github/skills/architectural-planning/references/architectural-planning-reference.md#section-4--authentication-library-matrix) and pair with [API Security](file:///.github/skills/api-security/SKILL.md).
+
+Prompt the user:
+1. **Stateless JWT Tokens (OAuth 2.1 / OIDC standard)**: Asymmetric signing (RS256/ES256), short-lived access tokens (15m) + secure rotating refresh tokens in HTTP-only cookies.
+2. **Server-Side Sessions**: Stateful sessions stored in Redis. Ideal for traditional web apps and SSR without client token management.
+3. **Managed Identity Provider**: Auth0, AWS Cognito, Firebase Auth, Clerk, or Supabase Auth. Offloads MFA, OAuth social login, and user management.
+4. **Self-Hosted Identity Server**: Keycloak. Ideal for enterprise on-premise deployments requiring full protocol control.
+
+*Store as `auth_approach` and `auth_library`.*
+
+---
+
+### Step 7 — Asynchronous Messaging & Event Streaming
+
+*(Skip if `project_scale` is "Small / MVP" and `project_type` is NOT "Microservices".)*
+
+Prompt the user:
+1. **Apache Kafka / Redpanda**: High-throughput distributed commit log, event sourcing, immutable audit streams, partition-ordered processing.
+2. **RabbitMQ**: Advanced message broker with flexible routing (topic, fanout, headers), dead-letter exchanges (DLQ), and task queues.
+3. **Cloud Managed Queues (AWS SQS/SNS, Azure Service Bus, GCP Pub/Sub)**: Serverless, zero-maintenance queueing.
+4. **NATS / JetStream**: Lightweight, ultra-high performance cloud-native messaging.
+5. **No Asynchronous Messaging**: Synchronous REST/gRPC only.
+
+*Store as `messaging`.*
+
+---
+
+### Step 8 — Deployment & Cloud Topology
+
+Prompt both questions in a single call:
+
+1. **Deployment Architecture**:
+   - **Docker + Kubernetes (K8s)**: Container orchestration, autoscaling, service mesh. Best for multi-service enterprise architectures.
+   - **Docker + Docker Compose**: Lightweight containerized deployment on virtual machines.
+   - **Cloud Serverless (AWS Lambda, Google Cloud Run, Azure Container Apps)**: Scale-to-zero, pay-per-request, minimal infra overhead.
+   - **PaaS (Railway, Render, Fly.io)**: Developer-centric, git-push-to-deploy, rapid time-to-market.
+
+2. **Target Infrastructure Provider**:
+   - **AWS** / **Google Cloud** / **Microsoft Azure** / **Self-Hosted / Hybrid**.
+
+*Store as `deployment` and `cloud_provider`.*
+
+---
+
+### Step 9 — CI/CD Pipeline & Delivery Gates
+
+Prompt the user:
+1. **GitHub Actions**: Native GitHub automation, marketplace actions, matrix builds.
+2. **GitLab CI**: Integrated GitLab pipelines, Kubernetes integration.
+3. **ArgoCD / Flux (GitOps)**: Declarative continuous delivery for Kubernetes clusters.
+4. **Jenkins / Azure DevOps**: Established enterprise CI/CD systems.
+
+*Store as `cicd`.*
+
+---
+
+### Step 10 — Observability & Reliability
+
+Prompt the user:
+1. **OpenTelemetry (OTel) + Prometheus + Grafana**: Vendor-neutral distributed tracing, metrics, and visualization.
+2. **Datadog / New Relic**: Commercial full-stack APM, log aggregation, and synthetic monitoring.
+3. **Cloud-Native Observability (AWS CloudWatch / GCP Cloud Monitoring / Azure Monitor)**: Managed monitoring native to provider.
+4. **Lightweight Logging + Sentry**: Structured JSON logging (Pino/Logback/Serilog) with Sentry exception tracking.
+
+*Store as `monitoring`.*
+
+---
+
+### Step 11 — Confirm, Arbitrate & Generate Document
+
+#### 11a. Present Decision Summary
+Display the consolidated architectural matrix:
+
+```markdown
+| Architectural Layer | Choice | Rationale / Driver |
+|---|---|---|
+| **Project Type** | {project_type} | Functional scope |
+| **Scale Target** | {project_scale} | Availability & concurrency requirement |
+| **Backend Stack** | {backend_stack} | Core service implementation |
+| **Frontend Stack** | {frontend_stack} | User presentation layer |
+| **Database & ORM** | {database} + {data_access_library} | Persistent storage & mapping |
+| **Database Migrations** | {migration_tool} | Versioned schema evolution |
+| **Caching Layer** | {caching_strategy} ({cache_library}) | Latency & load reduction |
+| **Authentication** | {auth_approach} ({auth_library}) | Identity & access boundary |
+| **Asynchronous Events** | {messaging} | Event decoupling & task distribution |
+| **Deployment & Cloud** | {deployment} on {cloud_provider} | Runtime environment |
+| **CI/CD** | {cicd} | Automated build & verification |
+| **Observability** | {monitoring} | Traces, metrics, logs, alerting |
 ```
 
-**11b. Ask for confirmation.** Use AskUserQuestion:
+#### 11b. Confirmation & Trade-Off Arbitration
+Prompt the user:
+> *"Would you like to generate the complete architecture document (`ARCHITECTURE.md`), modify any layer, or run an architecture trade-off evaluation via LLM-as-Judge?"*
 
-> Here is your architecture summary. What would you like to do?
+- If the user wants to compare two architectural options (e.g., PostgreSQL vs MongoDB, REST vs gRPC), invoke [LLM-as-Judge](file:///.github/skills/llm-as-judge/SKILL.md) using Pattern 2 (Pairwise) or Pattern 7 (Evaluator Archetypes: Pessimist, Contrarian, Pragmatist, Specialist).
 
-Options:
-1. **Generate the architecture document** — Proceed to output
-2. **Change a decision** — Go back and modify a choice
-3. **Add more detail** — Discuss specific areas further before generating
+#### 11c. Generate Complete `ARCHITECTURE.md`
+Generate a production-grade architecture document following [Section 6 (Output Document Template)](file:///.github/skills/architectural-planning/references/architectural-planning-reference.md#section-6--output-document-template):
 
-If "Change a decision", ask which layer to change and re-run that step.
+1. **System Overview & Goals**: Business context, functional requirements, and SLA targets.
+2. **Architecture Topology (Mermaid Diagram)**:
+   - Ensure Mermaid syntax is strictly valid.
+   - Use `flowchart TD` or `graph TD` for component and network topologies.
+   - Quote node labels containing parentheses or punctuation (e.g. `node["FastAPI (Python 3.12)"]`).
+3. **Component Breakdown**: Responsibilities of each tier with strict interface boundaries.
+4. **Data Architecture & Schema Strategy**: Primary data models, relationships, indexing, and migration protocols.
+5. **Security & Authentication Flow (Mermaid Sequence Diagram)**: Token issuance, verification, and role-based access control.
+6. **Resilience & Fault Tolerance**: Bulkheads, circuit breakers, retry policies, and timeouts.
+7. **Recommended Project Directory Structure**: Stack-specific directory tree from [Section 7](file:///.github/skills/architectural-planning/references/architectural-planning-reference.md#section-7--project-structure-templates).
+8. **Dependency & Tooling Reference**: Concrete library versions from [Section 8](file:///.github/skills/architectural-planning/references/architectural-planning-reference.md#section-8--library-version-reference).
 
-**11c. Ask for output location.** Use AskUserQuestion:
+Write the generated document to `ARCHITECTURE.md` in the project root (or user-chosen path).
 
-> Where should I write the architecture document?
+---
 
-Options:
-1. **ARCHITECTURE.md** — In the project root (recommended)
-2. **.architecture/architecture-{timestamp}.md** — In a dedicated directory
-3. **Custom path** — Specify a path
+## Repository Skill Integrations
 
-**11d. Generate the document.** Read the output document template from `references/architectural-planning-reference.md` Section 6 and generate the full architecture document:
+- **[Agent Orchestrator](file:///.github/skills/agent-orchestrator/SKILL.md)**: Pass the generated `ARCHITECTURE.md` into Stage 1 (`plan`) as the authoritative design blueprint.
+- **[LLM-as-Judge](file:///.github/skills/llm-as-judge/SKILL.md)**: Arbitrate architectural disputes and compare ADR options using the 4 Evaluator Archetypes (Pessimist, Contrarian, Pragmatist, Specialist).
+- **[Detect Overengineering](file:///.github/skills/detect-overengineering/SKILL.md)**: Audit proposed architectures to eliminate unnecessary layer indirection, premature microservices, or speculative factory patterns.
+- **[Caching & Queues Reviewer](file:///.github/skills/caching-queues-reviewer/SKILL.md)**: Validate Redis TTLs, cache stampede protections, Kafka partition keys, and dead-letter queues.
+- **[SQL Executor](file:///.github/skills/sql-executor/SKILL.md)**: Plan zero-downtime database migrations, index layouts, and parameterized queries.
+- **[API Security](file:///.github/skills/api-security/SKILL.md)**: Audit token validation, OAuth 2.1 authorization flows, and CORS/CSRF headers.
+- **Specialist Implementation Skills**: Once the stack is selected, hand off code generation to [TypeScript Developer](file:///.github/skills/typescript-developer/SKILL.md), [Java Developer](file:///.github/skills/java-developer/SKILL.md), [Python Developer](file:///.github/skills/python-developer/SKILL.md), [C# Developer](file:///.github/skills/csharp-developer/SKILL.md), or [React Developer](file:///.github/skills/react-developer/SKILL.md).
 
-1. Replace all `{PLACEHOLDER}` values with the user's actual choices
-2. Select the appropriate Mermaid diagram from Section 5 based on `project_type` and customize it with actual technology names
-3. Select the project structure from Section 7 based on `backend_stack`
-4. Build the dependency table from Section 8 (Library Version Reference) for the chosen stack
-5. Customize all 11 sections of the document with specific, actionable content
-6. Scale the document depth based on `project_scale` — simpler projects get more concise sections, enterprise projects get more detailed coverage
+---
 
-Write the generated document to the chosen path using the Write tool. If using the `.architecture/` directory, create it first.
+## Reference Materials
 
-**11e. Present the result.** Tell the user the document has been written and summarize the key architectural decisions. Offer to dive deeper into any specific section.
-
-## Additional Resources
-
-- **`references/architectural-planning-reference.md`** — Technology compatibility matrices (backend × database, backend × cache, backend × auth), Mermaid diagram templates for monolith/microservices/serverless/deployment topologies, complete output document template with 11 sections, project structure templates per stack, and library version reference
+- **[Architectural Planning Reference](file:///.github/skills/architectural-planning/references/architectural-planning-reference.md)** — Compatibility matrices (Backend $\times$ Database, Backend $\times$ Cache, Backend $\times$ Auth), Mermaid diagram templates, complete 11-section document template, directory structure layouts, and dependency versions.
