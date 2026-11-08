@@ -214,3 +214,4 @@ CREATE GLOBAL TEMPORARY TABLE gtt_invoice_buffer (
 ) ON COMMIT PRESERVE ROWS; -- Rows retained across commits for the duration of the session
 ```
 *(In Oracle 18c+, Private Temporary Tables `CREATE PRIVATE TEMPORARY TABLE ORA$PTT_...` can also be created dynamically with session/transaction drop semantics).*
+

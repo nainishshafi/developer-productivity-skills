@@ -219,3 +219,4 @@ FROM department_revenues
 GROUP BY department;
 ```
 *(In PostgreSQL 9.4+, you can also use modern aggregate filter syntax: `SUM(revenue) FILTER (WHERE quarter = 'Q1') AS q1_revenue`).*
+
