@@ -27,7 +27,7 @@ These skills provide ready-made workflows for modern software engineering — sp
 | [`scan-halucinated-tests`](#scan-halucinated-tests) | **Architecture & Quality** | Cross-validates test symbols against AST ground truth | `"scan for hallucinated tests"` |
 | [`trace-code-context`](#trace-code-context) | **Architecture & Quality** | AST symbol extraction, callers/callees & Mermaid graph | `"trace code context"` |
 | [`playwright-bdd-tester`](#playwright-bdd-tester) | **Testing & Quality** | BDD Gherkin & Playwright browser test automation | `"write playwright tests"` |
-| [`troubleshoot-and-fix`](#troubleshoot-and-fix) | **Diagnostics** | Isolated reproduction testbeds and fix verification | `"troubleshoot and fix"` |
+| [`troubleshoot-and-fix`](#troubleshoot-and-fix) | **Diagnostics** | Isolated reproduction testbeds, 3-attempt circuit breaker & escalation summary | `"troubleshoot and fix"` |
 | [`legacy-code-modernization`](#legacy-code-modernization) | **Modernization** | 4-phase safe modernization (Extract $\to$ Pin $\to$ TDD $\to$ Strangler) | `"modernize legacy code"` |
 | [`skill-creator`](#skill-creator) | **Tooling & Automation** | Scaffolds modular knowledge-packs and task skills | `"create a new skill"` |
 | [`github-security-scanner-hook`](#github-security-scanner-hook) | **Tooling & Automation** | Pre-commit secret scanning & Semgrep OWASP rules | `"scan for security vulnerabilities"` |
@@ -132,7 +132,7 @@ Built-in evaluation capability for evaluating and comparing LLM responses direct
 ## 🛠️ 4. Diagnostics, Debugging & Modernization
 
 ### `troubleshoot-and-fix`
-Universal diagnostic and repair framework for runtime crashes, exceptions, and logic errors. Extracts problematic logic and test fixtures into an isolated sandbox harness (`scripts/isolate-runner.js`, `scripts/isolate-runner.py`) to systematically reproduce and verify fixes before porting them back to source code.
+Universal diagnostic and repair framework for runtime crashes, exceptions, and logic errors. Enforces a strict 3-iteration circuit breaker to prevent infinite token-burning trial-and-error loops, escalating a structured out-of-options diagnostic summary when hypotheses fail. Extracts problematic logic and test fixtures into an isolated sandbox harness (`scripts/isolate-runner.js`, `scripts/isolate-runner.py`) to systematically reproduce and verify fixes before porting them back to source code.
 - **Trigger phrases:** `"troubleshoot and fix"`, `"debug this error"`, `"fix this bug"`, `"solve runtime exception"`, `"diagnose issue"`, `"reproduce and fix bug"`.
 
 ### `legacy-code-modernization`

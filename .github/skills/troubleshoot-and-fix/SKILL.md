@@ -1,12 +1,12 @@
 ---
 name: troubleshoot-and-fix
-description: Universal, language-independent framework for diagnosing, troubleshooting, and fixing software bugs, exceptions, regressions, and performance issues. Refers to language-specific developer skills (python-developer, typescript-developer, react-developer, java-developer, csharp-developer) for runtime idioms and conventions. When a bug cannot be reproduced directly in the main project environment (e.g. missing dependencies, cloud credentials, heavy setup, or complex coupling), it systematically extracts the problematic logic, generates realistic mock data, and executes an isolated reproduction harness (via nodejs-executor MCP or standalone scratch scripts) to verify the fix before porting it back. Use when asked to "troubleshoot and fix", "debug this error", "fix this bug", "solve runtime exception", "diagnose issue", "reproduce and fix bug", or "debug failing code".
-version: 1.1.0
+description: Universal, language-independent framework for diagnosing, troubleshooting, and fixing software bugs, exceptions, regressions, and performance issues. Refers to language-specific developer skills (python-developer, typescript-developer, react-developer, java-developer, csharp-developer) for runtime idioms and conventions. Enforces a strict 3-iteration circuit breaker to prevent infinite token-burning retry loops, providing an empirical diagnostic escalation summary when options are exhausted. When direct reproduction is blocked by heavy dependencies or environment limits, it systematically extracts the problematic logic, generates realistic mock fixtures, and executes an isolated reproduction harness (via nodejs-executor MCP or standalone scratch scripts) to verify the fix before porting it back. Use when asked to "troubleshoot and fix", "debug this error", "fix this bug", "solve runtime exception", "diagnose issue", "reproduce and fix bug", or "debug failing code".
+version: 1.2.0
 ---
 
 # Troubleshoot and Fix Skill
 
-A universal, language-independent troubleshooting and repair framework. This skill provides an empirical, evidence-driven methodology to diagnose root causes, isolate failures, synthesize mock testbeds, verify fixes without guessing, and prevent regressions.
+A universal, language-independent troubleshooting and repair framework. This skill provides an empirical, evidence-driven methodology to diagnose root causes, isolate failures, synthesize mock testbeds, verify fixes without guessing, prevent regressions, and enforce a **strict 3-iteration circuit breaker** to prevent runaway token expenditure.
 
 ---
 
@@ -35,7 +35,56 @@ This skill defines the **diagnostic and verification process**, but delegates la
 
 ---
 
-## 3. The 5-Phase Troubleshoot & Fix Protocol
+## 3. Circuit Breaker & Token-Budget Guardrail (Max 3 Hypotheses)
+
+To prevent infinite trial-and-error loops, runaway token consumption, and speculative code churn, agents executing this skill must adhere to the **3-Iteration Circuit Breaker**:
+
+1. **Iteration Budget**:
+   - **Attempt 1**: Test primary hypothesis based on initial stack trace and symptom analysis.
+   - **Attempt 2**: If Attempt 1 fails, step back, re-evaluate assumptions, and test an alternative hypothesis.
+   - **Attempt 3**: If Attempt 2 fails, isolate the minimal invariant or probe environmental/configuration boundaries.
+2. **Circuit Breaker Trip & Immediate Halt**:
+   - If after **3 distinct attempts** the defect is not cleanly resolved and verified, **STOP IMMEDIATELY**.
+   - **Do not guess, brute-force, or make speculative random edits.**
+   - **Revert unverified exploratory changes** in the main working tree to prevent workspace corruption (`git restore` or clean scratch code).
+   - Preserve reproduction testbeds in `scratch/repro/` so diagnostic artifacts remain available.
+   - Output the **Out-of-Options Escalation Summary** immediately.
+
+### Out-of-Options Escalation Summary Template
+
+When the circuit breaker trips, present this structured post-mortem to the user:
+
+```markdown
+## 🛑 Troubleshooting Circuit Breaker: Out of Options Summary
+
+### 1. Defect & Reproduction Baseline
+- **Symptom / Error**: `<Exact error message or incorrect output>`
+- **Failing Location**: `<File path & line number>`
+- **Reproduction Testbed**: `scratch/repro/repro_<issue>.<ext>` (Status: Reproduced in isolation)
+
+### 2. Hypotheses Tested & Ruled Out
+| Attempt | Hypothesis / Suspected Root Cause | Action Taken | Empirical Outcome / Why It Failed |
+|:---:|---|---|---|
+| **1** | e.g. Null dereference in `calcTax()` | Added optional chaining `item?.tax` | Failed: Upstream API returned string `"null"` instead of primitive `null`. |
+| **2** | e.g. String-to-number type coercion | Added `Number(item.tax)` parsing | Failed: Handled tax, but caused NaN in downstream aggregation `calcTotal()`. |
+| **3** | e.g. Schema mismatch in payload parser | Coerced in DTO mapper | Failed: Broke existing serialization contract on line 88. |
+
+### 3. What Was Ruled Out vs. Remaining Unknowns
+- **Ruled Out**: e.g., The issue is not an async race condition or DB lock; it is deterministic data transformation.
+- **Remaining Unknowns**: e.g., Why the upstream service sends string `"null"` instead of omitting the key.
+
+### 4. Environmental & External Blockers Identified
+- e.g., Unable to verify upstream service schema without access to staging environment or external third-party webhook logs.
+
+### 5. Recommended Next Steps for Developer
+1. Inspect the upstream webhook payload contract at the API gateway level.
+2. Add a runtime schema sanitizer before the payload enters the domain layer.
+3. Review reproduction testbed in `scratch/repro/repro_<issue>.<ext>`.
+```
+
+---
+
+## 4. The 5-Phase Troubleshoot & Fix Protocol
 
 ```
 [Phase 1: Ingestion & Triage]
@@ -144,7 +193,11 @@ Execute the standalone file directly:
 > **Confirm Failure First**: The harness must fail with the *exact same error or incorrect output* as observed in production. Never modify the logic until reproduction is confirmed.
 
 #### Step 4: Fix and Verify in Isolation
-- Iterate on the extracted code inside the standalone testbed.
+- Iterate on the extracted code inside the standalone testbed with a **hard budget of 3 attempts**:
+  1. **Attempt 1**: Test primary hypothesis. If verified, proceed to Phase 4.
+  2. **Attempt 2**: If Attempt 1 fails, reformulate assumptions and test alternative hypothesis.
+  3. **Attempt 3**: If Attempt 2 fails, isolate boundary conditions or minimal invariants.
+  4. **Circuit Breaker Halt**: If all 3 attempts fail, **do not continue looping**. Stop, revert working tree changes, keep `scratch/repro/` artifacts, and deliver the **Out-of-Options Escalation Summary**.
 - Re-run the standalone harness until:
   1. The failing edge-case test passes.
   2. The baseline happy-path test still passes (no regression).

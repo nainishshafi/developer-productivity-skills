@@ -163,7 +163,8 @@ If any quality gate fails (`FAILED` or `BLOCKED`):
    - For failing tests, runtime exceptions, or broken contracts, activate **`troubleshoot-and-fix`**.
    - Generate an isolated reproduction harness (`scripts/isolate-runner.js` or `scripts/isolate-runner.py`) to systematically reproduce the defect outside monolithic project dependencies.
    - Verify the fix inside the reproduction sandbox before porting the patch back.
-3. **Re-evaluate Stages**: Re-run the affected pipeline stages until all quality gates pass.
+3. **Respect the 3-Iteration Circuit Breaker**: If `troubleshoot-and-fix` fails to resolve the defect within its 3-iteration budget, do not loop indefinitely or burn tokens. Halt the pipeline immediately, revert unverified code churn, and surface the **Out of Options Summary** directly to the user for guidance.
+4. **Re-evaluate Stages**: Once verified, re-run the affected pipeline stages until all quality gates pass.
 
 ---
 

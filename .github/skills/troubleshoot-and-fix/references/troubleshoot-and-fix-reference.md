@@ -181,3 +181,19 @@ Before marking the issue resolved:
 - [ ] **Permanent Regression Test Added**: Is the isolated reproduction test case integrated into the project's native test suite (`tests/`, `__tests__/`, `src/test/`)?
 - [ ] **Blast Radius Checked**: Are other occurrences of the same pattern in adjacent modules audited and protected?
 
+---
+
+## 6. Circuit Breaker & Escalation Heuristics
+
+### Why Agents Must Limit Debugging Iterations
+In complex distributed or legacy codebases, an agent can easily fall into an infinite trial-and-error cycle:
+1. Making speculative edits that mask one symptom while causing another.
+2. Accumulating code churn that destabilizes unrelated modules.
+3. Consuming excessive tokens and API quota without making real progress.
+
+### The 3-Attempt Rule
+- **Attempt 1**: Target the most obvious stack trace or logic failure.
+- **Attempt 2**: Re-examine data flow and upstream/downstream boundaries.
+- **Attempt 3**: Minimal invariant isolation or environmental probe.
+- **Trip**: If unresolved after 3 attempts, halt, revert workspace modifications, keep `scratch/repro/` artifacts, and provide the structured **Out-of-Options Escalation Summary** with concrete hypotheses ruled out and clear next steps for the developer.
+
