@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/partial-mcp-config.json",
+  "mcpServers": {
+    "sql-connector": {
+      "command": "node",
+      "args": [
+        "--experimental-sqlite",
+        "<path-to-repo>/mcp/sql-connector/dist/index.js"
+      ],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}

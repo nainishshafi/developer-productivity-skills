@@ -1,0 +1,58 @@
+{
+  "$comment": "Sample connection configurations for sql-connector MCP server tools (execute_query, list_tables, describe_table, explain_query, test_connection)",
+  "sqlite_memory": {
+    "engine": "sqlite",
+    "filePath": ":memory:"
+  },
+  "sqlite_file": {
+    "engine": "sqlite",
+    "filePath": "C:/data/app.db"
+  },
+  "sqlserver": {
+    "engine": "sqlserver",
+    "host": "localhost",
+    "port": 1433,
+    "database": "SalesDB",
+    "user": "sa",
+    "password": "YourStrongPassword123!",
+    "ssl": true
+  },
+  "oracle": {
+    "engine": "oracle",
+    "host": "localhost",
+    "port": 1521,
+    "database": "FREEPDB1",
+    "user": "scott",
+    "password": "tiger"
+  },
+  "postgres": {
+    "engine": "postgres",
+    "host": "localhost",
+    "port": 5432,
+    "database": "analytics_db",
+    "user": "postgres",
+    "password": "postgres_password",
+    "ssl": false
+  },
+  "postgres_uri": {
+    "engine": "postgres",
+    "connectionString": "postgresql://postgres:password@localhost:5432/analytics_db?sslmode=disable"
+  },
+  "mongodb": {
+    "engine": "mongodb",
+    "connectionString": "mongodb://localhost:27017/shop",
+    "database": "shop"
+  },
+  "msaccess": {
+    "engine": "msaccess",
+    "filePath": "C:/legacy_apps/inventory.accdb"
+  },
+  "mysql": {
+    "engine": "mysql",
+    "host": "localhost",
+    "port": 3306,
+    "database": "app_db",
+    "user": "root",
+    "password": "root_password"
+  }
+}
