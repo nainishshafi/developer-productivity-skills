@@ -8,6 +8,7 @@ import {
   TableMetadata,
 } from '../types.js';
 import { auditSqlQuery } from '../guardrails/sql-guardrail.js';
+import { withTimeout } from '../utils.js';
 
 export class SqlServerAdapter implements DatabaseAdapter {
   readonly engine = 'sqlserver' as const;
@@ -96,11 +97,12 @@ export class SqlServerAdapter implements DatabaseAdapter {
 
     const startTime = performance.now();
     const maxRows = options.maxRows || 500;
+    const timeoutMs = options.timeoutMs || 15000;
 
     try {
       const { Request } = await import('tedious' as any);
 
-      return await new Promise<QueryResult>((resolve) => {
+      const queryPromise = new Promise<QueryResult>((resolve) => {
         const rows: Record<string, unknown>[] = [];
         let rowCount = 0;
 
@@ -156,6 +158,8 @@ export class SqlServerAdapter implements DatabaseAdapter {
 
         this.connection.execSql(request);
       });
+
+      return await withTimeout(queryPromise, timeoutMs, 'SQL Server query');
     } catch (err: unknown) {
       const executionTimeMs = Math.round(performance.now() - startTime);
       return {

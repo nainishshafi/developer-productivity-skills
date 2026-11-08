@@ -128,8 +128,8 @@ export function auditSqlStatement(
     }
   }
 
-  // 5. Strict Check: Unbounded UPDATE
-  if (/^UPDATE\b/i.test(clean)) {
+  // 5. Strict Check: Unbounded UPDATE (both standalone and inside CTEs)
+  if (/\bUPDATE\s+([a-zA-Z0-9_."`]+)\s+SET\b/i.test(clean) || /^UPDATE\b/i.test(clean)) {
     if (!/\bWHERE\b/i.test(clean)) {
       violations.push(`CRITICAL: Unbounded 'UPDATE' without WHERE clause is strictly blocked.`);
     } else {
@@ -143,10 +143,20 @@ export function auditSqlStatement(
   }
 
   // 6. Check for Read-Only mode violations
-  const isReadOnly = ['SELECT', 'WITH', 'EXPLAIN', 'SHOW', 'DESCRIBE', 'DESC', 'PRAGMA'].includes(firstWord);
+  let isReadOnly = ['SELECT', 'WITH', 'EXPLAIN', 'SHOW', 'DESCRIBE', 'DESC', 'PRAGMA'].includes(firstWord);
+
+  // If firstWord is WITH, check if it contains mutation CTEs (INSERT, UPDATE, DELETE, MERGE, DROP, TRUNCATE, ALTER)
+  if (firstWord === 'WITH') {
+    if (/\b(INSERT\s+INTO|UPDATE\s+|DELETE\s+FROM|DELETE\s+|MERGE\s+INTO|DROP\s+|TRUNCATE\s+|ALTER\s+TABLE)\b/i.test(clean)) {
+      isReadOnly = false;
+      if (mode === 'read-only') {
+        violations.push(`POLICY: Mutation operation detected inside CTE ('WITH ... DELETE/UPDATE/INSERT') is not permitted in 'read-only' mode. Set mode to 'guarded-write' to execute verified writes.`);
+      }
+    }
+  }
 
   if (mode === 'read-only') {
-    if (!isReadOnly) {
+    if (!isReadOnly && firstWord !== 'WITH') {
       violations.push(`POLICY: Mutation operation '${firstWord}' is not permitted in 'read-only' mode. Set mode to 'guarded-write' to execute verified writes.`);
     }
 

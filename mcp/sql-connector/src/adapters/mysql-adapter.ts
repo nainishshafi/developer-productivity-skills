@@ -8,6 +8,7 @@ import {
   TableMetadata,
 } from '../types.js';
 import { auditSqlQuery } from '../guardrails/sql-guardrail.js';
+import { withTimeout } from '../utils.js';
 
 export class MySqlAdapter implements DatabaseAdapter {
   readonly engine = 'mysql' as const;
@@ -74,9 +75,14 @@ export class MySqlAdapter implements DatabaseAdapter {
 
     const startTime = performance.now();
     const maxRows = options.maxRows || 500;
+    const timeoutMs = options.timeoutMs || 15000;
 
     try {
-      const [results, fields] = await this.connection.execute(audit.normalizedQuery, options.parameters || []);
+      const [results, fields] = await withTimeout<[any, any]>(
+        this.connection.execute(audit.normalizedQuery, options.parameters || []),
+        timeoutMs,
+        'MySQL query'
+      );
       const executionTimeMs = Math.round(performance.now() - startTime);
 
       if (audit.isReadOnly) {

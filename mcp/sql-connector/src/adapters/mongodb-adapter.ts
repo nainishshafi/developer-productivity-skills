@@ -8,6 +8,7 @@ import {
   TableMetadata,
 } from '../types.js';
 import { auditMongoQuery } from '../guardrails/mongo-guardrail.js';
+import { withTimeout } from '../utils.js';
 
 export class MongoAdapter implements DatabaseAdapter {
   readonly engine = 'mongodb' as const;
@@ -70,6 +71,7 @@ export class MongoAdapter implements DatabaseAdapter {
 
     const startTime = performance.now();
     const maxRows = options.maxRows || 500;
+    const timeoutMs = options.timeoutMs || 15000;
 
     try {
       let payload: any;
@@ -90,8 +92,8 @@ export class MongoAdapter implements DatabaseAdapter {
       const op = (payload.operation || 'find').toLowerCase();
 
       if (op === 'find') {
-        const cursor = coll.find(payload.filter || {}).limit(maxRows);
-        const rows = await cursor.toArray();
+        const cursor = coll.find(payload.filter || {}).limit(maxRows).maxTimeMS(timeoutMs);
+        const rows = await withTimeout<any[]>(cursor.toArray(), timeoutMs, 'MongoDB find');
         const executionTimeMs = Math.round(performance.now() - startTime);
 
         return {
@@ -105,8 +107,8 @@ export class MongoAdapter implements DatabaseAdapter {
           truncated: rows.length >= maxRows,
         };
       } else if (op === 'aggregate') {
-        const cursor = coll.aggregate(payload.pipeline || []).limit(maxRows);
-        const rows = await cursor.toArray();
+        const cursor = coll.aggregate(payload.pipeline || []).maxTimeMS(timeoutMs);
+        const rows = await withTimeout<any[]>(cursor.toArray(), timeoutMs, 'MongoDB aggregate');
         const executionTimeMs = Math.round(performance.now() - startTime);
 
         return {

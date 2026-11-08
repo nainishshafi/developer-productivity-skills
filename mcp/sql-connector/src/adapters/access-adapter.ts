@@ -55,21 +55,25 @@ export class AccessAdapter implements DatabaseAdapter {
     // On Windows, use ADODB PowerShell automation bridge if node-adodb or ODBC is not installed
     if (process.platform === 'win32') {
       try {
+        // Securely pass query and dbPath via Base64 parameters to prevent command injection
+        const encPath = Buffer.from(dbPath, 'utf8').toString('base64');
+        const encQuery = Buffer.from(audit.normalizedQuery, 'utf8').toString('base64');
+
         const psScript = `
-          $connStr = "Provider=Microsoft.ACE.OLEDB.16.0;Data Source='${dbPath}';Persist Security Info=False;"
+          param([string]$encPath, [string]$encQuery, [int]$max)
+          $dbPath = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($encPath))
+          $query = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($encQuery))
+          $conn = New-Object -ComObject ADODB.Connection
           try {
-            $conn = New-Object -ComObject ADODB.Connection
-            $conn.Open($connStr)
+            $conn.Open("Provider=Microsoft.ACE.OLEDB.16.0;Data Source=\`"$dbPath\`";Persist Security Info=False;")
           } catch {
-            $connStr = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source='${dbPath}';Persist Security Info=False;"
-            $conn = New-Object -ComObject ADODB.Connection
-            $conn.Open($connStr)
+            $conn.Open("Provider=Microsoft.ACE.OLEDB.12.0;Data Source=\`"$dbPath\`";Persist Security Info=False;")
           }
           $rs = New-Object -ComObject ADODB.Recordset
-          $rs.Open("${audit.normalizedQuery.replace(/"/g, '`"')}", $conn)
+          $rs.Open($query, $conn)
           $results = @()
           $count = 0
-          while (-not $rs.EOF -and $count -lt ${maxRows}) {
+          while (-not $rs.EOF -and $count -lt $max) {
             $row = @{}
             for ($i = 0; $i -lt $rs.Fields.Count; $i++) {
               $field = $rs.Fields.Item($i)
@@ -84,9 +88,23 @@ export class AccessAdapter implements DatabaseAdapter {
           $results | ConvertTo-Json -Depth 5 -Compress
         `;
 
-        const { stdout, stderr } = await execFileAsync('powershell', ['-NoProfile', '-Command', psScript], {
-          timeout: options.timeoutMs || 15000,
-        });
+        const { stdout, stderr } = await execFileAsync(
+          'powershell',
+          [
+            '-NoProfile',
+            '-NonInteractive',
+            '-ExecutionPolicy',
+            'Bypass',
+            '-Command',
+            `& { ${psScript} }`,
+            encPath,
+            encQuery,
+            String(maxRows),
+          ],
+          {
+            timeout: options.timeoutMs || 15000,
+          }
+        );
 
         const executionTimeMs = Math.round(performance.now() - startTime);
 
@@ -162,9 +180,10 @@ export class AccessAdapter implements DatabaseAdapter {
   }
 
   async describeTable(tableName: string): Promise<TableColumnMetadata[]> {
-    // Inspection query
+    // Inspection query with sanitized table name
+    const sanitized = tableName.replace(/[^a-zA-Z0-9_]/g, '');
     const res = await this.query({
-      query: `SELECT TOP 1 * FROM [${tableName.replace(/[^a-zA-Z0-9_]/g, '')}]`,
+      query: `SELECT TOP 1 * FROM [${sanitized}]`,
       mode: 'read-only',
     });
 

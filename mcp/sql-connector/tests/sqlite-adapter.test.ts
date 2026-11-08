@@ -119,3 +119,51 @@ describe('SQLite Adapter & Guardrails Integration', () => {
     assert(explainRes.rawText?.length! > 0);
   });
 });
+
+describe('AdapterFactory Connection Pool & LRU Eviction', () => {
+  test('should reuse connected adapter for identical connection config', async () => {
+    const { AdapterFactory } = await import('../dist/adapters/adapter-factory.js');
+    const config1 = { engine: 'sqlite' as const, filePath: ':memory:' };
+    const a1 = await AdapterFactory.getAdapter(config1);
+    const a2 = await AdapterFactory.getAdapter(config1);
+
+    assert.equal(a1, a2);
+    await AdapterFactory.closeAll();
+    assert.equal(AdapterFactory.getPoolSize(), 0);
+  });
+
+  test('should track pool size and allow idle eviction', async () => {
+    const { AdapterFactory } = await import('../dist/adapters/adapter-factory.js');
+    await AdapterFactory.closeAll();
+
+    const config = { engine: 'sqlite' as const, filePath: ':memory:' };
+    await AdapterFactory.getAdapter(config);
+    assert.equal(AdapterFactory.getPoolSize(), 1);
+
+    // Evict with 0ms max idle
+    const evicted = await AdapterFactory.evictIdle(0);
+    assert.equal(evicted, 1);
+    assert.equal(AdapterFactory.getPoolSize(), 0);
+  });
+});
+
+describe('Timeout Utility Boundary', () => {
+  test('should reject when operation exceeds timeout boundary', async () => {
+    const { withTimeout } = await import('../dist/utils.js');
+    const hangingPromise = new Promise((resolve) => setTimeout(resolve, 500));
+
+    await assert.rejects(
+      async () => {
+        await withTimeout(hangingPromise, 50, 'Test operation');
+      },
+      /Test operation timed out after 50ms/
+    );
+  });
+
+  test('should resolve cleanly within timeout boundary', async () => {
+    const { withTimeout } = await import('../dist/utils.js');
+    const fastPromise = Promise.resolve('ok');
+    const res = await withTimeout(fastPromise, 500);
+    assert.equal(res, 'ok');
+  });
+});

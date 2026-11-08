@@ -204,4 +204,43 @@ describe('SQL Connector Guardrail Engine', () => {
       assert.equal(auditUpdate.allowed, true);
     });
   });
+
+  describe('CTE Mutation & Advanced Dialect Defense', () => {
+    test('should reject mutation CTEs in read-only mode', () => {
+      const cteDelete = 'WITH d AS (DELETE FROM users WHERE id = 1 RETURNING id) SELECT * FROM d;';
+      const auditDelete = auditSqlQuery(cteDelete, 'read-only');
+      assert.equal(auditDelete.allowed, false);
+      assert.equal(auditDelete.isReadOnly, false);
+      assert(auditDelete.violations.some((v) => v.includes('inside CTE')));
+
+      const cteUpdate = 'WITH u AS (UPDATE accounts SET balance = 0 WHERE id = 5) SELECT * FROM u;';
+      const auditUpdate = auditSqlQuery(cteUpdate, 'read-only');
+      assert.equal(auditUpdate.allowed, false);
+      assert.equal(auditUpdate.isReadOnly, false);
+
+      const cteInsert = 'WITH i AS (INSERT INTO logs (msg) VALUES (\'test\')) SELECT * FROM i;';
+      const auditInsert = auditSqlQuery(cteInsert, 'read-only');
+      assert.equal(auditInsert.allowed, false);
+      assert.equal(auditInsert.isReadOnly, false);
+    });
+
+    test('should strictly block unbounded mutations inside CTEs even in guarded-write mode', () => {
+      const cteUnboundedDelete = 'WITH d AS (DELETE FROM users) SELECT * FROM d;';
+      const auditDelete = auditSqlQuery(cteUnboundedDelete, 'guarded-write');
+      assert.equal(auditDelete.allowed, false);
+      assert.equal(auditDelete.riskLevel, 'CRITICAL_BLOCKED');
+
+      const cteUnboundedUpdate = 'WITH u AS (UPDATE users SET active = 0) SELECT * FROM u;';
+      const auditUpdate = auditSqlQuery(cteUnboundedUpdate, 'guarded-write');
+      assert.equal(auditUpdate.allowed, false);
+      assert.equal(auditUpdate.riskLevel, 'CRITICAL_BLOCKED');
+    });
+
+    test('should allow pure read-only CTEs in read-only mode', () => {
+      const cteSelect = 'WITH active_users AS (SELECT * FROM users WHERE active = true) SELECT count(*) FROM active_users;';
+      const audit = auditSqlQuery(cteSelect, 'read-only');
+      assert.equal(audit.allowed, true);
+      assert.equal(audit.isReadOnly, true);
+    });
+  });
 });

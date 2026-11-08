@@ -8,6 +8,7 @@ import {
   TableMetadata,
 } from '../types.js';
 import { auditSqlQuery } from '../guardrails/sql-guardrail.js';
+import { withTimeout } from '../utils.js';
 
 export class PostgresAdapter implements DatabaseAdapter {
   readonly engine = 'postgres' as const;
@@ -79,9 +80,14 @@ export class PostgresAdapter implements DatabaseAdapter {
 
     const startTime = performance.now();
     const maxRows = options.maxRows || 500;
+    const timeoutMs = options.timeoutMs || 15000;
 
     try {
-      const res = await this.client.query(audit.normalizedQuery, options.parameters || []);
+      const res = await withTimeout<any>(
+        this.client.query(audit.normalizedQuery, options.parameters || []),
+        timeoutMs,
+        'PostgreSQL query'
+      );
       const executionTimeMs = Math.round(performance.now() - startTime);
 
       if (audit.isReadOnly) {

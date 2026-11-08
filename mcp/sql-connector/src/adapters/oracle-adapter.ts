@@ -8,6 +8,7 @@ import {
   TableMetadata,
 } from '../types.js';
 import { auditSqlQuery } from '../guardrails/sql-guardrail.js';
+import { withTimeout } from '../utils.js';
 
 export class OracleAdapter implements DatabaseAdapter {
   readonly engine = 'oracle' as const;
@@ -75,13 +76,18 @@ export class OracleAdapter implements DatabaseAdapter {
 
     const startTime = performance.now();
     const maxRows = options.maxRows || 500;
+    const timeoutMs = options.timeoutMs || 15000;
 
     try {
       const oracledb = await import('oracledb' as any);
-      const res = await this.connection.execute(audit.normalizedQuery, options.parameters || [], {
-        outFormat: oracledb.OUT_FORMAT_OBJECT,
-        maxRows,
-      });
+      const res = await withTimeout<any>(
+        this.connection.execute(audit.normalizedQuery, options.parameters || [], {
+          outFormat: oracledb.OUT_FORMAT_OBJECT,
+          maxRows,
+        }),
+        timeoutMs,
+        'Oracle query'
+      );
 
       const executionTimeMs = Math.round(performance.now() - startTime);
 
