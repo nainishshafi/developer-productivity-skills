@@ -287,3 +287,4 @@ FROM CumulativeMetrics
 WHERE (running_revenue / total_company_revenue) <= 0.80
 ORDER BY revenue DESC;
 ```
+
