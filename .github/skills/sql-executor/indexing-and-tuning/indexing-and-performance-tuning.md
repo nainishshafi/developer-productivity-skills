@@ -85,3 +85,11 @@ Use `explain_query` via MCP to inspect the execution strategy. Watch for these r
 - **SQLite**: `EXPLAIN QUERY PLAN <query>`
 - **MySQL**: `EXPLAIN FORMAT=JSON <query>`
 - **MongoDB**: Append `.explain("executionStats")` to aggregation/find
+
+---
+
+## 4. Specialized Index Architecture Deep Dive
+
+For advanced index types (PostgreSQL GIN for JSONB and `pg_trgm` wildcard search, GiST exclusion constraints, and BRIN time-series indexing), consult:
+- **[PostgreSQL Specialized Indexing Guide](file:///.github/skills/sql-executor/indexing-and-tuning/postgres-specialized-indexes.md)**
+

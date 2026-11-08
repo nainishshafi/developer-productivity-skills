@@ -90,3 +90,4 @@ Never generate SQL queries based on assumed table or column names.
   }
 }
 ```
+

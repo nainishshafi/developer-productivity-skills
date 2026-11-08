@@ -99,3 +99,4 @@ npm install mysql2       # For MySQL / MariaDB
 npm run build
 ```
 *(SQLite is built directly into Node.js 22 and requires no external packages).*
+
