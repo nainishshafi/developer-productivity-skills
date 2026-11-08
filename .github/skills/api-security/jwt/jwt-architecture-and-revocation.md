@@ -117,3 +117,4 @@ When a user logs out, resets their password, or is banned, how do you revoke act
 - **Vulnerability**: Storing credit cards, passwords, or PII in JWT payloads.
 - **Fact**: Standard JWT payloads are **NOT encrypted**; they are merely base64url encoded and can be decoded by anyone with access to the token.
 - **Defense**: Store only non-sensitive identifiers (`sub`, `roles`, `tenant_id`) in claims. If sensitive data must be transmitted, use **JWE (JSON Web Encryption)**.
+

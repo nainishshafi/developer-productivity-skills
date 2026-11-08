@@ -93,3 +93,4 @@ flowchart TD
 - Store session data in a **Redis Cluster** using `SETEX session:<id> 86400 <json_data>`.
 - Sliders: Extend session TTL on each active user request to implement inactivity timeouts.
 - Eviction policy for session Redis: Configure `maxmemory-policy noeviction` to ensure active sessions are never silently dropped under memory pressure.
+

@@ -126,3 +126,4 @@ sequenceDiagram
 1. **Zero Credential Exfiltration**: There are no API keys, tokens, or passwords to leak in HTTP headers or application logs.
 2. **Transport-Layer Identity**: Identity is cryptographically established before application code (HTTP route handlers) executes.
 3. **Defense Against MITM**: Even if DNS is spoofed, connection fails because certificates do not match the internal CA root.
+

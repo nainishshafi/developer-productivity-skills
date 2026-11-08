@@ -105,3 +105,4 @@ Instead of hardcoding RSA public keys into microservices, Resource Servers fetch
 3. If not found in cache, fetch the latest JWKS from the IdP (with rate limiting / cooldown to prevent DoS).
 4. Verify signature using the matching public key certificate.
 5. Validate standard claims: `exp` (not expired), `nbf`, `iss` (matches expected IdP), and `aud` (matches your API).
+
