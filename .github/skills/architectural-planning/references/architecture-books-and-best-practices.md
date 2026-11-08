@@ -158,3 +158,4 @@ A curated compendium of seminal architectural literature, decision frameworks, a
 | **Step 9 (CI/CD)** | Neal Ford et al. (*Evolutionary Architecture*) | Architectural fitness functions & automated delivery verification gates |
 | **Step 10 (Observability)** | Charity Majors et al. (*Observability Engineering*) | OpenTelemetry standard, wide events, and distributed tracing |
 | **Step 11 (Documentation)** | Michael Nygard (*ADRs*), Richards & Ford (*Architecture Hard Parts*) | Trade-off articulation, Mermaid diagrams, and version-controlled ADRs |
+
