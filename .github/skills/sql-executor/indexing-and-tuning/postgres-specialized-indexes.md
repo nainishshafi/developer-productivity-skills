@@ -146,3 +146,4 @@ Standard `REINDEX` acquires an exclusive lock blocking all read and write traffi
 ```sql
 REINDEX INDEX CONCURRENTLY idx_users_metadata_gin;
 ```
+
