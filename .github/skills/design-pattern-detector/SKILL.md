@@ -4,14 +4,14 @@ description: Use when the user asks to "detect design patterns", "find patterns 
   this file", "analyze code for patterns", "check for anti-patterns", "pattern analysis",
   "is this a singleton", "detect god object", "find factory pattern", "detect facade",
   "check for god file", "check for strategy pattern", "scan for design patterns", "what patterns does this code use",
-  "find anti-patterns", "pattern audit", or wants to identify design patterns and
+  "find anti-patterns", "pattern audit", "detect dependency injection", or wants to identify design patterns and
   anti-patterns in a source file or across the entire repository.
-version: 1.2.0
+version: 1.3.0
 ---
 
 # Design Pattern Detector
 
-Analyze source files to detect common design patterns (Singleton, Factory, Observer, Strategy, Builder, Decorator, Repository, Command, Template Method, Facade) and anti-patterns (God Object / God File, Long Method, Feature Envy). Uses deterministic structural extraction for signal detection combined with contextual source analysis. Language-agnostic with specialized support for Python (AST), Java, JS/TS, Go, and C# (structural regex).
+Analyze source files to detect common design patterns (Singleton, Factory, Observer, Strategy, Builder, Decorator, Repository, Command, Template Method, Facade, Dependency Injection) and anti-patterns (God Object / God File, Long Method, Feature Envy). Uses deterministic structural extraction for signal detection combined with contextual source analysis. Language-agnostic with specialized support for Python (AST), Java, JS/TS, Go, and C# (structural regex).
 
 **Extraction approach:** `scripts/extract-patterns.py` deterministically extracts class structure, method signatures, fields, metrics, and 13 boolean structural signals (ground truth), then the agent (or a delegated subagent for repo-wide batch scans) reads the source for business context and classifies patterns with confidence scores.
 
@@ -218,6 +218,12 @@ You are a design pattern analyzer. Your task is to identify design patterns and 
 - HIGH: class composes 3+ distinct subsystem fields/dependencies and exposes simplified orchestration methods without heavy domain state
 - MEDIUM: class coordinates 2+ subsystems or is named `*Facade` with delegating methods
 - LOW: thin wrapper around multiple helper modules
+
+### Dependency Injection (Inversion of Control)
+- Signals: `has_delegation_pattern` + constructor parameters match member fields
+- HIGH: constructor takes 2+ interface/protocol parameters stored in private/readonly fields; no internal `new` instantiations
+- MEDIUM: constructor takes a single interface dependency
+- LOW: setter/method injection without immutability
 
 ## Anti-Pattern Definitions
 

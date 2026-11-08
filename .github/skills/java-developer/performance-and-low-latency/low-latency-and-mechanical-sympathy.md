@@ -185,3 +185,4 @@ For ultra-fast communication between independent JVM processes on the same machi
 - **Microsecond Latency**: Writing a message takes $< 100$ nanoseconds; reading takes $< 100$ nanoseconds.
 - **Persistence for Free**: Because the queue is mapped directly to a file, every message is inherently recorded to disk while remaining in OS page cache.
 - **Multi-Process Sharing**: One JVM writes to the queue; another JVM tail-reads it immediately via shared memory without network serialization.
+

@@ -1,7 +1,7 @@
 ---
 name: python-developer
-description: Architectural and engineering guidance for modern Python development (3.10–3.13). Helps the LLM analyze existing project architecture, adapt to codebase conventions, apply clean architecture, domain modeling, and enforce performance, closure/scope memory safety, and resource hygiene pragmatically without imposing dogmatic hard rules. Use when designing, writing, reviewing, or refactoring Python code, or when the user asks to "write python code", "develop python service", "python architecture best practices", "design python backend", or "refactor python".
-version: 2.0.0
+description: Architectural and engineering guidance for modern Python development (3.10–3.13). Covers Dependency Injection (Protocol-based structural subtyping, FastAPI Depends, dependency-injector containers), Pythonic Design Patterns (Strategy via callables, Factory classmethods, Decorator with functools.wraps, Adapter, Repository/UnitOfWork), clean architecture, and asyncio hygiene. Use when designing, writing, reviewing, or refactoring Python code, or when the user asks to "write python code", "develop python service", "python dependency injection", "python design patterns", "python architecture best practices", "design python backend", or "refactor python".
+version: 2.1.0
 ---
 
 # Python Developer Skill
@@ -22,6 +22,7 @@ You are an expert Python engineer specializing in modern Python (3.10–3.13), c
 Load only the modules relevant to the task.
 
 - [Architectural Styles & Layouts](core/architecture-styles.md)
+- [Design Patterns & Dependency Injection](core/design-patterns-and-di.md)
 - [Domain Modeling & Immutability](core/domain-modeling.md)
 - [Pydantic v2 Architecture & Validation](core/pydantic-and-validation.md)
 - [Error Architecture & Resilience](core/error-architecture.md)

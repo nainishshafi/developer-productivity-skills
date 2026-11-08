@@ -148,3 +148,68 @@ builder.Services.AddHttpClient<IPaymentGateway, StripePaymentGateway>((sp, clien
 });
 ```
 
+---
+
+## 5. Modern C# Design Patterns
+
+### 5.1 Keyed Services (.NET 8+) for Strategy / Factory Pattern
+In .NET 8+, register multiple implementations under distinct keys without third-party containers:
+
+```csharp
+// Program.cs
+builder.Services.AddKeyedScoped<IPaymentStrategy, CreditCardStrategy>("credit_card");
+builder.Services.AddKeyedScoped<IPaymentStrategy, PayPalStrategy>("paypal");
+
+// Consumer resolving strategy dynamically
+public class CheckoutService(
+    [FromKeyedServices("paypal")] IPaymentStrategy defaultPayment,
+    IServiceProvider serviceProvider)
+{
+    public async Task ProcessAsync(string paymentMethod, decimal amount, CancellationToken ct)
+    {
+        var strategy = serviceProvider.GetKeyedService<IPaymentStrategy>(paymentMethod) ?? defaultPayment;
+        await strategy.PayAsync(amount, ct);
+    }
+}
+```
+
+### 5.2 Decorator Pattern with Dependency Injection
+Decorate existing services (adding caching, telemetry, or retries) without modifying the original implementation:
+
+```csharp
+// Decorator adding caching around repository
+public class CachedOrderRepository(
+    IOrderRepository inner,
+    IMemoryCache cache) : IOrderRepository
+{
+    public async Task<Order?> GetByIdAsync(Guid id, CancellationToken ct)
+    {
+        return await cache.GetOrCreateAsync($"order:{id}", async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+            return await inner.GetByIdAsync(id, ct);
+        });
+    }
+}
+
+// Registration using Scrutor or manual factory:
+builder.Services.AddScoped<IOrderRepository, SqlOrderRepository>();
+builder.Services.Decorate<IOrderRepository, CachedOrderRepository>();
+```
+
+### 5.3 Observer Pattern via Domain Events & MediatR
+Decouple side effects (notifications, cache invalidations) from core domain mutations:
+
+```csharp
+public record OrderCreatedEvent(Guid OrderId, decimal Amount) : INotification;
+
+public class SendConfirmationEmailHandler(IEmailSender emailSender) : INotificationHandler<OrderCreatedEvent>
+{
+    public async Task Handle(OrderCreatedEvent notification, CancellationToken ct)
+    {
+        await emailSender.SendAsync(notification.OrderId, ct);
+    }
+}
+```
+
+

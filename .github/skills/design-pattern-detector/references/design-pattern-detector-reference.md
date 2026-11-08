@@ -212,6 +212,32 @@ Reference guide for the `design-pattern-detector` skill — pattern catalog, det
 
 ---
 
+### 11. Dependency Injection (Inversion of Control)
+
+**Intent:** Decouple components by passing dependencies into a class/function (typically via constructor) rather than letting the class instantiate them directly (`new Component()`).
+
+**Structural signals:**
+- `has_delegation_pattern` — constructor parameters match internal fields/properties
+- Constructor takes interface/protocol types; absence of internal `new ConcreteDependency()` instantiation
+- Framework annotations: `@Inject`, `@Autowired`, `@Component`, `@Service` (Java/TS), `[FromKeyedServices]` (C#), `Depends()` (Python)
+
+**Confidence scoring:**
+- **HIGH:** Constructor receives 2+ interface/protocol parameters and assigns them to private/final fields; zero direct concrete instantiations
+- **MEDIUM:** Single interface dependency injected via constructor or factory function
+- **LOW:** Setter or property injection without immutability
+
+**Per-language idioms:**
+
+| Language | Constructor Style | Injection Mechanism | Annotation / Convention |
+| :--- | :--- | :--- | :--- |
+| **Java** | `public Service(Repo repo)` | Spring IoC, Jakarta CDI | `@Service`, `@RequiredArgsConstructor` |
+| **C#** | `public class Service(IRepo repo)` | `Microsoft.Extensions.DI` | Primary constructor, `[FromServices]` |
+| **TS/JS** | `constructor(private repo: IRepo)` | NestJS, TSyringe, Pure DI | `@Injectable()`, Composition Root |
+| **Python** | `def __init__(self, repo: Protocol)` | FastAPI `Depends`, Pure DI | Structural Subtyping (`typing.Protocol`) |
+| **Go** | `func NewService(repo Repo) *Service` | Pure DI, Google Wire | Constructor function passing interface |
+
+---
+
 ## Anti-Pattern Catalog
 
 ### 1. God Object / God File

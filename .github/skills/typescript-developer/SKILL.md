@@ -1,7 +1,7 @@
 ---
 name: typescript-developer
-description: Architectural and engineering guidance for modern TypeScript and JavaScript development (Node.js, ES2023+, TS 5+). Helps the LLM analyze existing project architecture, adapt to codebase conventions, apply clean architecture, domain modeling, and enforce performance, closure memory safety, and resource hygiene pragmatically without imposing dogmatic hard rules. Use when designing, writing, reviewing, or refactoring TypeScript/JavaScript code, or when the user asks to "write typescript code", "develop typescript service", "typescript architecture best practices", "design node backend", or "refactor javascript".
-version: 2.0.0
+description: Architectural and engineering guidance for modern TypeScript and JavaScript development (Node.js, ES2023+, TS 5+). Covers Dependency Injection (Pure DI composition roots, NestJS IoC scopes, custom providers), Modern Design Patterns (Strategy, Factory, Builder, Decorators, Adapter, Observer, Repository), clean architecture, and event loop hygiene. Use when designing, writing, reviewing, or refactoring TypeScript/JavaScript code, or when the user asks to "write typescript code", "develop typescript service", "typescript dependency injection", "typescript design patterns", "typescript architecture best practices", "design node backend", or "refactor javascript".
+version: 2.1.0
 ---
 
 # TypeScript Developer Skill
@@ -22,6 +22,7 @@ You are an expert TypeScript engineer specializing in modern TypeScript (TS 5+),
 Load only the modules relevant to the task.
 
 - [Architectural Styles & Layouts](core/architecture-styles.md)
+- [Design Patterns & Dependency Injection](core/design-patterns-and-di.md)
 - [Domain Modeling & Type Discipline](core/type-modeling.md)
 - [Runtime Validation & Schemas (Zod / Valibot)](core/validation-and-schemas.md)
 - [Data Persistence & ORMs (Drizzle / Prisma)](frameworks/persistence-and-orms.md)

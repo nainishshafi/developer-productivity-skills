@@ -163,3 +163,4 @@ java -XX:AOTMode=create -XX:AOTConfiguration=app.aotconf -XX:AOTCache=app.aot -j
 # Phase 3: Run with instant startup (< 200ms) and pre-compiled bytecode
 java -XX:AOTCache=app.aot -jar app.jar
 ```
+

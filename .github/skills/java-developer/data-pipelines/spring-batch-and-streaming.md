@@ -217,3 +217,4 @@ Selecting the wrong reader causes transaction timeouts or duplicate processing.
 3. **Partitioning for Horizontal Scaling**:
    - Split a monolithic step into $N$ parallel steps using Spring Batch `PartitionHandler`:
    - Example: Partition by range (`WHERE id BETWEEN 1 AND 1000000`, `WHERE id BETWEEN 1000001 AND 2000000`) across separate worker threads or remote worker nodes.
+
