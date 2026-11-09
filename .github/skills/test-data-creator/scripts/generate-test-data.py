@@ -24,32 +24,32 @@ import os
 import random
 import sys
 import uuid
+from pathlib import Path
 from typing import Any, Callable, Dict, Generator, List, Optional, Tuple
 
-FIRST_NAMES = [
-    "James", "Mary", "Robert", "Patricia", "John", "Jennifer", "Michael", "Linda",
-    "David", "Elizabeth", "William", "Barbara", "Richard", "Susan", "Joseph", "Jessica",
-    "Thomas", "Sarah", "Charles", "Karen", "Christopher", "Nancy", "Daniel", "Lisa",
-    "Matthew", "Betty", "Anthony", "Margaret", "Mark", "Sandra", "Donald", "Ashley",
-    "Steven", "Kimberly", "Paul", "Emily", "Andrew", "Donna", "Joshua", "Michelle",
-]
+SAMPLES_DEFAULT_FILE = Path(__file__).parent / "samples.json"
 
-LAST_NAMES = [
-    "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
-    "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson",
-    "Thomas", "Taylor", "Moore", "Jackson", "Martin", "Lee", "Perez", "Thompson",
-    "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson", "Walker",
-]
 
-DOMAINS = ["example.com", "testmail.org", "acme-corp.net", "enterprise.io", "sample-domain.com"]
+def load_samples(custom_path: Optional[str] = None) -> Dict[str, List[str]]:
+    """Load vocabulary samples from external JSON file with resilient fallbacks."""
+    target_file = Path(custom_path) if custom_path else SAMPLES_DEFAULT_FILE
+    if target_file.exists():
+        try:
+            with open(target_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"[!] Warning: Failed to load samples from '{target_file}': {e}", file=sys.stderr)
 
-COUNTRIES = ["US", "GB", "CA", "DE", "FR", "JP", "AU", "SG", "IN", "BR", "NL", "SE"]
-
-ORDER_STATUSES = ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELED", "REFUNDED"]
-PAYMENT_METHODS = ["CREDIT_CARD", "DEBIT_CARD", "PAYPAL", "APPLE_PAY", "WIRE_TRANSFER", "CRYPTO"]
-CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "JPY"]
-
-DEVICE_NAMES = ["sensor_alpha", "sensor_beta", "temp_probe_01", "gateway_hub", "pressure_valve_3", "voltage_meter"]
+    return {
+        "first_names": ["James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda"],
+        "last_names": ["Smith", "Johnson", "Williams", "Brown", "Jones", "Miller", "Davis", "Wilson"],
+        "domains": ["example.com", "testmail.org", "acme-corp.net"],
+        "countries": ["US", "GB", "CA", "DE", "FR", "JP"],
+        "order_statuses": ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELED"],
+        "payment_methods": ["CREDIT_CARD", "DEBIT_CARD", "PAYPAL", "WIRE_TRANSFER"],
+        "currencies": ["USD", "EUR", "GBP", "JPY"],
+        "device_names": ["sensor_alpha", "sensor_beta", "temp_probe_01", "gateway_hub"],
+    }
 
 
 def get_skewed_int(max_val: int, skew: str, rng: random.Random) -> int:
@@ -73,14 +73,19 @@ def get_skewed_int(max_val: int, skew: str, rng: random.Random) -> int:
         return rng.randint(1, max_val)
 
 
-def generate_users(count: int, rng: random.Random, null_ratio: float = 0.0) -> Generator[Dict[str, Any], None, None]:
+def generate_users(count: int, rng: random.Random, samples: Dict[str, List[str]], null_ratio: float = 0.0) -> Generator[Dict[str, Any], None, None]:
     """Generate synthetic user account records."""
+    first_names = samples.get("first_names", ["James", "Mary", "John"])
+    last_names = samples.get("last_names", ["Smith", "Johnson", "Williams"])
+    domains = samples.get("domains", ["example.com", "testmail.org"])
+    countries = samples.get("countries", ["US", "GB", "CA", "DE"])
+
     base_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=730)
     for i in range(1, count + 1):
-        first = rng.choice(FIRST_NAMES)
-        last = rng.choice(LAST_NAMES)
+        first = rng.choice(first_names)
+        last = rng.choice(last_names)
         username = f"{first.lower()}.{last.lower()}_{i}"
-        domain = rng.choice(DOMAINS)
+        domain = rng.choice(domains)
         email = f"{username}@{domain}"
         created_delta = datetime.timedelta(
             days=rng.randint(0, 700),
@@ -102,14 +107,18 @@ def generate_users(count: int, rng: random.Random, null_ratio: float = 0.0) -> G
             "role": role,
             "status": status,
             "balance": balance,
-            "country": rng.choice(COUNTRIES),
+            "country": rng.choice(countries),
             "is_active": status == "ACTIVE",
             "created_at": created_at,
         }
 
 
-def generate_orders(count: int, rng: random.Random, skew: str = "uniform", max_user_id: int = 10000, null_ratio: float = 0.0) -> Generator[Dict[str, Any], None, None]:
+def generate_orders(count: int, rng: random.Random, samples: Dict[str, List[str]], skew: str = "uniform", max_user_id: int = 10000, null_ratio: float = 0.0) -> Generator[Dict[str, Any], None, None]:
     """Generate synthetic customer order records with relational foreign key distribution."""
+    order_statuses = samples.get("order_statuses", ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELED"])
+    currencies = samples.get("currencies", ["USD", "EUR", "GBP", "JPY"])
+    payment_methods = samples.get("payment_methods", ["CREDIT_CARD", "DEBIT_CARD", "PAYPAL", "WIRE_TRANSFER"])
+
     base_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=365)
     for i in range(1, count + 1):
         user_id = get_skewed_int(max_user_id, skew, rng)
@@ -118,7 +127,7 @@ def generate_orders(count: int, rng: random.Random, skew: str = "uniform", max_u
         created_at = (base_date + created_delta).isoformat()
         items_count = rng.randint(1, 12)
         total_amount = round(rng.uniform(5.0, 1200.0) * (items_count / 2.0), 2)
-        status = rng.choice(ORDER_STATUSES)
+        status = rng.choice(order_statuses)
         tracking_no = None if (status in ["PENDING", "CANCELED"] or (null_ratio > 0 and rng.random() < null_ratio)) else f"TRK{rng.randint(10000000, 99999999)}"
 
         yield {
@@ -126,8 +135,8 @@ def generate_orders(count: int, rng: random.Random, skew: str = "uniform", max_u
             "order_number": order_no,
             "customer_id": user_id,
             "total_amount": total_amount,
-            "currency": rng.choice(CURRENCIES),
-            "payment_method": rng.choice(PAYMENT_METHODS),
+            "currency": rng.choice(currencies),
+            "payment_method": rng.choice(payment_methods),
             "status": status,
             "items_count": items_count,
             "tracking_number": tracking_no,
@@ -135,11 +144,13 @@ def generate_orders(count: int, rng: random.Random, skew: str = "uniform", max_u
         }
 
 
-def generate_metrics(count: int, rng: random.Random) -> Generator[Dict[str, Any], None, None]:
+def generate_metrics(count: int, rng: random.Random, samples: Dict[str, List[str]]) -> Generator[Dict[str, Any], None, None]:
     """Generate high-frequency time-series / IoT sensor metric telemetry records."""
+    device_names = samples.get("device_names", ["sensor_alpha", "gateway_hub", "temp_probe_01"])
+
     base_time = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=24)
     for i in range(1, count + 1):
-        device = rng.choice(DEVICE_NAMES)
+        device = rng.choice(device_names)
         ts = (base_time + datetime.timedelta(milliseconds=i * 100)).isoformat()
         metric_type = rng.choice(["temperature_celsius", "pressure_psi", "cpu_load_percent", "memory_used_mb", "rpm"])
         if metric_type == "temperature_celsius":
@@ -188,8 +199,12 @@ def parse_custom_fields(fields_str: str) -> List[Tuple[str, str, Optional[List[s
     return parsed
 
 
-def generate_custom(fields: List[Tuple[str, str, Optional[List[str]]]], count: int, rng: random.Random) -> Generator[Dict[str, Any], None, None]:
+def generate_custom(fields: List[Tuple[str, str, Optional[List[str]]]], count: int, rng: random.Random, samples: Dict[str, List[str]]) -> Generator[Dict[str, Any], None, None]:
     """Generate arbitrary synthetic data matching custom fields."""
+    first_names = samples.get("first_names", ["James", "Mary", "John"])
+    last_names = samples.get("last_names", ["Smith", "Johnson", "Williams"])
+    domains = samples.get("domains", ["example.com", "testmail.org"])
+
     base_date = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=365)
     for i in range(1, count + 1):
         row: Dict[str, Any] = {}
@@ -201,10 +216,10 @@ def generate_custom(fields: List[Tuple[str, str, Optional[List[str]]]], count: i
             elif ftype in ["uuid", "guid"]:
                 row[fname] = str(uuid.UUID(int=rng.getrandbits(128), version=4))
             elif ftype in ["name", "full_name"]:
-                row[fname] = f"{rng.choice(FIRST_NAMES)} {rng.choice(LAST_NAMES)}"
+                row[fname] = f"{rng.choice(first_names)} {rng.choice(last_names)}"
             elif ftype in ["email"]:
-                user = f"{rng.choice(FIRST_NAMES).lower()}.{rng.choice(LAST_NAMES).lower()}_{i}"
-                row[fname] = f"{user}@{rng.choice(DOMAINS)}"
+                user = f"{rng.choice(first_names).lower()}.{rng.choice(last_names).lower()}_{i}"
+                row[fname] = f"{user}@{rng.choice(domains)}"
             elif ftype in ["date", "timestamp", "datetime"]:
                 dt = base_date + datetime.timedelta(days=rng.randint(0, 360), seconds=rng.randint(0, 86400))
                 row[fname] = dt.isoformat()
@@ -316,6 +331,7 @@ def main() -> None:
     parser.add_argument("--skew", choices=["uniform", "pareto", "normal"], default="uniform", help="Distribution skew for foreign keys (default: uniform)")
     parser.add_argument("--null-ratio", type=float, default=0.0, help="Fraction of nullable fields set to null (0.0 to 1.0)")
     parser.add_argument("--seed", type=int, default=42, help="Pseudo-random generator seed for reproducible datasets")
+    parser.add_argument("--samples-file", help="Path to custom JSON samples file (defaults to samples.json)")
     parser.add_argument("--output", help="Output file path (defaults to stdout)")
 
     args = parser.parse_args()
@@ -325,17 +341,18 @@ def main() -> None:
         sys.exit(1)
 
     rng = random.Random(args.seed)
+    samples = load_samples(args.samples_file)
 
     # Initialize generator stream
     if args.preset == "users":
-        stream = generate_users(args.count, rng, null_ratio=args.null_ratio)
+        stream = generate_users(args.count, rng, samples, null_ratio=args.null_ratio)
     elif args.preset == "orders":
-        stream = generate_orders(args.count, rng, skew=args.skew, null_ratio=args.null_ratio)
+        stream = generate_orders(args.count, rng, samples, skew=args.skew, null_ratio=args.null_ratio)
     elif args.preset == "metrics":
-        stream = generate_metrics(args.count, rng)
+        stream = generate_metrics(args.count, rng, samples)
     elif args.fields:
         parsed_fields = parse_custom_fields(args.fields)
-        stream = generate_custom(parsed_fields, args.count, rng)
+        stream = generate_custom(parsed_fields, args.count, rng, samples)
     else:
         sys.exit(1)
 
@@ -371,3 +388,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

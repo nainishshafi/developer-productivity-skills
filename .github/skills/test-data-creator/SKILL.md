@@ -174,6 +174,7 @@ Goal: Stream 20,000 sensor telemetry records in NDJSON format for Kafka load tes
 
 - [Test Data Creator Reference Guide](file:///.github/skills/test-data-creator/references/test-data-creator-reference.md) — Comprehensive technical reference, distribution math, bulk loaders, and boundary edge cases.
 - [Streaming Data Generator Script](file:///.github/skills/test-data-creator/scripts/generate-test-data.py) — Universal streaming generator in Python.
+- [Sample Vocabularies Fixture](file:///.github/skills/test-data-creator/scripts/samples.json) — External JSON vocabulary fixture for names, domains, currencies, and devices.
 - [SQL Connector MCP Server](file:///.github/skills/sql-connector/SKILL.md) — Database query execution, schema inspection, and safety firewall.
 - [SQL Executor](file:///.github/skills/sql-executor/SKILL.md) — Multi-engine SQL query tuning and validation.
 - [Researcher PoC Tester](file:///.github/skills/researcher-poc-tester/SKILL.md) — Empirical benchmarking and statistical test runner.

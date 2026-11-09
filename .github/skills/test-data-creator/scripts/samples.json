@@ -1,0 +1,28 @@
+{
+  "first_names": [
+    "James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda",
+    "David", "Elizabeth", "William", "Barbara", "Richard", "Susan", "Joseph", "Jessica"
+  ],
+  "last_names": [
+    "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
+    "Rodriguez", "Martinez", "Hernandez", "Lopez", "Wilson", "Anderson", "Thomas", "Taylor"
+  ],
+  "domains": [
+    "example.com", "testmail.org", "acme-corp.net", "enterprise.io", "sample-domain.com"
+  ],
+  "countries": [
+    "US", "GB", "CA", "DE", "FR", "JP", "AU", "SG", "IN", "BR"
+  ],
+  "order_statuses": [
+    "PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELED", "REFUNDED"
+  ],
+  "payment_methods": [
+    "CREDIT_CARD", "DEBIT_CARD", "PAYPAL", "APPLE_PAY", "WIRE_TRANSFER"
+  ],
+  "currencies": [
+    "USD", "EUR", "GBP", "CAD", "AUD", "JPY"
+  ],
+  "device_names": [
+    "sensor_alpha", "sensor_beta", "temp_probe_01", "gateway_hub", "pressure_valve_3"
+  ]
+}
