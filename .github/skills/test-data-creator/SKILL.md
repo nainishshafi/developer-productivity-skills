@@ -89,10 +89,15 @@ Execute the streaming data generator script using the repository virtual environ
 .\.venv\Scripts\python.exe .github/skills/test-data-creator/scripts/generate-test-data.py \
     --preset users --count 1000 --format json --output scratch/fixtures/users.json
 
-# Generate 50,000 orders in SQL with 80/20 Pareto customer skew (batches of 1,000):
+# Generate 50,000 orders in SQL with 80/20 Pareto customer skew (batches of 1,000, target dialect):
 .\.venv\Scripts\python.exe .github/skills/test-data-creator/scripts/generate-test-data.py \
-    --preset orders --count 50000 --format sql --table-name customer_orders \
+    --preset orders --count 50000 --format sql --dialect postgres --table-name customer_orders \
     --batch-size 1000 --skew pareto --output scratch/fixtures/orders.sql
+
+# Generate SQL Server T-SQL batch inserts:
+.\.venv\Scripts\python.exe .github/skills/test-data-creator/scripts/generate-test-data.py \
+    --preset orders --count 10000 --format sql --dialect sqlserver --table-name customer_orders \
+    --output scratch/fixtures/orders_mssql.sql
 
 # Generate IoT time-series sensor metrics:
 .\.venv\Scripts\python.exe .github/skills/test-data-creator/scripts/generate-test-data.py \

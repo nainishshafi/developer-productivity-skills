@@ -17,28 +17,71 @@ Usage:
 """
 
 import argparse
+import csv
 import datetime
 import json
 import math
 import os
 import random
+import re
 import sys
 import uuid
 from pathlib import Path
 from typing import Any, Callable, Dict, Generator, List, Optional, Tuple
 
 SAMPLES_DEFAULT_FILE = Path(__file__).parent / "samples.json"
+SAFE_IDENTIFIER_REGEX = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+
+DIALECT_TRANSACTIONS = {
+    "postgres": ("BEGIN TRANSACTION;\n\n", "COMMIT;\n"),
+    "sqlite": ("BEGIN TRANSACTION;\n\n", "COMMIT;\n"),
+    "sqlserver": ("BEGIN TRAN;\n\n", "COMMIT TRAN;\n"),
+    "mysql": ("START TRANSACTION;\n\n", "COMMIT;\n"),
+    "oracle": ("", "\nCOMMIT;\n"),
+}
+
+
+def validate_identifier(name: str, label: str = "identifier") -> str:
+    """Validate that a SQL table or column name contains only safe alphanumeric characters."""
+    if not SAFE_IDENTIFIER_REGEX.match(name):
+        raise ValueError(
+            f"Invalid SQL {label} '{name}'. Must match ^[a-zA-Z_][a-zA-Z0-9_]*$ to prevent injection."
+        )
+    return name
+
+
+def quote_identifier(name: str, dialect: str = "postgres") -> str:
+    """Quote SQL identifier safely according to the target database dialect."""
+    validate_identifier(name)
+    if dialect == "sqlserver":
+        return f"[{name}]"
+    elif dialect == "mysql":
+        return f"`{name}`"
+    else:
+        # postgres, sqlite, oracle
+        return f'"{name}"'
 
 
 def load_samples(custom_path: Optional[str] = None) -> Dict[str, List[str]]:
-    """Load vocabulary samples from external JSON file with resilient fallbacks."""
-    target_file = Path(custom_path) if custom_path else SAMPLES_DEFAULT_FILE
-    if target_file.exists():
+    """Load vocabulary samples from external JSON file with resilient fallbacks or fast failure on custom paths."""
+    if custom_path:
+        target_file = Path(custom_path)
+        if not target_file.exists():
+            print(f"[!] Error: Custom samples file not found: '{custom_path}'", file=sys.stderr)
+            sys.exit(1)
         try:
             with open(target_file, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
-            print(f"[!] Warning: Failed to load samples from '{target_file}': {e}", file=sys.stderr)
+            print(f"[!] Error: Failed to parse custom samples file '{target_file}': {e}", file=sys.stderr)
+            sys.exit(1)
+
+    if SAMPLES_DEFAULT_FILE.exists():
+        try:
+            with open(SAMPLES_DEFAULT_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"[!] Warning: Failed to load default samples from '{SAMPLES_DEFAULT_FILE}': {e}", file=sys.stderr)
 
     return {
         "first_names": ["James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda"],
@@ -182,18 +225,41 @@ def generate_metrics(count: int, rng: random.Random, samples: Dict[str, List[str
 def parse_custom_fields(fields_str: str) -> List[Tuple[str, str, Optional[List[str]]]]:
     """Parse field specification string: 'id:int,name:name,status:choice[A,B,C],val:float'."""
     parsed = []
-    tokens = [t.strip() for t in fields_str.split(",") if t.strip()]
+    # Tokenize by comma while respecting brackets
+    tokens: List[str] = []
+    current: List[str] = []
+    depth = 0
+    for ch in fields_str:
+        if ch == "[":
+            depth += 1
+            current.append(ch)
+        elif ch == "]":
+            depth = max(0, depth - 1)
+            current.append(ch)
+        elif ch == "," and depth == 0:
+            tok = "".join(current).strip()
+            if tok:
+                tokens.append(tok)
+            current.clear()
+        else:
+            current.append(ch)
+    final_tok = "".join(current).strip()
+    if final_tok:
+        tokens.append(final_tok)
+
     for token in tokens:
         if ":" not in token:
-            parsed.append((token, "str", None))
+            fname = validate_identifier(token, "field name")
+            parsed.append((fname, "str", None))
             continue
         fname, ftype = token.split(":", 1)
-        fname = fname.strip()
+        fname = validate_identifier(fname.strip(), "field name")
         ftype = ftype.strip()
         choices = None
         if ftype.startswith("choice[") and ftype.endswith("]"):
             inner = ftype[7:-1]
-            choices = [c.strip() for c in inner.split("|") if c.strip()]
+            delimiter = "|" if "|" in inner else ","
+            choices = [c.strip() for c in inner.split(delimiter) if c.strip()]
             ftype = "choice"
         parsed.append((fname, ftype, choices))
     return parsed
@@ -245,24 +311,39 @@ def escape_sql_val(val: Any) -> str:
     return f"'{s_val}'"
 
 
-def write_sql_stream(out_fp, records: Generator[Dict[str, Any], None, None], table_name: str, batch_size: int, count: int) -> int:
-    """Stream records as chunked multi-row SQL INSERT statements with transaction blocks."""
-    out_fp.write(f"-- Generated {count} synthetic records for table [{table_name}]\n")
-    out_fp.write("BEGIN TRANSACTION;\n\n")
+def write_sql_stream(
+    out_fp,
+    records: Generator[Dict[str, Any], None, None],
+    table_name: str,
+    batch_size: int,
+    count: int,
+    dialect: str = "postgres",
+) -> int:
+    """Stream records as chunked multi-row SQL INSERT statements with dialect-aware identifier escaping and transaction blocks."""
+    quoted_table = quote_identifier(table_name, dialect=dialect)
+    begin_stmt, commit_stmt = DIALECT_TRANSACTIONS.get(
+        dialect, ("BEGIN TRANSACTION;\n\n", "COMMIT;\n")
+    )
+
+    out_fp.write(f"-- Generated {count} synthetic records for table [{table_name}] ({dialect})\n")
+    if begin_stmt:
+        out_fp.write(begin_stmt)
 
     batch: List[Dict[str, Any]] = []
     columns: Optional[List[str]] = None
+    quoted_cols_str: str = ""
     written = 0
 
     for record in records:
         if columns is None:
             columns = list(record.keys())
+            quoted_cols = [quote_identifier(c, dialect=dialect) for c in columns]
+            quoted_cols_str = ", ".join(quoted_cols)
         batch.append(record)
         written += 1
 
         if len(batch) >= batch_size:
-            cols_str = ", ".join([f'"{c}"' for c in columns])
-            out_fp.write(f'INSERT INTO "{table_name}" ({cols_str}) VALUES\n')
+            out_fp.write(f"INSERT INTO {quoted_table} ({quoted_cols_str}) VALUES\n")
             value_rows = []
             for r in batch:
                 row_vals = ", ".join([escape_sql_val(r[c]) for c in columns])
@@ -272,8 +353,7 @@ def write_sql_stream(out_fp, records: Generator[Dict[str, Any], None, None], tab
 
     # Flush remaining batch
     if batch and columns:
-        cols_str = ", ".join([f'"{c}"' for c in columns])
-        out_fp.write(f'INSERT INTO "{table_name}" ({cols_str}) VALUES\n')
+        out_fp.write(f"INSERT INTO {quoted_table} ({quoted_cols_str}) VALUES\n")
         value_rows = []
         for r in batch:
             row_vals = ", ".join([escape_sql_val(r[c]) for c in columns])
@@ -281,7 +361,8 @@ def write_sql_stream(out_fp, records: Generator[Dict[str, Any], None, None], tab
         out_fp.write(",\n".join(value_rows) + ";\n\n")
         batch.clear()
 
-    out_fp.write("COMMIT;\n")
+    if commit_stmt:
+        out_fp.write(commit_stmt)
     return written
 
 
@@ -308,7 +389,6 @@ def write_json_stream(out_fp, records: Generator[Dict[str, Any], None, None], as
 
 def write_csv_stream(out_fp, records: Generator[Dict[str, Any], None, None]) -> int:
     """Stream records as CSV with constant memory."""
-    import csv
     writer = None
     written = 0
     for r in records:
@@ -326,6 +406,12 @@ def main() -> None:
     parser.add_argument("--fields", help="Custom field spec (e.g. 'id:id,name:name,email:email,status:choice[A|B|C]')")
     parser.add_argument("--count", type=int, default=1000, help="Number of records to generate (default: 1000)")
     parser.add_argument("--format", choices=["json", "ndjson", "sql", "csv"], default="json", help="Output format (default: json)")
+    parser.add_argument(
+        "--dialect",
+        choices=["postgres", "sqlite", "sqlserver", "mysql", "oracle"],
+        default="postgres",
+        help="SQL dialect for quoting and transaction semantics (default: postgres)",
+    )
     parser.add_argument("--table-name", default="test_records", help="Target table name for SQL format")
     parser.add_argument("--batch-size", type=int, default=1000, help="Number of rows per SQL INSERT statement (default: 1000)")
     parser.add_argument("--skew", choices=["uniform", "pareto", "normal"], default="uniform", help="Distribution skew for foreign keys (default: uniform)")
@@ -368,7 +454,14 @@ def main() -> None:
     try:
         start_time = datetime.datetime.now()
         if args.format == "sql":
-            count = write_sql_stream(out_fp, stream, args.table_name, args.batch_size, args.count)
+            count = write_sql_stream(
+                out_fp,
+                stream,
+                args.table_name,
+                args.batch_size,
+                args.count,
+                dialect=args.dialect,
+            )
         elif args.format in ["json", "ndjson"]:
             count = write_json_stream(out_fp, stream, as_ndjson=(args.format == "ndjson"))
         elif args.format == "csv":
