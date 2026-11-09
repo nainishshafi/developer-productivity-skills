@@ -1,7 +1,7 @@
 ---
 name: sql-executor
-description: Practitioner guidance for querying, tuning, validating, and troubleshooting enterprise databases (SQL Server, Oracle, PostgreSQL, SQLite, MongoDB, MS Access, MySQL) via the sql-connector MCP server. Covers multi-engine joins, GIN/GiST/BRIN indexing, stored procedures, TVFs, Oracle cursors, CTEs, #temp tables, OLAP cubing, window functions, and cohort analytics. Use when asked to "write a sql join", "optimize sql query", "tune database index", "sql cube", "grouping sets", "sql cohort analysis", "postgres gin index", "oracle cursor", "sql stored procedure", "sql cte", or "run database queries".
-version: 1.3.0
+description: Practitioner guidance for querying, tuning, validating, and troubleshooting enterprise databases (SQL Server, Oracle, PostgreSQL, SQLite, MongoDB, MS Access, MySQL) via the sql-connector MCP server. Covers multi-engine joins, query optimization methods, GIN/GiST/BRIN indexing, stored procedures, TVFs, Oracle cursors, CTEs, #temp tables, OLAP cubing, window functions, and cohort analytics. Use when asked to "write a sql join", "optimize sql query", "tune database index", "query optimization", "sql performance tuning", "sql cube", "grouping sets", "sql cohort analysis", "postgres gin index", "oracle cursor", "sql stored procedure", "sql cte", or "run database queries".
+version: 1.4.0
 ---
 
 # SQL Executor
@@ -21,6 +21,152 @@ Architectural heuristics and execution guidance for querying, indexing, and opti
 | **Stored Procedures & TVFs** | Inline TVFs (iTVFs); parameterized `sp_executesql` / `CALL` | Multi-statement TVFs (mTVFs); string concatenation SQL | iTVFs inline into optimizer plans; dynamic SQL with parameters blocks SQL injection. |
 | **Oracle Cursors** | `SYS_REFCURSOR` for drivers; `BULK COLLECT` + `LIMIT 1000` | Row-by-row (RBAR) loops; `BULK COLLECT` without `LIMIT` | Bulk operations eliminate PL/SQL context switches; `LIMIT` prevents PGA memory exhaustion. |
 | **Window Functions** | `ROWS BETWEEN ...` framing; `DENSE_RANK()` for top $N$ per group | Unbounded `RANGE BETWEEN` when physical rows suffice | `ROWS` operates on physical offsets avoiding temporary disk spooling. |
+
+---
+
+## 🚀 Query Optimization Methods & Techniques
+
+Apply these 7 core query optimization methods when diagnosing slow queries, reducing I/O bottlenecks, or tuning database execution plans:
+
+### 1. Sargable Predicate Optimization (Enabling B-Tree Index Seeks)
+A query is **sargable** (Search Argument Able) when the database engine can seek directly into an index ($O(\log N)$) instead of scanning every page ($O(N)$). Wrapping columns in functions or calculations destroys sargability.
+
+| Anti-Pattern (Non-Sargable / Full Scan) | Optimized Sargable Rewrite (Index Seek) | Root Cause & Mechanism |
+|:---|:---|:---|
+| `WHERE DATE(created_at) = '2026-03-15'` | `WHERE created_at >= '2026-03-15' AND created_at < '2026-03-16'` | Function evaluation forces table-wide row evaluation. |
+| `WHERE amount + 50 > 500` | `WHERE amount > 450` | Arithmetic on column prevents B-tree traversal. |
+| `WHERE LOWER(email) = 'user@corp.com'` | `WHERE email = 'user@corp.com'` *(or functional index)* | Scalar function invalidates standard B-tree index. |
+| `WHERE varchar_key = 1042` *(numeric literal)* | `WHERE varchar_key = '1042'` | Implicit data type conversion casts every column value. |
+| `WHERE name LIKE '%smith'` | `WHERE name LIKE 'smith%'` *(or GIN/trigram index)* | Leading wildcard prevents root-to-leaf B-tree navigation. |
+| `WHERE status <> 'DELETED'` | `WHERE status IN ('ACTIVE', 'PENDING', 'SUSPENDED')` | Inequality/negation cannot isolate a B-tree search range. |
+
+---
+
+### 2. Composite & Covering Index Design (Equality $\to$ Range $\to$ Include)
+To eliminate expensive Heap/Clustered Index Lookups (random I/O), align composite index column orders and leaf payload columns:
+
+1. **Column Sequence Rule**:
+   $$\text{Index Columns: } [ \text{Equality Predicates } (=) ] \longrightarrow [ \text{Range / Inequality } (<, >, \text{BETWEEN}) ] \longrightarrow [ \text{ORDER BY Columns} ]$$
+2. **Covering Leaf Projections (`INCLUDE`)**:
+   Add projected columns to index leaf pages to achieve **Index-Only Scans** (0 heap touches):
+   ```sql
+   -- PostgreSQL / SQL Server covering index:
+   CREATE INDEX idx_orders_covering 
+   ON orders (store_id, order_date) 
+   INCLUDE (total_amount, customer_id);
+
+   -- Query executes entirely within index leaf memory:
+   SELECT total_amount, customer_id 
+   FROM orders 
+   WHERE store_id = 42 AND order_date >= '2026-01-01';
+   ```
+
+---
+
+### 3. Keyset / Seek Pagination ($O(1)$ vs. Deep $O(N)$ `OFFSET`)
+Offset pagination (`OFFSET 100000 ROWS FETCH NEXT 25`) forces the engine to read and discard $100,000$ rows from disk for every page request.
+
+```sql
+-- ❌ Suboptimal (Degrades to O(N) full scan on deep pages):
+SELECT id, title, created_at FROM articles
+ORDER BY created_at DESC, id DESC
+OFFSET 100000 ROWS FETCH NEXT 25 ROWS ONLY;
+
+-- ✅ Optimal Keyset / Cursor Pagination (Constant O(1) or O(log N) seek):
+SELECT id, title, created_at FROM articles
+WHERE (created_at < :last_seen_created_at)
+   OR (created_at = :last_seen_created_at AND id < :last_seen_id)
+ORDER BY created_at DESC, id DESC
+FETCH FIRST 25 ROWS ONLY;
+```
+
+---
+
+### 4. Semi-Join (`EXISTS`) over `IN` and Deduplicating `DISTINCT`
+Avoid using `SELECT DISTINCT` after joining one-to-many tables. Joining parent to child duplicates parent rows in memory only to spend CPU deduplicating them.
+
+```sql
+-- ❌ Suboptimal (Generates cartesian duplicates, then sorts/hashes to deduplicate):
+SELECT DISTINCT c.id, c.name 
+FROM customers c
+INNER JOIN orders o ON c.id = o.customer_id
+WHERE o.status = 'COMPLETED';
+
+-- ✅ Optimal (Short-circuits on first matching child row, zero memory bloat):
+SELECT c.id, c.name 
+FROM customers c
+WHERE EXISTS (
+    SELECT 1 FROM orders o 
+    WHERE o.customer_id = c.id AND o.status = 'COMPLETED'
+);
+```
+> [!NOTE]
+> `NOT EXISTS` is immune to `NULL` pitfalls, whereas `NOT IN (SELECT col ...)` returns **0 rows** if the subquery returns even a single `NULL`.
+
+---
+
+### 5. Set Operations: `UNION ALL` vs. Deduplicating `UNION`
+- **Default to `UNION ALL`**: Appends result streams in constant $O(1)$ memory.
+- **Avoid bare `UNION`**: Forces the engine to perform an expensive $O(N \log N)$ sort or in-memory hash table deduplication pass across both streams unless duplicates are strictly impossible to tolerate.
+
+---
+
+### 6. Window Function Framing Optimization (`ROWS` vs. `RANGE`)
+When using window aggregate functions (`SUM() OVER (...)`, `AVG() OVER (...)`):
+```sql
+-- ❌ Suboptimal (Default 'RANGE BETWEEN' creates disk/memory spools to check peer ties):
+SELECT employee_id, salary,
+       SUM(salary) OVER (PARTITION BY department_id ORDER BY hire_date) AS dept_running_total
+FROM employees;
+
+-- ✅ Optimal (Explicit 'ROWS BETWEEN' avoids spooling by operating on physical rows):
+SELECT employee_id, salary,
+       SUM(salary) OVER (
+           PARTITION BY department_id 
+           ORDER BY hire_date 
+           ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+       ) AS dept_running_total
+FROM employees;
+```
+
+---
+
+### 7. Systematic 5-Step Optimization Diagnostic Workflow
+
+When profiling a slow query with `sql-connector`:
+
+```
+┌─────────────────────────────────┐
+│ 1. Benchmark Logical Reads      │ ──► Focus on page reads in RAM (shared hit / logical reads), not clock time
+└────────────────┬────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────┐
+│ 2. Check Cardinality Estimates  │ ──► Compare Estimated Rows vs Actual Rows (update stale histograms/stats)
+└────────────────┬────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────┐
+│ 3. Check "Rows Removed by Filter"│ ──► Add discarded filter columns to composite index
+└────────────────┬────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────┐
+│ 4. Convert Scans into Seeks     │ ──► Eliminate non-sargable functions, casts, or leading wildcards
+└────────────────┬────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────┐
+│ 5. Eliminate Memory Spills      │ ──► Fix Sort/Hash Spills to TempDB/Disk by indexing ORDER BY or increasing memory
+└─────────────────────────────────┘
+```
+
+#### Diagnostic Commands by Database Engine:
+- **PostgreSQL**: `EXPLAIN (ANALYZE, BUFFERS, VERBOSE)` &rarr; Check `Buffers: shared hit/read` and `Rows Removed by Filter`.
+- **SQL Server**: `SET STATISTICS IO, TIME ON;` &rarr; Check `logical reads`, `physical reads`, and `CPU time vs. elapsed time`.
+- **Oracle**: `SET AUTOTRACE ON STATISTICS;` or `SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR());` &rarr; Check `consistent gets`.
+- **MySQL**: `EXPLAIN ANALYZE SELECT ...;` &rarr; Check table scan costs and join buffering.
+- **SQLite**: `EXPLAIN QUERY PLAN SELECT ...;` &rarr; Verify presence of `SEARCH TABLE ... USING INDEX` (seek) vs `SCAN TABLE` (scan).
 
 ---
 
