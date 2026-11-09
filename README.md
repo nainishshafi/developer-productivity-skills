@@ -4,7 +4,17 @@ A curated suite of enterprise-grade AI skills and Model Context Protocol (MCP) s
 
 Designed as **architectural guidance, decision frameworks, and engineering heuristics for AI agents** rather than rigid or deterministic rules — empowering agents to respect existing codebase baselines, reason through real-world trade-offs, and deliver high-signal, pragmatic engineering solutions.
 
-These skills provide ready-made workflows for modern software engineering — spanning architectural planning, language-specific engineering knowledge packs, Big-O complexity analysis, multi-agent SDLC orchestration, memory persistence, in-the-loop over-engineering checks, security scanning, automated code review, and isolated debugging.
+These skills provide ready-made workflows for modern software engineering across nine core engineering disciplines:
+
+- **🏗️ Architectural Planning & Trade-Offs**: Interactive system design, Mermaid modeling, component contracts, and Architecture Decision Records (ADRs) grounded in established literature (Kleppmann, Nygard, Newman, Evans, Fowler).
+- **📦 Language-Specific Engineering Packs**: Modular, context-optimized guides for modern runtimes (Java 21/25 Virtual Threads, TypeScript 5+ branded types, Python 3.10–3.13 Pydantic v2, C# 12/13 Minimal APIs, React 19 RSC, PowerShell 7+), each with embedded anti-bloat guardrails.
+- **🚀 Multi-Agent SDLC Orchestration**: End-to-end 7-stage pipeline (`plan` $\to$ `develop` $\to$ `codereview` $\to$ `complexitychecks` $\to$ `architecturechecks` $\to$ `halucinationchecks` $\to$ `securitychecks`) enforcing stage-isolated context handoffs to prevent context pollution and attention drift.
+- **💾 Project Memory Bus**: Long-term state persistence via SQLite (`.project-memory/memory.db`) with 40% semantic hybrid search, strictly partitioning knowledge into permanent architecture truths (`ledger`), active WIP handoffs (`sidecar`), and stage recaps with mandatory error learnings (`journal`).
+- **🛡️ In-The-Loop Over-Engineering Defense**: Continuous AST signal extraction (`detect-overengineering`) embedded directly into four loops: developer inner loop, PR review audits, architecture gates (triggering an automated simplification loop when score $\ge 40$), and bug fixes (anti-fix-bloat).
+- **⏱️ Asymptotic Big-O Complexity Audits**: Algorithmic time and space profiling ($O(1) \dots O(2^n)$), detecting hidden quadratic collection traps (`.includes()` in loops), and database query execution plan audits ($O(N)$ table scans).
+- **🔬 Empirical Research & PoC Benchmarking**: Safe web research (strict zero-download security policy) paired with automated statistical benchmark harnesses (`poc-stats-runner.py`) computing Median (P50), P95, P99, StdDev, and throughput.
+- **🔍 Isolated Debugging & Circuit Breakers**: Extracting failures into minimal standalone testbeds (`scratch/repro/`) with a strict 3-iteration circuit breaker to eliminate token-burning retry loops.
+- **🔐 Pre-Commit Security & Query Firewalls**: Secret scanning (`detect-secrets`), OWASP rule evaluation (`semgrep`), universal API authentication audits (JWT RS256, OAuth 2.1 PKCE, mTLS), and zero-tolerance destructive SQL firewalls (`DROP TABLE`, `DELETE *`).
 
 ---
 
