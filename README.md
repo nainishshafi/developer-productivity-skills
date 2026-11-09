@@ -34,6 +34,7 @@ These skills provide ready-made workflows for modern software engineering — sp
 | [`playwright-bdd-tester`](#playwright-bdd-tester) | **Testing & Quality** | BDD Gherkin & Playwright browser test automation | `"write playwright tests"` |
 | [`remote-pod-log-analyzer`](#remote-pod-log-analyzer) | **Diagnostics** | Remote Linux & Kubernetes pod log analysis via SSH, kubectl, grep, awk, jq | `"analyze remote logs"` |
 | [`troubleshoot-and-fix`](#troubleshoot-and-fix) | **Diagnostics** | Isolated reproduction testbeds, 3-attempt circuit breaker & anti-fix-bloat | `"troubleshoot and fix"` |
+| [`researcher-poc-tester`](#researcher-poc-tester) | **Research & Benchmarking** | Empirical PoCs, safe web research & percentile stats (Java VThreads, Polars, DB throughput) | `"test this concept"` |
 | [`legacy-code-modernization`](#legacy-code-modernization) | **Modernization** | 4-phase safe modernization (Extract $\to$ Pin $\to$ TDD $\to$ Strangler) | `"modernize legacy code"` |
 | [`skill-creator`](#skill-creator) | **Tooling & Automation** | Scaffolds modular knowledge-packs and task skills | `"create a new skill"` |
 | [`github-security-scanner-hook`](#github-security-scanner-hook) | **Tooling & Automation** | Pre-commit secret scanning & Semgrep OWASP rules | `"scan for security vulnerabilities"` |
@@ -186,6 +187,15 @@ Operational framework for searching, streaming, and statistically analyzing remo
 ### `troubleshoot-and-fix`
 Universal diagnostic and repair framework for runtime crashes, exceptions, and logic errors. Enforces a strict 3-iteration circuit breaker to prevent infinite token-burning trial-and-error loops, escalating a structured out-of-options diagnostic summary when hypotheses fail. Extracts problematic logic and test fixtures into an isolated sandbox harness (`scripts/isolate-runner.js`, `scripts/isolate-runner.py`) to systematically reproduce and verify fixes before porting them back to source code, enforcing in-the-loop over-engineering checks to prevent fix bloat.
 - **Trigger phrases:** `"troubleshoot and fix"`, `"debug this error"`, `"fix this bug"`, `"solve runtime exception"`, `"diagnose issue"`, `"reproduce and fix bug"`.
+
+### `researcher-poc-tester`
+Empirical research and Proof-of-Concept (PoC) benchmarking framework for evaluating software design hypotheses, concurrency paradigms, and language performance. Adheres to strict zero-download web research security guardrails (never downloading executables or running remote scripts). Constructs isolated testbeds with monotonic high-precision timers, warmup discarding, and statistical distribution modeling (Median P50, P95, P99, StdDev, Throughput ops/sec, and relative speedup factor). Includes deep pre-packaged scenarios:
+- **Java Concurrency**: Virtual Threads (`Thread.ofVirtual()`) vs Platform OS Threads in blocking I/O vs CPU work; carrier thread pinning traps (`synchronized`, JNI) and connection pool saturation.
+- **Database Query Throughput**: Batch size optimization (500–2,000 chunks yielding 30x+ speedups) vs single-row round trips; keyset cursor streaming vs $O(N)$ offset pagination.
+- **Data Engine Shootouts**: NumPy C-vectorized SIMD arrays vs Polars multithreaded Lazy Arrow vs Pandas GIL contention for analytical filtering, joins, and aggregations.
+- **Low-Latency & Mechanical Sympathy**: Cache line false sharing (64-byte L1 invalidation), zero-allocation steady states, and off-heap memory buffers.
+- **Automated Runner**: Powered by `poc-stats-runner.py` via `.\.venv\Scripts\python.exe`.
+- **Trigger phrases:** `"test this concept"`, `"create a poc"`, `"benchmark these approaches"`, `"virtual threads benchmark"`, `"numpy vs polars performance"`, `"high throughput db query"`, `"low latency stats"`, `"researcher-poc-tester"`.
 
 ### `legacy-code-modernization`
 Systematic, language-independent framework for safely refactoring and modernizing legacy codebases across 4 phases:
@@ -341,6 +351,7 @@ developer-productivity-skills/
 │       ├── python-linter/            # Automated Ruff & Mypy quality runner
 │       ├── react-developer/          # React 18/19, RSC, Zustand, Query pack
 │       ├── remote-pod-log-analyzer/  # Remote Linux & Kubernetes pod log analysis pack
+│       ├── researcher-poc-tester/    # Empirical PoC benchmarks, safe research & stats runner
 │       ├── save-memory/              # Structured memory persistence skill
 │       ├── scan-halucinated-tests/   # AST-based test hallucination scanner
 │       ├── scan-repo-readme/         # Semantic repository README searcher
