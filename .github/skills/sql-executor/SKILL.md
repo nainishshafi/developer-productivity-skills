@@ -181,7 +181,7 @@ Before generating queries, stored procedures, or table schemas, consult [`detect
 
 ## 📚 Modular Deep Topics
 
-- **[Query Optimization Reference Guide](file:///.github/skills/sql-executor/references/query-optimization-reference.md)** — Architectural reference for CBO cost models, join algorithms, sargability, pagination, and diagnostic playbooks.
+- **[Query Optimization Reference Guide](file:///.github/skills/sql-executor/query-optimization/query-optimization-reference.md)** — Architectural reference for CBO cost models, join algorithms, sargability, pagination, and diagnostic playbooks.
 - **[MCP Workflow & Schema Discovery](file:///.github/skills/sql-executor/mcp-operations/mcp-workflow-and-discovery.md)** — Discovery workflow, tool payloads, and connection handling.
 - **[Multi-Engine Joins Architecture](file:///.github/skills/sql-executor/joins/multi-engine-joins.md)** — Dialect-specific join syntax, `APPLY`, `LATERAL`, and MS Access parentheses rules.
 - **[Temporary Structures, CTEs & #TempTables](file:///.github/skills/sql-executor/temporary-tables-and-ctes/temp-tables-and-ctes.md)** — Chained/Recursive CTEs, CTE materialization, `#TempTable` vs `@TableVariable`, and GTTs.

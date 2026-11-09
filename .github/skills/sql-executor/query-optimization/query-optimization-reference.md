@@ -307,3 +307,4 @@ EXPLAIN QUERY PLAN SELECT * FROM orders WHERE customer_id = 42;
 - [PostgreSQL Specialized Indexing](file:///.github/skills/sql-executor/indexing-and-tuning/postgres-specialized-indexes.md) — GIN (`jsonb`, `pg_trgm`), GiST, and BRIN time-series indexing.
 - [Temporary Structures, CTEs & #TempTables](file:///.github/skills/sql-executor/temporary-tables-and-ctes/temp-tables-and-ctes.md) — Chained CTEs vs `#TempTable` optimizer tradeoffs.
 - [SQL Connector MCP Server](file:///.github/skills/sql-connector/SKILL.md) — Safely executing and auditing SQL queries with automated firewall protection.
+
