@@ -42,6 +42,7 @@ These skills provide ready-made workflows for modern software engineering across
 | [`scan-halucinated-tests`](#scan-halucinated-tests) | **Architecture & Quality** | Cross-validates test symbols against AST ground truth | `"scan for hallucinated tests"` |
 | [`trace-code-context`](#trace-code-context) | **Architecture & Quality** | AST symbol extraction, callers/callees & Mermaid graph | `"trace code context"` |
 | [`playwright-bdd-tester`](#playwright-bdd-tester) | **Testing & Quality** | BDD Gherkin & Playwright browser test automation | `"write playwright tests"` |
+| [`test-data-creator`](#test-data-creator) | **Testing & Quality** | Schema-aware SQL batching, JSON mocks & high-volume load test data (Pareto 80/20) | `"generate test data"` |
 | [`remote-pod-log-analyzer`](#remote-pod-log-analyzer) | **Diagnostics** | Remote Linux & Kubernetes pod log analysis via SSH, kubectl, grep, awk, jq | `"analyze remote logs"` |
 | [`troubleshoot-and-fix`](#troubleshoot-and-fix) | **Diagnostics** | Isolated reproduction testbeds, 3-attempt circuit breaker & anti-fix-bloat | `"troubleshoot and fix"` |
 | [`researcher-poc-tester`](#researcher-poc-tester) | **Research & Benchmarking** | Isolated side-by-side PoCs, JIT warmup & percentile stats (VThreads, Polars, DB throughput) | `"test this concept"` |
@@ -156,6 +157,11 @@ Generates authoritative ground-truth Markdown context files covering defined sym
 Architectural and engineering guidance for Behavior-Driven Development (BDD) and End-to-End browser test automation using Gherkin and Playwright across TypeScript/Node.js, Python, Java, and C# / .NET. Covers declarative scenario design, step definitions with parameter expressions, Page Object Models with accessible locators, auto-waiting, network mocking (`page.route`), authenticated state reuse (`storageState`), and parallel CI sharding.
 - **Trigger phrases:** `"write playwright tests"`, `"gherkin playwright"`, `"playwright bdd"`, `"write gherkin feature"`, `"e2e browser test"`, `"test with playwright"`, `"cucumber playwright"`, `"playwright java"`, `"playwright c#"`, `"bdd e2e testing"`.
 - **Supported environments:** TypeScript / Node.js (`playwright-bdd`), Python (`pytest-bdd`), Java (`playwright` + `cucumber-jvm`), C# / .NET (`Microsoft.Playwright` + `Reqnroll`/`SpecFlow`).
+
+### `test-data-creator`
+Generates realistic, schema-conformant synthetic mock datasets, API payloads, and high-volume performance test loads across SQL (SQL Server, PostgreSQL, MySQL, Oracle, SQLite via `sql-connector`), JSON/NDJSON, and CSV formats.
+- **Key Capabilities:** Schema inspection via `sql-connector` (`describe_table`), high-throughput chunked batch inserts (500–2,000 rows/statement) with transaction blocks ($20\text{x}\text{--}50\text{x}$ speedups), constant $O(1)$ memory streaming for millions of records, Pareto 80/20 & Zipfian distribution skew (simulating hot tenant partitions and lock contention), and boundary edge-case injection (escaped quotes `O'Connor`, emojis, leap years, max int64). Includes fast streaming CLI script `generate-test-data.py`.
+- **Trigger phrases:** `"generate test data"`, `"create test data"`, `"seed database"`, `"mock data generator"`, `"performance test data"`, `"generate sql inserts"`, `"generate mock json"`, `"test-data-creator"`.
 
 ---
 
@@ -369,6 +375,7 @@ developer-productivity-skills/
 │       ├── sql-connector/            # Multi-database query & safety firewall skill
 │       ├── sql-executor/             # Multi-engine SQL tuning, joins & validation pack
 │       ├── sync-github-forks/        # Automated fork synchronization tool
+│       ├── test-data-creator/        # Synthetic SQL/JSON test data & performance load generator
 │       ├── trace-code-context/       # AST dependency & Mermaid graph generator
 │       └── troubleshoot-and-fix/     # Isolated reproduction testbed framework with circuit breaker
 └── README.md
