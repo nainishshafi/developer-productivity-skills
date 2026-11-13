@@ -61,7 +61,7 @@ These skills provide ready-made workflows for modern software engineering across
 | [`scan-repo-readme`](#scan-repo-readme) | **Tooling & Automation** | Dual-phase keyword and semantic README search | `"scan the readme"` |
 | [`save-memory`](#save-memory) | **Memory & Context** | Persists ledger, sidecar, and journal memories to SQLite | `"save memory"` |
 | [`load-memory`](#load-memory) | **Memory & Context** | Hybrid semantic (40%) + lexical (60%) memory retrieval | `"load memory"` |
-| [`nodejs-executor`](#nodejs-executor) | **Tooling & Automation** | Sandboxed JavaScript/TypeScript execution via MCP | `"run nodejs code"` |
+| [`nodejs-executor`](#nodejs-executor) | **Tooling & Automation** | Controlled terminal environment, CLI command automation & sandboxed JS/TS execution via MCP | `"run nodejs code"` |
 | [`sql-connector`](#sql-connector) | **Database & Tooling** | Multi-DB query & schema inspection with zero-tolerance destructive DDL/DML firewall | `"query database"` |
 
 ---
@@ -281,8 +281,8 @@ Retrieves concise memories using hybrid search ($0.40 \times \text{Semantic Cosi
 - **Trigger phrases:** `"load memory"`, `"check project memory"`, `"retrieve ledger"`, `"check past mistakes"`, `"what did we learn"`.
 
 ### `nodejs-executor`
-Evaluates JS/TS snippets and executes scripts via the `nodejs-executor` MCP server with multi-layered sandbox security and C++ permission model isolation.
-- **Trigger phrases:** `"run nodejs code"`, `"execute javascript"`, `"execute typescript"`, `"run js snippet"`, `"evaluate expression"`.
+Provides a **controlled terminal environment** for CLI command automation (`run_terminal_command` for direct non-shell CLI binaries, `run_package_script` for `npm`/`pnpm`/`yarn`, and hardened `unrestricted` child-process execution), script execution (`execute_file`), and JS/TS evaluation (`execute_code`, `evaluate_expression`) via the `nodejs-executor` MCP server with multi-layered sandbox security, destructive-command blocking, secret scrubbing, and C++ permission model isolation.
+- **Trigger phrases:** `"run nodejs code"`, `"execute javascript"`, `"execute typescript"`, `"run js snippet"`, `"evaluate expression"`, `"run terminal command"`.
 
 ### `sql-connector`
 Executes safe queries and discovers schemas across SQL Server, Oracle, PostgreSQL, SQLite, MongoDB, MS Access, and MySQL via the `sql-connector` MCP server. Zero-tolerance SQL firewall blocks `DROP TABLE`, `DELETE *`, and destructive mutations.
@@ -295,8 +295,8 @@ Executes safe queries and discovers schemas across SQL Server, Oracle, PostgreSQ
 Reusable MCP servers located in `mcp/` providing protocol-compliant tool integrations:
 
 ### `nodejs-executor` (`mcp/nodejs-executor/`)
-- **Tools:** `execute_code`, `evaluate_expression`, `execute_file`, `run_package_script`, `get_runtime_info`
-- **Features:** Native type-stripping TypeScript execution on Node.js 22+, AST sanitization, and secret scrubbing.
+- **Tools:** `execute_code`, `evaluate_expression`, `execute_file`, `run_package_script`, `run_terminal_command`, `get_runtime_info`
+- **Features:** Controlled terminal environment for CLI command automation (`run_terminal_command` with `shell: false` and blocked raw shells, `npm`/`pnpm`/`yarn` scripts, and hardened `--allow-child-process` execution with workspace write confinement), native type-stripping TypeScript execution on Node.js 22+, destructive-pattern blocking, and host secret scrubbing.
 
 ### `project-memory` (`mcp/project-memory/`)
 - **Tools:** `save_memory`, `load_memory`, `search_memory`, `get_unprocessed_learnings`, `mark_learning_promoted`, `delete_memory`, `clear_sidecar`

@@ -8,15 +8,8 @@ const SENSITIVE_PREFIX_PATTERN = /^(AWS_|GITHUB_|GH_|AZURE_|GCP_|GOOGLE_|OPENAI_
  */
 export function sanitizeEnvironment(
   overrides?: Record<string, string>,
-  sandboxMode: SandboxMode = 'strict'
+  _sandboxMode: SandboxMode = 'strict'
 ): NodeJS.ProcessEnv {
-  if (sandboxMode === 'unrestricted') {
-    return {
-      ...process.env,
-      ...(overrides ?? {}),
-    };
-  }
-
   const cleanEnv: NodeJS.ProcessEnv = {};
 
   for (const [key, value] of Object.entries(process.env)) {

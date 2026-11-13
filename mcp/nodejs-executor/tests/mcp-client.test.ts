@@ -31,13 +31,14 @@ describe('MCP Protocol Integration', () => {
       await client.connect(transport);
 
       const toolsList = await client.listTools();
-      assert.ok(toolsList.tools.length >= 5);
+      assert.ok(toolsList.tools.length >= 6);
 
       const toolNames = toolsList.tools.map((t) => t.name);
       assert.ok(toolNames.includes('execute_code'));
       assert.ok(toolNames.includes('evaluate_expression'));
       assert.ok(toolNames.includes('execute_file'));
       assert.ok(toolNames.includes('run_package_script'));
+      assert.ok(toolNames.includes('run_terminal_command'));
       assert.ok(toolNames.includes('get_runtime_info'));
 
       // Call get_runtime_info
@@ -65,6 +66,19 @@ describe('MCP Protocol Integration', () => {
       const parsedExec = JSON.parse(execContent.text);
       assert.equal(parsedExec.success, true);
       assert.match(parsedExec.stdout, /MCP JSON-RPC SUCCESS!/);
+
+      const termResult = await client.callTool({
+        name: 'run_terminal_command',
+        arguments: {
+          command: 'node',
+          args: ['--version'],
+        },
+      });
+      assert.equal(termResult.isError, false);
+      const termContent = termResult.content[0];
+      const parsedTerm = JSON.parse(termContent.text);
+      assert.equal(parsedTerm.success, true);
+      assert.match(parsedTerm.stdout.trim(), /^v\d+\.\d+\.\d+/);
     } finally {
       await client.close();
     }

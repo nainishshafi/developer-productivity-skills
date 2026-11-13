@@ -1,12 +1,12 @@
 ---
 name: nodejs-executor
-description: Use when the user asks to "run nodejs code", "execute javascript", "execute typescript", "run js snippet", "run node script", "evaluate expression", "execute node file", "run package script", "test node snippet", or wants to execute JavaScript/TypeScript code safely using the nodejs-executor MCP server with multi-layered sandbox security.
-version: 1.0.0
+description: Use when the user asks to "run nodejs code", "execute javascript", "execute typescript", "run js snippet", "run node script", "evaluate expression", "execute node file", "run package script", "run terminal command", "test node snippet", or wants to execute JavaScript/TypeScript code or CLI commands safely using the nodejs-executor MCP server with multi-layered sandbox security.
+version: 1.1.0
 ---
 
 # Node.js Executor Skill
 
-Execute JavaScript and TypeScript code, evaluate expressions, run script files, and automate package scripts using the `nodejs-executor` MCP server with multi-layered security sandboxing.
+Execute JavaScript and TypeScript code, evaluate expressions, run script files, and automate CLI commands/package scripts in a controlled terminal environment using the `nodejs-executor` MCP server with multi-layered security sandboxing.
 
 ---
 
@@ -16,6 +16,7 @@ Execute JavaScript and TypeScript code, evaluate expressions, run script files, 
 - **`evaluate_expression`**: Evaluate a single expression or async expression with deep object introspection and type detection.
 - **`execute_file`**: Run an existing `.js`, `.mjs`, `.cjs`, or `.ts` file on disk with command-line arguments.
 - **`run_package_script`**: Execute `npm`, `pnpm`, or `yarn` run scripts from any `package.json` with argument injection protections.
+- **`run_terminal_command`**: Execute non-shell CLI binaries directly (`shell: false`) with blocked-shell enforcement, metacharacter rejection, destructive-argument blocking, `workingDirectory` containment, and host secret scrubbing.
 - **`get_runtime_info`**: Inspect Node.js version, V8 version, platform, architecture, memory usage, CPU count, and permission model support.
 
 ---
@@ -28,7 +29,7 @@ Every execution defaults to **`strict`** mode for defense-in-depth protection:
 | :--- | :--- | :--- | :--- | :--- |
 | **`strict`** (default) | Writes/deletes locked to OS temp folder (`--allow-fs-write=<tempDir>`). Host files cannot be modified or deleted. | **BLOCKED** (`child_process` disabled). | Sensitive keys scrubbed (`*KEY*`, `*TOKEN*`, `*SECRET*`, `AWS_*`, `GITHUB_*`, etc.). | Safe execution of untrusted snippets, calculations, tests, and data parsing. |
 | **`workspace-write`** | Writes/deletes permitted in temp and current working directory. Files outside workspace remain protected. | **BLOCKED** (`child_process` disabled). | Sensitive keys scrubbed. | File generation tasks, building artifacts, or transforming project files. |
-| **`unrestricted`** | Full host permissions (Node permission model disabled). | Allowed. | Full host `process.env`. | Only when user explicitly requests full host system management or shell execution. |
+| **`unrestricted`** | Writes/deletes confined to temp and workspace (`--allow-fs-write`); host-wide writes remain blocked. | Allowed (`--allow-child-process`); destructive root patterns still blocked. | Sensitive host keys still scrubbed (`*KEY*`, `*TOKEN*`, etc.). | Controlled CLI command automation or child-process execution when explicitly requested. |
 
 ---
 

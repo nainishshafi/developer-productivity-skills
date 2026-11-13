@@ -38,6 +38,14 @@ export interface RunPackageScriptOptions {
   timeout?: number;
 }
 
+export interface RunTerminalCommandOptions {
+  command: string;
+  args?: string[];
+  workingDirectory?: string;
+  environmentVariables?: Record<string, string>;
+  timeout?: number;
+}
+
 export interface ExecutionResult {
   success: boolean;
   exitCode: number | null;

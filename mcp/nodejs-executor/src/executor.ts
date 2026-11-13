@@ -5,6 +5,7 @@ export { executeCode } from './tools/execute-code.js';
 export { evaluateExpression } from './tools/evaluate-expr.js';
 export { executeFile } from './tools/execute-file.js';
 export { runPackageScript } from './tools/package-script.js';
+export { runTerminalCommand } from './tools/terminal-command.js';
 export { getRuntimeInfo } from './tools/runtime-info.js';
 export { supportsNativeTypeScript, supportsPermissionModel, getPermissionFlags } from './security/permissions.js';
 export { sanitizeEnvironment } from './security/sanitizer.js';

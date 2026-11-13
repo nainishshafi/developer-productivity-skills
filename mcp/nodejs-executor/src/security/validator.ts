@@ -13,12 +13,8 @@ const DESTRUCTIVE_PATTERNS = [
  */
 export function preExecutionSecurityCheck(
   code: string,
-  sandboxMode: SandboxMode = 'strict'
+  _sandboxMode: SandboxMode = 'strict'
 ): { allowed: boolean; reason?: string } {
-  if (sandboxMode === 'unrestricted') {
-    return { allowed: true };
-  }
-
   for (const pattern of DESTRUCTIVE_PATTERNS) {
     if (pattern.test(code)) {
       return {

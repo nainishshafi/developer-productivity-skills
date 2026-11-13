@@ -9,6 +9,7 @@ import {
   evaluateExpression,
   executeFile,
   runPackageScript,
+  runTerminalCommand,
   getRuntimeInfo,
   supportsNativeTypeScript,
 } from '../dist/executor.js';
@@ -317,6 +318,110 @@ describe('Node.js Executor MCP Test Suite', () => {
 
       assert.equal(result.success, false);
       assert.match(result.stderr, /pre-execution safety policy/i);
+    });
+
+    test('should enforce destructive check, secret scrubbing, and child-process-only escalation in unrestricted mode', async () => {
+      const destructive = await executeCode({
+        code: 'import * as fs from "node:fs"; fs.rmSync("C:\\\\", { recursive: true });',
+        sandboxMode: 'unrestricted',
+      });
+      assert.equal(destructive.success, false);
+      assert.match(destructive.stderr, /pre-execution safety policy/i);
+
+      process.env.GITHUB_TOKEN = 'ghp_secret_token_unrestricted';
+      try {
+        const outsideWritePath = path.resolve(path.parse(process.cwd()).root, 'nodejs_executor_blocked.txt');
+        const result = await executeCode({
+          code: `
+            import * as fs from 'node:fs';
+            import { spawnSync } from 'node:child_process';
+            console.log("TOKEN:" + process.env.GITHUB_TOKEN);
+            const child = spawnSync(process.execPath, ['-e', 'console.log("CHILD_OK")'], { encoding: 'utf8' });
+            console.log("CHILD:" + (child.stdout || '').trim());
+            try {
+              fs.writeFileSync(${JSON.stringify(outsideWritePath)}, "blocked");
+              console.log("OUTSIDE_WRITE:ALLOWED");
+            } catch (e) {
+              console.log("OUTSIDE_WRITE:" + (e.code || e.message));
+            }
+          `,
+          sandboxMode: 'unrestricted',
+        });
+
+        assert.equal(result.success, true);
+        assert.match(result.stdout, /TOKEN:undefined/);
+        assert.match(result.stdout, /CHILD:CHILD_OK/);
+        assert.match(result.stdout, /OUTSIDE_WRITE:ERR_ACCESS_DENIED/);
+      } finally {
+        delete process.env.GITHUB_TOKEN;
+      }
+    });
+  });
+
+  describe('runTerminalCommand', () => {
+    test('executes a valid non-shell binary with arguments', async () => {
+      const result = await runTerminalCommand({
+        command: 'node',
+        args: ['--version'],
+      });
+      assert.equal(result.success, true);
+      assert.match(result.stdout.trim(), /^v\d+\.\d+\.\d+/);
+    });
+
+    test('rejects shell metacharacters in command or args', async () => {
+      const badCmd = await runTerminalCommand({ command: 'node;echo' });
+      assert.equal(badCmd.success, false);
+      assert.match(badCmd.stderr, /Security rejection: Invalid command/i);
+
+      const badArg = await runTerminalCommand({
+        command: 'node',
+        args: ['-e', 'console.log(1) && whoami'],
+      });
+      assert.equal(badArg.success, false);
+      assert.match(badArg.stderr, /forbidden shell metacharacters/i);
+    });
+
+    test('blocks raw shell and disk-administration binaries', async () => {
+      const result = await runTerminalCommand({
+        command: 'cmd.exe',
+        args: ['/c', 'echo', 'hi'],
+      });
+      assert.equal(result.success, false);
+      assert.match(result.stderr, /blocked by terminal policy/i);
+    });
+
+    test('blocks destructive command arguments via preExecutionSecurityCheck', async () => {
+      const result = await runTerminalCommand({
+        command: 'rm',
+        args: ['-rf', '/'],
+      });
+      assert.equal(result.success, false);
+      assert.match(result.stderr, /Blocked by pre-execution safety policy/i);
+    });
+
+    test('rejects workingDirectory outside workspace and temp directory', async () => {
+      const outsideDir = path.parse(process.cwd()).root;
+      const result = await runTerminalCommand({
+        command: 'node',
+        args: ['--version'],
+        workingDirectory: outsideDir,
+      });
+      assert.equal(result.success, false);
+      assert.match(result.stderr, /workingDirectory .* must reside within/i);
+    });
+
+    test('scrubs host secrets from child process environment', async () => {
+      process.env.GITHUB_TOKEN = 'ghp_terminal_secret_value';
+      try {
+        const result = await runTerminalCommand({
+          command: 'node',
+          args: ['-e', 'console.log(process.env.GITHUB_TOKEN ? "LEAKED" : "SCRUBBED")'],
+        });
+        assert.equal(result.success, true);
+        assert.match(result.stdout, /SCRUBBED/);
+      } finally {
+        delete process.env.GITHUB_TOKEN;
+      }
     });
   });
 

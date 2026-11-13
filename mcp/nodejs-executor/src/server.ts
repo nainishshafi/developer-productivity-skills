@@ -4,6 +4,7 @@ import { executeCode } from './tools/execute-code.js';
 import { evaluateExpression } from './tools/evaluate-expr.js';
 import { executeFile } from './tools/execute-file.js';
 import { runPackageScript } from './tools/package-script.js';
+import { runTerminalCommand } from './tools/terminal-command.js';
 import { getRuntimeInfo } from './tools/runtime-info.js';
 
 async function handleToolExecution<T>(
@@ -89,6 +90,20 @@ export function createServer(): McpServer {
       timeout: z.number().int().min(100).max(300000).default(60000).optional().describe('Timeout in milliseconds'),
     },
     (params) => handleToolExecution(() => runPackageScript(params))
+  );
+
+  // Tool: run_terminal_command
+  server.tool(
+    'run_terminal_command',
+    'Execute a controlled terminal CLI command without a shell (shell: false). Enforces executable-only command names, blocks raw shells and destructive commands, rejects shell metacharacters, confines workingDirectory to workspace/temp, and scrubs host secrets.',
+    {
+      command: z.string().describe('Executable binary name or path (no spaces or shell metacharacters, e.g. "git", "node", "pytest")'),
+      args: z.array(z.string()).optional().describe('Command-line arguments passed safely as an array'),
+      workingDirectory: z.string().optional().describe('Working directory within workspace or temp directory'),
+      environmentVariables: z.record(z.string(), z.string()).optional().describe('Optional environment variable overrides'),
+      timeout: z.number().int().min(100).max(300000).default(30000).optional().describe('Execution timeout in milliseconds'),
+    },
+    (params) => handleToolExecution(() => runTerminalCommand(params))
   );
 
   // Tool: get_runtime_info

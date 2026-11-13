@@ -21,7 +21,7 @@ export function getPermissionFlags(
   sandboxMode: SandboxMode = 'strict',
   allowFsWritePaths?: string[]
 ): string[] {
-  if (sandboxMode === 'unrestricted' || !supportsPermissionModel()) {
+  if (!supportsPermissionModel()) {
     return [];
   }
 
@@ -32,8 +32,12 @@ export function getPermissionFlags(
   writePaths.add(tempDir);
   writePaths.add(os.tmpdir());
 
-  if (sandboxMode === 'workspace-write') {
+  if (sandboxMode === 'workspace-write' || sandboxMode === 'unrestricted') {
     writePaths.add(cwd);
+  }
+
+  if (sandboxMode === 'unrestricted') {
+    flags.push('--allow-child-process');
   }
 
   if (allowFsWritePaths) {

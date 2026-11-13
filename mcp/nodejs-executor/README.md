@@ -1,6 +1,6 @@
 # Node.js Executor MCP Server
 
-A Model Context Protocol (MCP) server that provides safe, high-performance execution of JavaScript and TypeScript code, single-expression evaluation, script file execution, and package script automation inside a Node.js runtime.
+A Model Context Protocol (MCP) server that provides a **controlled terminal environment** for CLI command automation (package scripts and hardened child-process execution) alongside sandboxed JavaScript/TypeScript code execution, expression evaluation, and script file execution inside a Node.js runtime.
 
 Designed for AI assistants including **Claude Code**, **Claude Desktop**, **GitHub Copilot**, **Cursor**, and **Antigravity**.
 
@@ -18,7 +18,8 @@ Designed for AI assistants including **Claude Code**, **Claude Desktop**, **GitH
 - **TypeScript Support**: Native TypeScript execution on Node.js 22+ (via `--experimental-strip-types`) with zero transpilation overhead.
 - **Expression Evaluation (`evaluate_expression`)**: Quickly evaluate expressions with detailed type inspection and deep object formatting via `node:util.inspect`.
 - **File Execution (`execute_file`)**: Run `.js`, `.mjs`, `.cjs`, and `.ts` script files from disk with arguments.
-- **Package Scripts (`run_package_script`)**: Execute `npm`, `pnpm`, or `yarn` lifecycle and run scripts from any project's `package.json`.
+- **Package Scripts & CLI Runner (`run_package_script`)**: Execute `npm`, `pnpm`, or `yarn` lifecycle and run scripts from any project's `package.json` without shell-injection risks.
+- **Controlled Terminal Execution (`sandboxMode: "unrestricted"`)**: While `"strict"` (default) and `"workspace-write"` block `child_process`, passing `sandboxMode: "unrestricted"` enables `--allow-child-process` for host CLI commands while **still** enforcing destructive-pattern blocking, host secret scrubbing, and `--allow-fs-write` confinement to the workspace + temp directory.
 - **Runtime Diagnostics (`get_runtime_info`)**: Inspect Node.js version, V8 version, platform, architecture, memory usage, CPU count, and native TypeScript status.
 - **Robust Process Management**: Configurable execution timeouts, process tree termination, stdout/stderr stream truncation limits (512 KB) to prevent memory exhaustion, and automatic temporary file cleanup.
 - **Strict MCP Protocol Compliance**: Communicates over standard I/O (`stdio`) without stdout pollution. All diagnostics and logs route to `stderr`.
@@ -36,7 +37,7 @@ Execute JavaScript or TypeScript code in a dedicated Node.js process.
 - `sandboxMode` (`"strict" | "workspace-write" | "unrestricted"`, optional, default: `"strict"`):
   - `"strict"` (default): Writes/deletions locked to temp directory, `child_process` disabled, host secrets scrubbed.
   - `"workspace-write"`: Allows file writes in current workspace directory, `child_process` disabled, secrets scrubbed.
-  - `"unrestricted"`: Disables the permission sandbox (full host privileges).
+  - `"unrestricted"`: Enables `--allow-child-process` alongside workspace + temp write access, while **still** enforcing destructive-pattern blocking, host secret scrubbing, and `--allow-fs-write` confinement outside the workspace.
 - `allowFsWritePaths` (`string[]`, optional): Specific directories allowed for writes when running in sandbox mode.
 - `timeout` (`number`, optional, default: `30000`, max: `300000`): Timeout in milliseconds.
 - `workingDirectory` (`string`, optional): Working directory for the process.
@@ -86,7 +87,19 @@ Run an npm, pnpm, or yarn script defined in a `package.json`.
 - `args` (`string[]`, optional): Additional CLI arguments appended after `--`.
 - `timeout` (`number`, optional, default: `60000`): Timeout in milliseconds.
 
-### 5. `get_runtime_info`
+### 5. `run_terminal_command`
+Execute an arbitrary non-shell CLI binary in a **controlled terminal environment** (`shell: false`), enforcing blocked-binary checks (`cmd`, `powershell`, `pwsh`, `bash`, `sh`, `diskpart`, `reg`), shell metacharacter rejection, destructive-argument blocking, `workingDirectory` containment (workspace or temp directory), host secret scrubbing, and timeout clamping (`100`–`300000` ms).
+
+**Parameters:**
+- `command` *(required)*: Executable name or path (no spaces or shell metacharacters; raw shells are blocked)
+- `args` *(optional)*: Array of CLI arguments (shell metacharacters rejected)
+- `workingDirectory` *(optional)*: Execution directory (must be within the workspace or OS temp directory)
+- `environmentVariables` *(optional)*: Key-value map of extra environment variables
+- `timeout` *(optional)*: Timeout in ms (clamped `100`–`300000`, default `30000`)
+
+---
+
+### 6. `get_runtime_info`
 Retrieve Node.js host environment diagnostics.
 
 **Parameters:** None.
@@ -187,6 +200,7 @@ mcp/nodejs-executor/
 │   │   ├── execute-code.ts    # execute_code tool handler
 │   │   ├── execute-file.ts    # execute_file tool handler
 │   │   ├── package-script.ts  # run_package_script tool handler
+│   │   ├── terminal-command.ts # run_terminal_command tool handler
 │   │   └── runtime-info.ts    # get_runtime_info tool handler
 │   ├── executor.ts            # Public API Facade
 │   ├── index.ts               # CLI executable & stdio transport entrypoint
