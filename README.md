@@ -39,6 +39,7 @@ These skills provide ready-made workflows for modern software engineering across
 | [`detect-overengineering`](#detect-overengineering) | **Architecture & Quality** | YAGNI audits, layer bloat, trampoline pass-throughs, in-the-loop checks | `"check for over-engineering"` |
 | [`design-pattern-detector`](#design-pattern-detector) | **Architecture & Quality** | Structural AST extraction of design patterns & anti-patterns | `"detect design patterns"` |
 | [`architectural-planning`](#architectural-planning) | **Architecture & Quality** | Interactive system design, Mermaid specs, ADRs & foundational book references | `"plan my architecture"` |
+| [`rag-pipeline`](#rag-pipeline) | **Architecture & Quality** | End-to-end RAG architecture, hybrid search (BM25 + RRF), chunking, reranking & IR evaluation | `"build rag pipeline"` |
 | [`scan-halucinated-tests`](#scan-halucinated-tests) | **Architecture & Quality** | Cross-validates test symbols against AST ground truth | `"scan for hallucinated tests"` |
 | [`trace-code-context`](#trace-code-context) | **Architecture & Quality** | AST symbol extraction, callers/callees & Mermaid graph | `"trace code context"` |
 | [`playwright-bdd-tester`](#playwright-bdd-tester) | **Testing & Quality** | BDD Gherkin & Playwright browser test automation | `"write playwright tests"` |
@@ -144,6 +145,10 @@ Identifies design patterns (Singleton, Factory, Observer, Strategy, Builder, Dec
 ### `architectural-planning`
 Interactively guides architecture design for new or existing applications. Recommends compatible technologies across frontend, backend, persistence, caching, messaging, and deployment, outputting Mermaid diagrams, component breakdowns, data models, and API topologies. Includes comprehensive references to foundational architecture literature (Kleppmann, Nygard, Newman, Richards/Ford, Evans, Fowler, Beck) in `references/architecture-books-and-best-practices.md`.
 - **Trigger phrases:** `"plan my architecture"`, `"design system architecture"`, `"create an architecture document"`, `"help me choose a tech stack"`, `"system design"`.
+
+### `rag-pipeline`
+End-to-end architectural and engineering guidance for designing, building, and evaluating production Retrieval-Augmented Generation (RAG) pipelines. Covers document ingestion & layout/table preservation, structure-aware & contextual/parent-child chunking, Matryoshka (MRL) embeddings, vector databases (`pgvector` `halfvec` HNSW with iterative scan, Qdrant, Milvus, SQLite FTS5), hybrid search (`BM25` + dense vectors + Reciprocal Rank Fusion `RRF`), cross-encoder reranking, query transformations (rewrite, multi-query, step-back, HyDE), grounded generation with citations & abstention, Agentic/Corrective RAG, RAG Triad & offline IR metrics (`Recall@K`, `Precision@K`, `MRR`, `NDCG@K`), and document-level ACL security. Includes zero-dependency CLI utility `rag-pipeline-eval.py`.
+- **Trigger phrases:** `"rag-pipeline"`, `"rag-pipeline-creator"`, `"build rag pipeline"`, `"create rag pipeline"`, `"design rag architecture"`, `"chunking strategy"`, `"hybrid search rag"`, `"vector database indexing"`, `"reranking pipeline"`, `"agentic rag"`, `"evaluate rag pipeline"`, `"rag grounding"`.
 
 ### `scan-halucinated-tests`
 Cross-validates test files against real source code AST to catch phantom functions, non-existent properties, wrong import paths, fabricated constants, bad mocks, and incorrect exception types.
@@ -300,7 +305,7 @@ Reusable MCP servers located in `mcp/` providing protocol-compliant tool integra
 
 ### Skills Automated Validation
 
-Validate all 32 `SKILL.md` frontmatter headers and YAML rules across the repository:
+Validate all 35 `SKILL.md` frontmatter headers and YAML rules across the repository:
 ```bash
 npm run validate:skills --prefix mcp/sql-connector
 ```
@@ -365,6 +370,7 @@ developer-productivity-skills/
 │       ├── python-api-writer/        # FastAPI & Django API architecture pack
 │       ├── python-developer/         # Python 3.10-3.13, Pydantic v2, asyncio pack
 │       ├── python-linter/            # Automated Ruff & Mypy quality runner
+│       ├── rag-pipeline/             # End-to-end RAG architecture, hybrid search & IR evaluation pack
 │       ├── react-developer/          # React 18/19, RSC, Zustand, Query pack
 │       ├── remote-pod-log-analyzer/  # Remote Linux & Kubernetes pod log analysis pack
 │       ├── researcher-poc-tester/    # Empirical PoC benchmarks, safe research & stats runner
