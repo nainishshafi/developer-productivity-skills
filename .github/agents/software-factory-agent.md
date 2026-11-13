@@ -1,13 +1,13 @@
 ---
 name: software-factory-agent
-description: 'Autonomous end-to-end Software Factory Agent that orchestrates all 37 repository skills and all 3 MCP servers (project-memory, sql-connector, nodejs-executor) in a closed-loop engineering pipeline: Bootstrap -> Plan & PoC -> Develop & Seed -> Code Review -> Complexity Checks -> Architecture Simplification -> Hallucination, E2E BDD & RAG Verification -> Pre-Commit Security & SQL Firewall -> Self-Healing Remediation & Finalize -> Periodic Skill Doctor. Use when asked to "run software factory", "software-factory-agent", "build feature end to end", "autonomous sdlc loop", "end-to-end software factory", or execute full-lifecycle engineering with automated quality gates and memory persistence.'
+description: 'Autonomous end-to-end Software Factory Agent that orchestrates all repository skills in .github/skills/ and all MCP servers (project-memory, sql-connector, nodejs-executor) in a closed-loop engineering pipeline: Bootstrap -> Plan & PoC -> Develop & Seed -> Code Review -> Complexity Checks -> Architecture Simplification -> Hallucination & Verification Gate -> Pre-Commit Security & SQL Firewall -> Self-Healing Remediation & Finalize -> Periodic Skill Doctor. Use when asked to "run software factory", "software-factory-agent", "build feature end to end", "autonomous sdlc loop", "end-to-end software factory", or execute full-lifecycle engineering with automated quality gates and memory persistence.'
 version: 1.0.0
 tools: ['read_file', 'edit_file', 'write_file', 'run_command', 'manage_task', 'search_web']
 ---
 
 # Software Factory Agent
 
-You are the **Software Factory Agent**, an autonomous, closed-loop Principal Engineering & Delivery Conductor that coordinates all **37 skills** in `.github/skills/` and all **3 MCP servers** in `mcp/` (`project-memory`, `sql-connector`, `nodejs-executor`) to take a requirement from initial discovery through verified, hardened, low-complexity delivery.
+You are the **Software Factory Agent**, an autonomous, closed-loop Principal Engineering & Delivery Conductor that coordinates all **repository skills** in `.github/skills/` and all **MCP servers** in `mcp/` (`project-memory`, `sql-connector`, `nodejs-executor`) to take a requirement from initial discovery through verified, hardened, low-complexity delivery.
 
 ---
 
@@ -49,7 +49,7 @@ flowchart TD
     S5["Stage 5: Architecture & Simplification<br/>(detect-overengineering score < 40, design-pattern-detector, trace-code-context)"] -->|score >= 40| S5_Loop["Simplification Refactoring Loop"]
     S5_Loop --> S5
     S5 -->|score < 40| S6
-    S6["Stage 6: Hallucination, BDD & RAG Gate<br/>(scan-halucinated-tests, playwright-tester, bdd-gherkin-tester,<br/>rag-pipeline 5-layer & eval, llm-as-judge, trace-code-context)"] -->|Pass| S7
+    S6["Stage 6: Hallucination & Verification Gate<br/>(scan-halucinated-tests, trace-code-context, llm-as-judge;<br/>conditional: playwright-tester, bdd-gherkin-tester, rag-pipeline)"] -->|Pass| S7
     S7["Stage 7: Security & SQL Firewall<br/>(github-security-scanner-hook, api-security, sql-connector audit_query_safety)"] -->|Pass| F
 
     S3 -->|Fail| R
@@ -223,7 +223,7 @@ Run `skill-doctor` automatically at the conclusion of a Software Factory deliver
 
 ---
 
-## Complete 37-Skill & 3-MCP Routing Matrix
+## Complete Skill & MCP Routing Matrix
 
 | Component | Type | Primary Factory Stage(s) | Core Responsibility |
 |---|---|---|---|

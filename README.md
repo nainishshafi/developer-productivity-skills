@@ -4,12 +4,13 @@ A curated suite of enterprise-grade AI skills and Model Context Protocol (MCP) s
 
 Designed as **architectural guidance, decision frameworks, and engineering heuristics for AI agents** rather than rigid or deterministic rules — empowering agents to respect existing codebase baselines, reason through real-world trade-offs, and deliver high-signal, pragmatic engineering solutions.
 
-These skills provide ready-made workflows for modern software engineering across nine core engineering disciplines:
+These skills provide ready-made workflows for modern software engineering across ten core engineering disciplines:
 
 - **🏗️ Architectural Planning & Trade-Offs**: Interactive system design, Mermaid modeling, component contracts, and Architecture Decision Records (ADRs) grounded in established literature (Kleppmann, Nygard, Newman, Evans, Fowler).
 - **📦 Language-Specific Engineering Packs**: Modular, context-optimized guides for modern runtimes (Java 21/25 Virtual Threads, TypeScript 5+ branded types, Python 3.10–3.13 Pydantic v2, C# 12/13 Minimal APIs, React 19 RSC, PowerShell 7+), each with embedded anti-bloat guardrails.
 - **🚀 Multi-Agent SDLC Orchestration**: End-to-end 7-stage pipeline (`plan` $\to$ `develop` $\to$ `codereview` $\to$ `complexitychecks` $\to$ `architecturechecks` $\to$ `halucinationchecks` $\to$ `securitychecks`) enforcing stage-isolated context handoffs to prevent context pollution and attention drift.
 - **💾 Project Memory Bus**: Long-term state persistence via SQLite (`.project-memory/memory.db`) with 40% semantic hybrid search, strictly partitioning knowledge into permanent architecture truths (`ledger`), active WIP handoffs (`sidecar`), and stage recaps with mandatory error learnings (`journal`).
+- **🧬 Continuous Skill Evolution (`skill-doctor`)**: Periodically harvests unprocessed `journal` and `ledger` learnings from `project-memory`, updates existing skill submodules without router bloat or scaffolds new skills via `skill-creator`, audits frontmatter/links, and marks processed learnings `promoted` or `skipped`.
 - **🛡️ In-The-Loop Over-Engineering Defense**: Continuous AST signal extraction (`detect-overengineering`) embedded directly into four loops: developer inner loop, PR review audits, architecture gates (triggering an automated simplification loop when score $\ge 40$), and bug fixes (anti-fix-bloat).
 - **⏱️ Asymptotic Big-O Complexity Audits**: Algorithmic time and space profiling ($O(1) \dots O(2^n)$), detecting hidden quadratic collection traps (`.includes()` in loops), and database query execution plan audits ($O(N)$ table scans).
 - **🔬 Empirical Research & PoC Benchmarking**: Validates architectural trade-offs through isolated side-by-side testbeds (`scratch/pocs/`) with automated JIT warmup discarding, monotonic timers, and multi-iteration statistical distributions (Median P50, P95, P99, StdDev, ops/sec) to empirically measure real-world performance (e.g., Virtual Threads I/O vs CPU concurrency, Polars Arrow vs NumPy SIMD, DB batching vs cursor streaming).
@@ -190,7 +191,8 @@ Automates and coordinates end-to-end multi-agent software engineering workflows 
   - `journal`: Stage execution recaps containing BOTH distilled work summary AND mandatory learnings / traps avoided.
 - **In-The-Loop Over-Engineering Detection:** Embeds `detect-overengineering` across development self-checks, code review diff audits, architecture gates (triggering an automated simplification loop when score $\ge 40$), and defect remediation (anti-fix-bloat guardrail).
 - **Remediation & Circuit Breaker:** Integrates `troubleshoot-and-fix` with an isolated reproduction testbed and strict 3-iteration circuit breaker.
-- **CLI Context Manager:** `.\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py` manages run state, stage handoff payloads, and `check-overengineering` audits.
+- **CLI Context Manager:** `.\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py` manages run state, stage handoff payloads, `check-overengineering` audits, `report` generation (with pending-learning counts), and `skill-doctor` diagnostics.
+- **Periodic Skill Evolution:** Integrates `skill-doctor` at finalization when `>= 3` unprocessed learnings accumulate or remediation ran during delivery.
 - **Trigger phrases:** `"orchestrate a feature"`, `"run full development pipeline"`, `"plan-develop-review"`, `"agent orchestrator"`, `"run full lifecycle checks"`.
 
 ### `llm-as-judge`
@@ -243,15 +245,16 @@ Scaffolds and writes new skills following repository conventions. Supports **Mod
 - **Trigger phrases:** `"create a new skill"`, `"add a skill"`, `"write a skill"`, `"scaffold a skill"`, `"build a skill"`.
 
 ### `skill-doctor`
-Closed-loop skill evolution utility that periodically harvests unprocessed `journal` and `ledger` learnings from `project-memory`, triages them against existing skills, updates modular submodules without router bloat or scaffolds new skills via `skill-creator`, audits all skill frontmatter/links, and marks processed learnings as `promoted` or `skipped`.
+Closed-loop skill evolution utility that periodically harvests unprocessed `journal` and `ledger` learnings from `project-memory`, triages them against existing skills (`UPDATE_EXISTING_SKILL`, `CREATE_NEW_SKILL`, `SKIP_TRANSIENT`), updates modular submodules without router bloat or scaffolds new skills via `skill-creator`, audits all skill frontmatter/links, and marks processed learnings as `promoted` or `skipped`.
+- **CLI Utility:** `.\.venv\Scripts\python.exe .github/skills/skill-doctor/scripts/skill-doctor.py` (`diagnose`, `mark`, `audit-skills`).
 - **Trigger phrases:** `"skill doctor"`, `"run skill doctor"`, `"update skills from memory"`, `"evolve skills from learnings"`, `"promote learnings to skills"`, `"audit skill health"`.
 
 ### `github-security-scanner-hook`
-Scans staged files for secrets and code vulnerabilities prior to git commits using `detect-secrets` and 24 Semgrep OWASP rules (command injection, path traversal, hardcoded tokens, XSS, dangerous subprocesses).
+Scans staged files for secrets and code vulnerabilities prior to git commits using `detect-secrets` and 24 Semgrep OWASP rules (command injection, path traversal, hardcoded tokens, hardcoded personal paths/PII, XSS, dangerous subprocesses). Enforces executing concrete scanner rules (`scan-staged.py`) against diffs rather than manual visual sign-off.
 - **Trigger phrases:** `"scan for security vulnerabilities"`, `"check for secrets in code"`, `"set up a pre-commit security hook"`, `"scan staged files for secrets"`.
 
 ### `python-linter`
-Runs Ruff (linting and formatting) and Mypy (type checking) with automated fixes on Python projects.
+Runs Ruff (linting and formatting) and Mypy (type checking) with automated fixes on Python projects, strictly resolving `.\.venv\Scripts\python.exe` (or `uv`) to avoid Windows Store `python` stub failures.
 - **Trigger phrases:** `"lint python"`, `"run the linter"`, `"fix linting errors"`, `"run ruff"`, `"format python code"`, `"run mypy"`.
 
 ### `sync-github-forks`
@@ -267,11 +270,11 @@ Dual-phase keyword and semantic extraction across repository README files with `
 ## 💾 6. Context & Long-Term Memory (MCP Skills)
 
 ### `save-memory`
-Persists high-signal project memory into the `project-memory` MCP server. Partitions state into `ledger` (permanent architecture decisions), `sidecar` (transient active WIP context), and `journal` (session summaries and mandatory learnings).
+Persists high-signal project memory into the `project-memory` MCP server. Partitions state into `ledger` (permanent architecture decisions), `sidecar` (transient active WIP context), and `journal` (session summaries and mandatory learnings), enforcing `node:sqlite` (`DatabaseSync`), parameterized queries, workspace-bound DB paths, and zero-vector boundary stripping.
 - **Trigger phrases:** `"save memory"`, `"record memory"`, `"save to ledger"`, `"save to sidecar"`, `"record mistake"`, `"save learning"`.
 
 ### `load-memory`
-Retrieves concise memories using hybrid search ($0.40 \times \text{Semantic Cosine} + 0.60 \times \text{Lexical Overlap}$) across 256-dimensional subword embeddings without context-polluting raw logs.
+Retrieves concise memories using hybrid search ($0.40 \times \text{Semantic Cosine} + 0.60 \times \text{Lexical Overlap}$) across 256-dimensional subword embeddings without context-polluting raw logs, and supports `get_unprocessed_learnings`, `mark_learning_promoted`, and `skillStatus` filtering for `skill-doctor`.
 - **Trigger phrases:** `"load memory"`, `"check project memory"`, `"retrieve ledger"`, `"check past mistakes"`, `"what did we learn"`.
 
 ### `nodejs-executor`
@@ -306,10 +309,11 @@ Reusable MCP servers located in `mcp/` providing protocol-compliant tool integra
 ## 🤖 Autonomous Agents (`.github/agents/`)
 
 ### `software-factory-agent` (`.github/agents/software-factory-agent.md`)
-End-to-end autonomous Software Factory Conductor binding all **37 skills** and all **3 MCP servers** (`project-memory`, `sql-connector`, `nodejs-executor`) into a closed-loop delivery pipeline:
-- **Closed-Loop Pipeline:** `Bootstrap` $\to$ `Plan & Empirical PoC` $\to$ `Develop & Testbed Seed` $\to$ `Code Review & Lint` $\to$ `Complexity & Query Plans` $\to$ `Architecture Simplification` $\to$ `Hallucination, BDD & RAG Verification` $\to$ `Security & SQL Firewall` $\to$ `Self-Healing Remediation & Finalize` $\to$ `Periodic Skill Doctor`.
+End-to-end autonomous Software Factory Conductor binding all **repository skills** (`.github/skills/`) and all **MCP servers** (`project-memory`, `sql-connector`, `nodejs-executor`) into a closed-loop delivery pipeline:
+- **Closed-Loop Pipeline:** `Bootstrap` $\to$ `Plan & Empirical PoC` $\to$ `Develop & Testbed Seed` $\to$ `Code Review & Lint` $\to$ `Complexity & Query Plans` $\to$ `Architecture Simplification` $\to$ `Hallucination & Verification Gate` $\to$ `Security & SQL Firewall` $\to$ `Self-Healing Remediation & Finalize` $\to$ `Periodic Skill Doctor`.
 - **In-The-Loop Quality & Anti-Bloat:** Enforces `check-overengineering` (`score < 40`) across implementation, PR review, architecture gates (triggering an automated simplification loop when `>= 40`), and bug patches.
 - **Persistent State & Diagnostics:** Coordinates `project-memory` (`ledger`, `sidecar`, `journal` + final `clear_sidecar`), `sql-connector` (`:memory:` fixtures, `explain_query`, `audit_query_safety`), `nodejs-executor` (`benchmark-harness.mjs`), and `troubleshoot-and-fix` + `remote-pod-log-analyzer` with a strict 3-iteration circuit breaker.
+- **Periodic Skill Evolution (Phase 9):** Automatically triggers `skill-doctor` after delivery when unprocessed learnings reach `>= 3` or Phase 8 remediation ran, promoting lessons into skills and marking them via `mark_learning_promoted`.
 - **Trigger phrases:** `"run software factory"`, `"software-factory-agent"`, `"build feature end to end"`, `"autonomous sdlc loop"`, `"end-to-end software factory"`.
 
 ---
@@ -327,7 +331,7 @@ End-to-end autonomous Software Factory Conductor binding all **37 skills** and a
 
 ### Skills & Agents Automated Validation
 
-Validate all 37 `SKILL.md` frontmatter headers, `.github/agents/*.md` definitions, and YAML rules across the repository:
+Validate all `SKILL.md` frontmatter headers, `.github/agents/*.md` definitions, and YAML rules across the repository:
 ```bash
 npm run validate:skills --prefix mcp/sql-connector
 ```
@@ -372,7 +376,7 @@ developer-productivity-skills/
 │   └── sql-connector/                # Multi-engine DB connector with SQL firewall & frontmatter validator
 ├── .github/
 │   ├── agents/
-│   │   └── software-factory-agent.md # Autonomous end-to-end closed-loop agent (37 skills + 3 MCPs)
+│   │   └── software-factory-agent.md # Autonomous end-to-end closed-loop agent (all skills + MCPs)
 │   └── skills/
 │       ├── agent-orchestrator/       # 7-stage multi-agent SDLC workflow with memory bus & in-the-loop OE checks
 │       ├── api-security/             # Universal API authentication & AppSec audit pack
@@ -409,6 +413,7 @@ developer-productivity-skills/
 │       ├── sync-github-forks/        # Automated fork synchronization tool
 │       ├── test-data-creator/        # Synthetic SQL/JSON test data & performance load generator
 │       ├── trace-code-context/       # AST dependency & Mermaid graph generator
-│       └── troubleshoot-and-fix/     # Isolated reproduction testbed framework with circuit breaker
+│       ├── troubleshoot-and-fix/     # Isolated reproduction testbed framework with circuit breaker
+│       └── typescript-developer/     # Modern Node.js 20+, TypeScript 5+, DI & testing pack
 └── README.md
 ```

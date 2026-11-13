@@ -33,7 +33,7 @@ The **Agent Orchestrator** is an automated multi-agent workflow conductor that c
 At each stage, the orchestrator invokes the specialized domain sub-agent, packages bounded context, embeds **`detect-overengineering`** checks directly into the development and remediation loops, tracks sub-agent outputs via **`save-memory`**, selectively retrieves useful context for downstream agents via **`load-memory`**, and evaluates explicit quality gates before proceeding.
 
 > [!TIP]
-> For autonomous end-to-end execution across all **37 skills** and **3 MCP servers** (`project-memory`, `sql-connector`, `nodejs-executor`), invoke the repository's [Software Factory Agent](file:///.github/agents/software-factory-agent.md).
+> For autonomous end-to-end execution across all **repository skills** and **MCP servers** (`project-memory`, `sql-connector`, `nodejs-executor`), invoke the repository's [Software Factory Agent](file:///.github/agents/software-factory-agent.md).
 
 ---
 
@@ -377,7 +377,7 @@ If any quality gate fails (`FAILED` or `BLOCKED`):
 
 ## References
 
-- [Software Factory Agent](file:///.github/agents/software-factory-agent.md) — Autonomous end-to-end closed-loop agent coordinating all 37 skills and 3 MCP servers.
+- [Software Factory Agent](file:///.github/agents/software-factory-agent.md) — Autonomous end-to-end closed-loop agent coordinating all repository skills and MCP servers.
 - [Skill Doctor](file:///.github/skills/skill-doctor/SKILL.md) — Periodic continuous learning skill that promotes `project-memory` learnings into skill updates or new skills.
 - [Detect Overengineering](file:///.github/skills/detect-overengineering/SKILL.md) — Anti-bloat heuristics, YAGNI auditing, and deterministic signal extractor (`extract-signals.py`).
 - [Save Memory](file:///.github/skills/save-memory/SKILL.md) — Persist high-signal project memory into `project-memory` (`ledger`, `sidecar`, `journal`).
