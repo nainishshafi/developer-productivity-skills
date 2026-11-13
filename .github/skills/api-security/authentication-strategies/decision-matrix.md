@@ -21,21 +21,21 @@ Selecting an authentication mechanism is a foundational architectural decision t
 
 ```mermaid
 flowchart TD
-    Start[Who is the caller / client?] --> ClientType{Caller Category}
+    Start["Who is the caller / client?"] --> ClientType{Caller Category}
 
     ClientType -->|First-party Browser SPA / SSR| SameDomain{Same domain as API?}
-    SameDomain -- Yes --> SessionCookie[Stateful Session Cookie<br>HttpOnly, Secure, SameSite=Lax]
-    SameDomain -- No / Multi-Domain --> JWT_Auth[Short-Lived JWT + Refresh Token<br>or OAuth2 PKCE]
+    SameDomain -- Yes --> SessionCookie["Stateful Session Cookie<br/>HttpOnly, Secure, SameSite=Lax"]
+    SameDomain -- No / Multi-Domain --> JWT_Auth["Short-Lived JWT + Refresh Token<br/>or OAuth2 PKCE"]
 
-    ClientType -->|Mobile / Native App| MobileFlow[OAuth 2.1 Authorization Code with PKCE<br>Token in OS Secure Enclave / Keyring]
+    ClientType -->|Mobile / Native App| MobileFlow["OAuth 2.1 Authorization Code with PKCE<br/>Token in OS Secure Enclave / Keyring"]
 
     ClientType -->|Third-Party Developer / B2B| B2BType{Integration Pattern}
-    B2BType -- Standard Developer API --> HashedAPIKey[Hashed API Keys<br>Prefix: sk_live_...<br>Stored as SHA-256 hash]
-    B2BType -- Webhook Delivery / Notification --> HMACSig[HMAC Signature with Timestamp & Secret<br>e.g. Stripe-Signature header]
+    B2BType -- Standard Developer API --> HashedAPIKey["Hashed API Keys<br/>Prefix: sk_live_...<br/>Stored as SHA-256 hash"]
+    B2BType -- Webhook Delivery / Notification --> HMACSig["HMAC Signature with Timestamp & Secret<br/>e.g. Stripe-Signature header"]
 
     ClientType -->|Internal Service-to-Service Microservices| MeshType{Infrastructure Mesh}
-    MeshType -- Zero-Trust Service Mesh / Kubernetes --> mTLS[mTLS with SPIFFE/X.509 Certs]
-    MeshType -- Cloud Microservices without Mesh --> ClientCreds[OAuth 2.0 Client Credentials Grant<br>M2M Signed JWT]
+    MeshType -- Zero-Trust Service Mesh / Kubernetes --> mTLS["mTLS with SPIFFE/X.509 Certs"]
+    MeshType -- Cloud Microservices without Mesh --> ClientCreds["OAuth 2.0 Client Credentials Grant<br/>M2M Signed JWT"]
 ```
 
 ---

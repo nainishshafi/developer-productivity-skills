@@ -1,7 +1,7 @@
 ---
 name: save-memory
 description: Use when the user asks to "save memory", "record memory", "save to ledger", "save to sidecar", "record mistake", "save learning", "remember this decision", "log anti-pattern", "persist task context", or whenever the agent needs to record an architectural decision, active task context, or hard-won lesson learned from mistakes without context bloat.
-version: 1.1.0
+version: 1.1.1
 ---
 
 # Save Memory Skill
@@ -75,7 +75,7 @@ Ensure the returned response contains:
 
 ## Architecture & Security Invariants (`project-memory` MCP)
 
-- **Zero Native C++ Addon Traps on Windows**: Use Node.js 22+ built-in `node:sqlite` (`DatabaseSync`) instead of `better-sqlite3` to avoid `node-gyp` build failures in sandboxed environments.
+- **Zero Native C++ Addon Traps on Windows**: Use Node.js 22+ built-in `node:sqlite` (`DatabaseSync`) instead of `better-sqlite3` to avoid `node-gyp` build failures in sandboxed environments. When invoking `mcp/project-memory` directly with `node` on Node.js `< 22.13.0` (e.g., `v22.12.0`), pass `--experimental-sqlite` or Node will throw `ERR_UNKNOWN_BUILTIN_MODULE: No such built-in module: node:sqlite`.
 - **Path Traversal Defense**: Never expose a raw `dbPath` parameter on MCP tools; keep database resolution confined to `.project-memory/memory.db` (or validated workspace/temp paths).
 - **SQLite Hygiene & Vector Boundary**: Always use parameterized prepared statements (`?`), maintain a long-lived singleton database connection, and strip 256-dimensional embeddings at the DB boundary so vectors never leak into LLM responses.
 

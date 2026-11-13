@@ -83,9 +83,9 @@ flowchart LR
     TopicIn[orders.raw] --> Consumer[Order Consumer]
     Consumer --> Process{Process Message}
     Process -- Success --> Commit[Commit Offset]
-    Process -- Transient Error --> Retry[Exponential Retry Queue (orders.retry-1)]
-    Process -- Corrupted / Poison Pill --> DLQ[Dead Letter Queue (orders.dlq)]
-    DLQ --> Alert[PagerDuty Alert & Inspection Dashboard]
+    Process -- Transient Error --> Retry["Exponential Retry Queue (orders.retry-1)"]
+    Process -- Corrupted / Poison Pill --> DLQ["Dead Letter Queue (orders.dlq)"]
+    DLQ --> Alert["PagerDuty Alert & Inspection Dashboard"]
     DLQ --> Commit
 ```
 
