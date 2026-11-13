@@ -1,6 +1,6 @@
 # Developer Productivity Skills
 
-A curated suite of enterprise-grade AI skills and Model Context Protocol (MCP) servers for **Claude Code**, **Antigravity**, and **GitHub Copilot**. 
+Reusable skills and MCP servers for **Claude Code**, **Antigravity**, and **GitHub Copilot**—covering architecture, language packs, code review, and testing alongside local tools for sandboxed code execution, persistent project memory, and database queries.
 
 Designed as **architectural guidance, decision frameworks, and engineering heuristics for AI agents** — anchored by the autonomous [**`software-factory-agent`**](.github/agents/software-factory-agent.md) — rather than rigid or deterministic rules, empowering agents to respect existing codebase baselines, reason through real-world trade-offs, and deliver high-signal, pragmatic engineering solutions.
 
