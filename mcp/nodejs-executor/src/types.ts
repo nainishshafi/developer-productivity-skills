@@ -55,6 +55,7 @@ export interface ExecutionResult {
   timedOut: boolean;
   error?: string;
   sandboxMode?: SandboxMode;
+  stdoutLogFile?: string;
 }
 
 export interface ExpressionResult {

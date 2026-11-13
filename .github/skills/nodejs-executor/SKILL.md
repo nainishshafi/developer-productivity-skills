@@ -16,7 +16,7 @@ Execute JavaScript and TypeScript code, evaluate expressions, run script files, 
 - **`evaluate_expression`**: Evaluate a single expression or async expression with deep object introspection and type detection.
 - **`execute_file`**: Run an existing `.js`, `.mjs`, `.cjs`, or `.ts` file on disk with command-line arguments.
 - **`run_package_script`**: Execute `npm`, `pnpm`, or `yarn` run scripts from any `package.json` with argument injection protections.
-- **`run_terminal_command`**: Execute non-shell CLI binaries directly (`shell: false`) with blocked-shell enforcement, metacharacter rejection, destructive-argument blocking, `workingDirectory` containment, and host secret scrubbing.
+- **`run_terminal_command`**: Execute non-shell CLI binaries directly (`shell: false`) with blocked-shell enforcement, metacharacter rejection, destructive-argument blocking, `workingDirectory` containment, host secret scrubbing, and automatic timestamped `stdoutLogFile` output.
 - **`get_runtime_info`**: Inspect Node.js version, V8 version, platform, architecture, memory usage, CPU count, and permission model support.
 
 ---
@@ -52,6 +52,7 @@ Every execution defaults to **`strict`** mode for defense-in-depth protection:
    - Ensure arguments do not contain shell metacharacters (`&`, `|`, `;`, `>`, `$`).
 5. **Running direct non-shell CLI binaries (e.g., Python, `rg`, `git`, `dotnet`)**:
    - Use `run_terminal_command` with `command` set to the executable (no spaces, e.g., `".venv/Scripts/python.exe"` or `"rg"`) and `args: [...]`.
+   - Captured `stdout` is also written to a timestamped log file (`<os.tmpdir()>/nodejs-executor-logs/stdout-<timestamp>-<pid>.log`), returned as `stdoutLogFile` in the tool response.
    - Raw shells (`cmd`, `powershell`, `pwsh`, `bash`, `sh`), shell built-ins, pipes (`|`), redirects (`>`), and `args` containing `[&|;><$\n\r]` (including regexes with `|` or `$`) are blocked. For multi-step pipelines or shell-like processing, use `execute_code` with `sandboxMode: "unrestricted"` instead.
 
 ---

@@ -79,6 +79,7 @@ describe('MCP Protocol Integration', () => {
       const parsedTerm = JSON.parse(termContent.text);
       assert.equal(parsedTerm.success, true);
       assert.match(parsedTerm.stdout.trim(), /^v\d+\.\d+\.\d+/);
+      assert.ok(parsedTerm.stdoutLogFile);
     } finally {
       await client.close();
     }

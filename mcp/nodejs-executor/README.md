@@ -97,6 +97,19 @@ Execute an arbitrary non-shell CLI binary in a **controlled terminal environment
 - `environmentVariables` *(optional)*: Key-value map of extra environment variables
 - `timeout` *(optional)*: Timeout in ms (clamped `100`–`300000`, default `30000`)
 
+**Output:** Returns `ExecutionResult` including `stdoutLogFile`, the path to a timestamped log file (`<os.tmpdir()>/nodejs-executor-logs/stdout-<timestamp>-<pid>.log`) containing the captured `stdout`:
+```json
+{
+  "success": true,
+  "exitCode": 0,
+  "stdout": "...",
+  "stderr": "",
+  "durationMs": 42,
+  "timedOut": false,
+  "stdoutLogFile": "<os.tmpdir>/nodejs-executor-logs/stdout-2026-11-13T08-00-00-000Z-12345.log"
+}
+```
+
 **Usage Notes & Examples:**
 You can run any direct non-shell CLI binary (such as `python`, `node`, `git`, `rg`, `grep`, `npm`, `dotnet`, `docker`, `kubectl`) in a controlled terminal environment:
 

@@ -1,3 +1,4 @@
+import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { runProcess } from '../process/runner.js';
@@ -77,11 +78,19 @@ export async function runTerminalCommand(
   }
 
   const env = sanitizeEnvironment(options.environmentVariables);
-  return await runProcess(command, args, {
+  const result = await runProcess(command, args, {
     cwd: targetCwd,
     env,
     timeoutMs,
     shell: false,
   });
+
+  const logDir = path.join(os.tmpdir(), 'nodejs-executor-logs');
+  await fs.mkdir(logDir, { recursive: true });
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const stdoutLogFile = path.join(logDir, `stdout-${timestamp}-${process.pid}.log`);
+  await fs.writeFile(stdoutLogFile, result.stdout, 'utf8');
+
+  return { ...result, stdoutLogFile };
 }
 

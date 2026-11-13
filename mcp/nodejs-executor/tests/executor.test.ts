@@ -359,13 +359,18 @@ describe('Node.js Executor MCP Test Suite', () => {
   });
 
   describe('runTerminalCommand', () => {
-    test('executes a valid non-shell binary with arguments', async () => {
+    test('executes a valid non-shell binary with arguments and writes timestamped stdout log', async () => {
       const result = await runTerminalCommand({
         command: 'node',
         args: ['--version'],
       });
       assert.equal(result.success, true);
       assert.match(result.stdout.trim(), /^v\d+\.\d+\.\d+/);
+      assert.ok(result.stdoutLogFile);
+      assert.match(path.basename(result.stdoutLogFile), /^stdout-\d{4}-\d{2}-\d{2}T.+\.log$/);
+      const logged = await fs.readFile(result.stdoutLogFile, 'utf8');
+      assert.equal(logged, result.stdout);
+      await fs.unlink(result.stdoutLogFile);
     });
 
     test('rejects shell metacharacters in command or args', async () => {
