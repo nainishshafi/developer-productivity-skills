@@ -1,6 +1,6 @@
 # Flakiness Elimination, Auto-Waiting & Network Interception
 
-Techniques for building rock-solid, deterministic Playwright BDD test suites that never fail spuriously.
+Techniques for building rock-solid, deterministic Playwright test suites that never fail spuriously.
 
 ---
 
@@ -44,7 +44,7 @@ await expect(page.getByRole('button', { name: 'Submit' })).toBeEnabled();
 
 ## 3. Authentication State Reuse (`storageState`)
 
-Logging in through the UI before every single Gherkin scenario slows test runs down by 10x. Use Playwright's `storageState` to log in once during setup, save session cookies/tokens to disk, and share state across scenarios:
+Logging in through the UI before every single test slows suites down by 10x. Use Playwright's `storageState` to log in once during setup, save session cookies/tokens to disk, and share state across tests:
 
 ```typescript
 // tests/setup/auth.setup.ts
@@ -75,7 +75,7 @@ Isolate your E2E browser tests from unstable third-party APIs or simulate error 
 
 ```typescript
 // Mock external payment gateway to guarantee fast, deterministic tests
-When('the payment gateway responds with payment approved', async ({ page }) => {
+test('completes checkout when payment gateway approves', async ({ page }) => {
   await page.route('**/api/v1/payments/charge', async (route) => {
     await route.fulfill({
       status: 200,
@@ -83,13 +83,17 @@ When('the payment gateway responds with payment approved', async ({ page }) => {
       body: JSON.stringify({ transactionId: 'TX-9988', status: 'CAPTURED' }),
     });
   });
+
+  // Trigger checkout flow and assert order confirmation...
 });
 
-// Simulate a 500 error from downstream service
-When('the inventory service is temporarily unavailable', async ({ page }) => {
+// Simulate a 503 error from downstream service
+test('displays fallback banner when inventory service is unavailable', async ({ page }) => {
   await page.route('**/api/v1/inventory/**', async (route) => {
     await route.fulfill({ status: 503, body: 'Service Unavailable' });
   });
+
+  // Trigger inventory lookup and assert graceful error state...
 });
 ```
 

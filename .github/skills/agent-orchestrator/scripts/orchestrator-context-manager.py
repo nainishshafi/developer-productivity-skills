@@ -43,15 +43,15 @@ STAGES = [
 STAGE_SKILLS_MAP = {
     "plan": {
         "primary_skill": "architectural-planning",
-        "supporting_skills": ["scan-repo-readme", "trace-code-context", "load-memory", "save-memory", "researcher-poc-tester", "rag-pipeline", "llm-as-judge", "api-security", "caching-queues-reviewer", "sql-executor"],
+        "supporting_skills": ["scan-repo-readme", "trace-code-context", "load-memory", "save-memory", "bdd-gherkin-tester", "researcher-poc-tester", "rag-pipeline", "llm-as-judge", "api-security", "caching-queues-reviewer", "sql-executor"],
         "subagent_role": "Architecture & Planning Specialist",
-        "description": "System design, empirical PoC benchmarking, requirements breakdown, component boundaries, and contract definition.",
+        "description": "BDD-first Gherkin feature specifications, system design, empirical PoC benchmarking, requirements breakdown, component boundaries, and contract definition.",
         "memory_load": "load_memory(category='ledger') for architecture truths; load_memory(category='journal') for design traps.",
         "memory_save": "save_memory(category='ledger') for ADRs/contracts; save_memory(category='journal') for plan learnings.",
     },
     "develop": {
         "primary_skill": "python-developer / typescript-developer / react-developer / java-developer / csharp-developer / python-api-writer / powershell-writer",
-        "supporting_skills": ["rag-pipeline", "detect-overengineering", "load-memory", "save-memory", "troubleshoot-and-fix", "remote-pod-log-analyzer", "legacy-code-modernization", "test-data-creator", "sql-connector", "nodejs-executor", "skill-creator", "sync-github-forks"],
+        "supporting_skills": ["bdd-gherkin-tester", "playwright-tester", "rag-pipeline", "detect-overengineering", "load-memory", "save-memory", "troubleshoot-and-fix", "remote-pod-log-analyzer", "legacy-code-modernization", "test-data-creator", "sql-connector", "nodejs-executor", "skill-creator", "sync-github-forks"],
         "subagent_role": "Core Implementation & Test Engineer",
         "description": "Production code authoring, synthetic testbed seeding, automated unit/integration tests, legacy code modernization, and embedded over-engineering checks in the loop.",
         "memory_load": "load_memory(category='ledger') for plan contracts; load_memory(category='sidecar') for active WIP; search_memory for domain traps.",
@@ -83,7 +83,7 @@ STAGE_SKILLS_MAP = {
     },
     "halucinationchecks": {
         "primary_skill": "scan-halucinated-tests",
-        "supporting_skills": ["trace-code-context", "playwright-bdd-tester", "rag-pipeline", "llm-as-judge", "load-memory", "save-memory"],
+        "supporting_skills": ["trace-code-context", "playwright-tester", "bdd-gherkin-tester", "rag-pipeline", "llm-as-judge", "load-memory", "save-memory"],
         "subagent_role": "Ground-Truth Verification Auditor",
         "description": "Verification of test symbols, non-existent imports, E2E BDD Playwright flows, RAG 5-layer evaluation, and fabricated APIs against ground-truth source code.",
         "memory_load": "load_memory(category='ledger') for verified API contracts; search_memory for mock drift lessons.",

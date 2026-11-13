@@ -1,32 +1,10 @@
-# Page Object Model & Resilient Locators
+# Page Object Model, Resilient Locators & Fixtures
 
-Design maintainable Page Object Models (POM) and use accessible Playwright locators that never break on CSS redesigns.
-
----
-
-## 1. Separation of Responsibilities in BDD
-
-```
-┌─────────────────────────────────┐
-│ Gherkin Feature (.feature)      │  -> Business requirements in human language
-└────────────────┬────────────────┘
-                 │ calls
-┌────────────────▼────────────────┐
-│ Step Definitions (.steps.ts)   │  -> Test orchestration & assertion boundaries
-└────────────────┬────────────────┘
-                 │ calls
-┌────────────────▼────────────────┐
-│ Page Object Models (.ts)        │  -> Encapsulates DOM locators & browser actions
-└────────────────┬────────────────┘
-                 │ drives
-┌────────────────▼────────────────┐
-│ Playwright Browser Engine       │  -> Executes Chromium/Firefox/WebKit actions
-└─────────────────────────────────┘
-```
+Design maintainable Page Object Models (POM), inject them via Playwright fixtures, and use accessible locators that never break on CSS redesigns.
 
 ---
 
-## 2. Playwright Locator Priority Hierarchy
+## 1. Playwright Locator Priority Hierarchy
 
 Always select locators matching how real users interact with the page (accessibility tree) rather than fragile DOM implementation details:
 
@@ -42,7 +20,7 @@ Always select locators matching how real users interact with the page (accessibi
 
 ---
 
-## 3. Reference Page Object Implementation
+## 2. Reference Page Object Implementation (TypeScript)
 
 ```typescript
 // tests/pages/CheckoutPage.ts
@@ -80,11 +58,40 @@ export class CheckoutPage extends BasePage {
 
 ---
 
+## 3. Custom Fixture Injection (`test.extend`)
+
+Never instantiate Page Objects manually inside every test. Inject them as Playwright fixtures so Playwright manages page lifecycle, storage state, and isolation:
+
+```typescript
+// tests/fixtures/testFixtures.ts
+import { test as base } from '@playwright/test';
+import { LoginPage } from '../pages/LoginPage';
+import { CheckoutPage } from '../pages/CheckoutPage';
+
+type CustomPages = {
+  loginPage: LoginPage;
+  checkoutPage: CheckoutPage;
+};
+
+export const test = base.extend<CustomPages>({
+  loginPage: async ({ page }, use) => {
+    await use(new LoginPage(page));
+  },
+  checkoutPage: async ({ page }, use) => {
+    await use(new CheckoutPage(page));
+  },
+});
+
+export { expect } from '@playwright/test';
+```
+
+---
+
 ## 4. Java Page Object Pattern (Playwright Java)
 
 ```java
-// src/test/java/com/example/bdd/pages/CheckoutPage.java
-package com.example.bdd.pages;
+// src/test/java/com/example/e2e/pages/CheckoutPage.java
+package com.example.e2e.pages;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
@@ -125,7 +132,7 @@ public class CheckoutPage {
 using System.Threading.Tasks;
 using Microsoft.Playwright;
 
-namespace MyBddTests.Pages
+namespace MyE2eTests.Pages
 {
     public class CheckoutPage
     {

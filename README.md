@@ -42,7 +42,8 @@ These skills provide ready-made workflows for modern software engineering across
 | [`rag-pipeline`](#rag-pipeline) | **Architecture & Quality** | End-to-end RAG architecture, hybrid search (BM25 + RRF), chunking, reranking & IR evaluation | `"build rag pipeline"` |
 | [`scan-halucinated-tests`](#scan-halucinated-tests) | **Architecture & Quality** | Cross-validates test symbols against AST ground truth | `"scan for hallucinated tests"` |
 | [`trace-code-context`](#trace-code-context) | **Architecture & Quality** | AST symbol extraction, callers/callees & Mermaid graph | `"trace code context"` |
-| [`playwright-bdd-tester`](#playwright-bdd-tester) | **Testing & Quality** | BDD Gherkin & Playwright browser test automation | `"write playwright tests"` |
+| [`playwright-tester`](#playwright-tester) | **Testing & Quality** | End-to-End browser test automation with Microsoft Playwright | `"write playwright tests"` |
+| [`bdd-gherkin-tester`](#bdd-gherkin-tester) | **Testing & Quality** | BDD Gherkin & BDD runner integration (`playwright-bdd`, `pytest-bdd`, Cucumber, Reqnroll) | `"write gherkin feature"` |
 | [`test-data-creator`](#test-data-creator) | **Testing & Quality** | Schema-aware SQL batching, JSON mocks & high-volume load test data (Pareto 80/20) | `"generate test data"` |
 | [`remote-pod-log-analyzer`](#remote-pod-log-analyzer) | **Diagnostics** | Remote Linux & Kubernetes pod log analysis via SSH, kubectl, grep, awk, jq | `"analyze remote logs"` |
 | [`troubleshoot-and-fix`](#troubleshoot-and-fix) | **Diagnostics** | Isolated reproduction testbeds, 3-attempt circuit breaker & anti-fix-bloat | `"troubleshoot and fix"` |
@@ -158,9 +159,14 @@ Cross-validates test files against real source code AST to catch phantom functio
 Generates authoritative ground-truth Markdown context files covering defined symbols, imports, callers, callees, and Mermaid call graphs via AST extraction.
 - **Trigger phrases:** `"trace code context"`, `"analyze this file"`, `"show callers and callees"`, `"generate a code context file"`, `"map dependencies for X"`.
 
-### `playwright-bdd-tester`
-Architectural and engineering guidance for Behavior-Driven Development (BDD) and End-to-End browser test automation using Gherkin and Playwright across TypeScript/Node.js, Python, Java, and C# / .NET. Covers declarative scenario design, step definitions with parameter expressions, Page Object Models with accessible locators, auto-waiting, network mocking (`page.route`), authenticated state reuse (`storageState`), and parallel CI sharding.
-- **Trigger phrases:** `"write playwright tests"`, `"gherkin playwright"`, `"playwright bdd"`, `"write gherkin feature"`, `"e2e browser test"`, `"test with playwright"`, `"cucumber playwright"`, `"playwright java"`, `"playwright c#"`, `"bdd e2e testing"`.
+### `playwright-tester`
+Architectural and engineering guidance for End-to-End (E2E) browser test automation using Microsoft Playwright across TypeScript/Node.js, Python, Java, and C# / .NET. Covers `playwright.config.ts` setup, Page Object Models (POM) with accessible locators, fixture injection, auto-waiting, web-first assertions, network mocking (`page.route`), authenticated state reuse (`storageState`), Trace Viewer diagnostics, and parallel CI sharding.
+- **Trigger phrases:** `"write playwright tests"`, `"playwright e2e"`, `"e2e browser test"`, `"test with playwright"`, `"playwright page object"`, `"playwright locators"`, `"playwright java"`, `"playwright c#"`, `"playwright trace"`.
+- **Supported environments:** TypeScript / Node.js (`@playwright/test`), Python (`pytest-playwright`), Java (`com.microsoft.playwright`), C# / .NET (`Microsoft.Playwright`).
+
+### `bdd-gherkin-tester`
+Architectural and engineering guidance for Behavior-Driven Development (BDD) using Gherkin and BDD test runners across TypeScript/Node.js, Python, Java, and C# / .NET (paired with `playwright-tester` for core Playwright mechanics). Covers declarative scenario design, `bddgen` tag filtering, step definitions with parameter expressions, and BDD fixture injection.
+- **Trigger phrases:** `"write gherkin feature"`, `"gherkin playwright"`, `"playwright bdd"`, `"cucumber"`, `"pytest-bdd"`, `"reqnroll"`, `"bddgen"`, `"bdd e2e testing"`.
 - **Supported environments:** TypeScript / Node.js (`playwright-bdd`), Python (`pytest-bdd`), Java (`playwright` + `cucumber-jvm`), C# / .NET (`Microsoft.Playwright` + `Reqnroll`/`SpecFlow`).
 
 ### `test-data-creator`
@@ -378,7 +384,8 @@ developer-productivity-skills/
 │       ├── llm-as-judge/             # 4 Evaluator Archetypes & multi-agent response evaluation
 │       ├── load-memory/              # Hybrid memory retrieval skill
 │       ├── nodejs-executor/          # MCP wrapper skill for node execution
-│       ├── playwright-bdd-tester/    # Gherkin BDD & Playwright browser test automation
+│       ├── bdd-gherkin-tester/       # Gherkin BDD & BDD runner integration
+│       ├── playwright-tester/        # Playwright E2E browser test automation pack
 │       ├── powershell-writer/        # Modern PowerShell 7+ & 5.1 automation pack
 │       ├── python-api-writer/        # FastAPI & Django API architecture pack
 │       ├── python-developer/         # Python 3.10-3.13, Pydantic v2, asyncio pack

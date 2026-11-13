@@ -169,3 +169,23 @@ In .NET, use **Reqnroll** (the modern open-source successor to SpecFlow) paired 
 }
 ```
 
+---
+
+## 6. Generating & Filtering BDD Specs (`bddgen`)
+
+`playwright-bdd` generates `.spec.js` test wrappers from `.feature` files before test execution:
+
+```bash
+# Step 1: Generate spec files from Gherkin feature files
+npx bddgen
+
+# Step 2: Execute Playwright tests (or combined: "bddgen && playwright test")
+npx playwright test
+
+# Filter scenarios using boolean tag expressions
+npx bddgen --tags "@smoke" && npx playwright test
+npx bddgen --tags "@regression and not (@flaky or @wip)" && npx playwright test
+```
+
+For CI parallel sharding (`--shard`) and Trace Viewer diagnostics (`show-trace`), see [`playwright-tester`](../../playwright-tester/reporting-and-ci/ci-and-reporting.md).
+

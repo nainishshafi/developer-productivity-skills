@@ -1,41 +1,30 @@
 # CI Execution, Sharding & Trace Viewer Diagnostics
 
-Run Gherkin Playwright suites at scale in CI/CD pipelines, parallelize with sharding, and debug failures using the Playwright Trace Viewer.
+Run Playwright suites at scale in CI/CD pipelines, parallelize with sharding, and debug failures using the Playwright Trace Viewer.
 
 ---
 
 ## 1. CLI Commands & Workflow
 
-### Generating & Executing Tests (`playwright-bdd`)
-`playwright-bdd` generates `.spec.js` test wrappers from `.feature` files before test execution:
-
 ```bash
-# Step 1: Generate spec files from Gherkin feature files
-npx bddgen
-
-# Step 2: Execute Playwright tests
+# Run all Playwright tests
 npx playwright test
 
-# Or run both in a single step (npm test script):
-npm run test:e2e # configured as: "bddgen && playwright test"
-```
+# Run a single spec file in headed mode
+npx playwright test tests/e2e/checkout.spec.ts --headed
 
-### Running Scenarios by Tags
-Filter scenarios using standard boolean tag expressions:
+# Open interactive UI mode for local debugging
+npx playwright test --ui
 
-```bash
-# Run only @smoke scenarios
-npx bddgen --tags "@smoke" && npx playwright test
-
-# Run all @regression tests excluding @flaky or @wip
-npx bddgen --tags "@regression and not (@flaky or @wip)" && npx playwright test
+# Filter tests by title
+npx playwright test -g "completes checkout"
 ```
 
 ---
 
 ## 2. Inspecting Failures with Playwright Trace Viewer
 
-When a scenario fails in CI, Playwright generates a complete recorded execution trace zip file (`trace: 'on-first-retry'`).
+When a test fails in CI, Playwright generates a complete recorded execution trace zip file (`trace: 'on-first-retry'`).
 
 The trace captures:
 - Full DOM snapshot before and after every action.
@@ -52,11 +41,11 @@ npx playwright show-trace test-results/checkout-chromium-retry1/trace.zip
 
 ## 3. Parallel Sharding in GitHub Actions CI
 
-Distribute large Gherkin test suites across multiple parallel CI runners:
+Distribute large Playwright test suites across multiple parallel CI runners:
 
 ```yaml
 # .github/workflows/e2e-tests.yml
-name: E2E Playwright BDD Tests
+name: E2E Playwright Tests
 on: [push, pull_request]
 
 jobs:
@@ -77,10 +66,8 @@ jobs:
       - run: pnpm install
       - run: pnpm exec playwright install --with-deps chromium
 
-      - name: Generate BDD Specs & Run Shard
-        run: |
-          npx bddgen
-          npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+      - name: Run Playwright Shard
+        run: npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
 
       - uses: actions/upload-artifact@v4
         if: always()

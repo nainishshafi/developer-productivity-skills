@@ -13,7 +13,7 @@ Focus testing effort on realistic component integration tests rather than brittl
 | **Static Analysis** | TypeScript (`strict`), ESLint (`react-hooks`, `jsx-a11y`) | Instant (IDE/CI) | Props contracts, hook dependency rules, missing alt/ARIA attributes |
 | **Pure Unit Tests** | Vitest / Jest | Sub-millisecond | Formatters, reducers, Zod schemas, complex state selectors, math/date helpers |
 | **Component & Hook Integration** | Vitest + React Testing Library + `userEvent` + MSW v2 | Fast (~5–50 ms/test) | Observable DOM behavior, form validation, custom hooks, TanStack Query/Zustand flows, loading/error states |
-| **End-to-End Browser** | Playwright ([`playwright-bdd-tester`](file:///.github/skills/playwright-bdd-tester/SKILL.md)) | Seconds | Auth cookies/redirects, multi-page navigation, streaming RSC hydration, CSS layout/scroll virtualization |
+| **End-to-End Browser** | Playwright ([`playwright-tester`](file:///.github/skills/playwright-tester/SKILL.md)) | Seconds | Auth cookies/redirects, multi-page navigation, streaming RSC hydration, CSS layout/scroll virtualization |
 
 ---
 

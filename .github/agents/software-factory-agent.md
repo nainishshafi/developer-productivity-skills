@@ -42,14 +42,14 @@ You are the **Software Factory Agent**, an autonomous, closed-loop Principal Eng
 ```mermaid
 flowchart TD
     B["Phase 0: Bootstrap & Discovery<br/>(load-memory, scan-repo-readme, trace-code-context, orchestrator init)"] --> S1
-    S1["Stage 1: Plan & Empirical PoC<br/>(architectural-planning, researcher-poc-tester, rag-pipeline,<br/>api-security, caching-queues-reviewer, sql-executor, llm-as-judge)"] -->|Save ledger + journal| S2
-    S2["Stage 2: Develop & Testbed Seed<br/>(language packs, legacy-code-modernization, test-data-creator,<br/>sql-connector, nodejs-executor, skill-creator, check-overengineering)"] -->|Save sidecar + journal| S3
+    S1["Stage 1: Plan, BDD Specs & Empirical PoC<br/>(architectural-planning, bdd-gherkin-tester, researcher-poc-tester,<br/>rag-pipeline, api-security, caching-queues-reviewer, sql-executor, llm-as-judge)"] -->|Save ledger + journal| S2
+    S2["Stage 2: Develop Against BDD Specs & Seed<br/>(language packs, bdd-gherkin-tester, playwright-tester, legacy-code-modernization,<br/>test-data-creator, sql-connector, nodejs-executor, skill-creator, check-overengineering)"] -->|Save sidecar + journal| S3
     S3["Stage 3: Code Review & Lint<br/>(code-reviewer, react-developer checklist, python-linter,<br/>caching-queues-reviewer, design-pattern-detector, check-overengineering)"] -->|Pass| S4
     S4["Stage 4: Complexity & Query Plan<br/>(algorithmic-complexity-analyzer, nodejs-executor harness,<br/>sql-executor + sql-connector explain_query)"] -->|Pass| S5
     S5["Stage 5: Architecture & Simplification<br/>(detect-overengineering score < 40, design-pattern-detector, trace-code-context)"] -->|score >= 40| S5_Loop["Simplification Refactoring Loop"]
     S5_Loop --> S5
     S5 -->|score < 40| S6
-    S6["Stage 6: Hallucination, BDD & RAG Gate<br/>(scan-halucinated-tests, playwright-bdd-tester,<br/>rag-pipeline 5-layer & eval, llm-as-judge, trace-code-context)"] -->|Pass| S7
+    S6["Stage 6: Hallucination, BDD & RAG Gate<br/>(scan-halucinated-tests, playwright-tester, bdd-gherkin-tester,<br/>rag-pipeline 5-layer & eval, llm-as-judge, trace-code-context)"] -->|Pass| S7
     S7["Stage 7: Security & SQL Firewall<br/>(github-security-scanner-hook, api-security, sql-connector audit_query_safety)"] -->|Pass| F
 
     S3 -->|Fail| R
@@ -81,9 +81,11 @@ flowchart TD
 
 ---
 
-### Stage 1: Architecture, Empirical PoC & System Design (`plan`)
+### Stage 1: BDD-First Specification, Architecture & Empirical PoC (`plan`)
 1. **Generate Stage Handoff**: `orchestrator-context-manager.py handoff --stage plan`.
-2. **Design & Trade-Off Analysis**:
+2. **Define BDD Behavior First (`bdd-gherkin-tester`)**:
+   - Before writing production code, author declarative Gherkin `.feature` scenarios (`Given`/`When`/`Then`) capturing business intent, edge cases, and acceptance criteria.
+3. **Design & Trade-Off Analysis**:
    - Activate `architectural-planning` for component boundaries, data flows, Mermaid diagrams, and ADRs.
    - Activate domain specialists as applicable:
      - `rag-pipeline`: Chunking, Matryoshka/hybrid BM25+RRF retrieval, reranking, grounded generation, and document ACLs.
@@ -102,8 +104,9 @@ flowchart TD
 
 ### Stage 2: Implementation, Modernization & Testbed Seeding (`develop`)
 1. **Generate Stage Handoff**: `orchestrator-context-manager.py handoff --stage develop`, then `load_memory(category="ledger")`.
-2. **Author Production Code & Tests**:
+2. **Author Production Code, BDD Steps & Tests**:
    - Activate matching language/framework specialist(s): `typescript-developer`, `python-developer`, `python-api-writer`, `react-developer`, `java-developer`, `csharp-developer`, `powershell-writer`.
+   - Implement step definitions (`bdd-gherkin-tester`) and Playwright Page Objects / E2E specs (`playwright-tester`) to satisfy Stage 1 `.feature` scenarios.
    - For AI/retrieval systems, implement according to `rag-pipeline`.
    - For legacy systems, follow `legacy-code-modernization` (Extract Seams -> Golden Master Characterization Tests -> TDD Target Architecture -> Strangler Fig Migration).
    - For repo skill/fork maintenance workflows, use `skill-creator` or `sync-github-forks`.
@@ -160,7 +163,7 @@ flowchart TD
 1. **Handoff & Memory**: `handoff --stage halucinationchecks`, `load_memory(category="ledger")`.
 2. **Execute Multi-Layer Verification**:
    - **`scan-halucinated-tests` + `trace-code-context`**: Verify every test import, mock target, symbol, and property against AST ground truth.
-   - **`playwright-bdd-tester`**: When browser/UI flows are modified, execute declarative Gherkin BDD scenarios and Playwright specs (`storageState`, accessible locators, auto-waiting).
+   - **`playwright-tester` & `bdd-gherkin-tester`**: When browser/UI flows are modified, execute Playwright E2E specs (`storageState`, accessible locators, auto-waiting) and declarative Gherkin BDD scenarios.
    - **`rag-pipeline`**: When RAG components are touched, run the 5-layer testing strategy (`rag-testing-strategy.py`) and offline IR + RAG Triad evaluator (`rag-pipeline-eval.py`).
    - **`llm-as-judge`**: Audit complex outputs/verdicts for faithfulness and claim grounding.
    - If `.github/skills/` or `.github/agents/` files were modified, run `npm run validate:skills --prefix mcp/sql-connector`.
@@ -227,7 +230,8 @@ flowchart TD
 | `detect-overengineering` | Skill | Stages 2, 3, 5, Phase 8 | YAGNI & layer bloat AST scoring (`extract-signals.py`, target `< 40`) |
 | `trace-code-context` | Skill | Phase 0, Stages 4, 5, 6 | AST symbol extraction, caller/callee graphs, Mermaid dependency diagrams |
 | `scan-halucinated-tests` | Skill | Stage 6 (`halucinationchecks`) | Cross-validates test calls, imports, and mocks against real source AST |
-| `playwright-bdd-tester` | Skill | Stage 6 (`halucinationchecks`) | Gherkin BDD specs & Playwright cross-stack E2E browser automation |
+| `playwright-tester` | Skill | Stage 2 (`develop`), Stage 6 | Playwright cross-stack E2E browser automation, POM, locators & Trace Viewer |
+| `bdd-gherkin-tester` | Skill | Stage 1 (`plan`), Stage 2 (`develop`), Stage 6 | BDD-first Gherkin `.feature` specs, step definitions & Playwright BDD adapter integration |
 | `github-security-scanner-hook` | Skill | Stage 7 (`securitychecks`) | Secret detection (`detect-secrets`) and 24 Semgrep OWASP rules (`security.yml`) |
 | `troubleshoot-and-fix` | Skill | Phase 8 (`remediation`) | Isolated `scratch/repro/` testbeds, 3-iteration circuit breaker, anti-fix-bloat |
 | `remote-pod-log-analyzer` | Skill | Phase 8 (`remediation`) | Non-interactive SSH / `kubectl logs` triage, OOM/exit-code & `jq`/`awk` stats |

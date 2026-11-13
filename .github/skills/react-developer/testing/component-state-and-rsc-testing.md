@@ -172,7 +172,7 @@ test('renders ErrorBoundary fallback when child throws', () => {
 | **Async React Server Component (RSC)** | Invoke directly as an `async` function and pass resolved JSX to `render(...)` |
 | **Client Component using `next/navigation`** | Mock `useRouter`, `useSearchParams`, and `usePathname` in test setup (`vi.mock('next/navigation', ...)`) |
 | **Server Actions (`'use server'`)** | Test as pure async server functions with in-memory/test DB fixtures, validating `FormData` parsing, auth checks, and `revalidatePath` calls |
-| **Streaming RSC, Cookies, Middleware & Redirects** | Test in a real browser via Playwright ([`playwright-bdd-tester`](file:///.github/skills/playwright-bdd-tester/SKILL.md)) |
+| **Streaming RSC, Cookies, Middleware & Redirects** | Test in a real browser via Playwright ([`playwright-tester`](file:///.github/skills/playwright-tester/SKILL.md)) |
 
 ```tsx
 // app/users/[id]/page.test.tsx
