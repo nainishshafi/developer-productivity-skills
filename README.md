@@ -281,7 +281,9 @@ Retrieves concise memories using hybrid search ($0.40 \times \text{Semantic Cosi
 - **Trigger phrases:** `"load memory"`, `"check project memory"`, `"retrieve ledger"`, `"check past mistakes"`, `"what did we learn"`.
 
 ### `nodejs-executor`
-Provides a **controlled terminal environment** for CLI command automation (`run_terminal_command` for direct non-shell CLI binaries, `run_package_script` for `npm`/`pnpm`/`yarn`, and hardened `unrestricted` child-process execution), script execution (`execute_file`), and JS/TS evaluation (`execute_code`, `evaluate_expression`) via the `nodejs-executor` MCP server with multi-layered sandbox security, destructive-command blocking, secret scrubbing, and C++ permission model isolation.
+Controlled terminal environment and sandboxed JavaScript/TypeScript runner powered by the `nodejs-executor` MCP server:
+- **CLI & Python execution (`run_terminal_command`, `run_package_script`):** Run direct CLI binaries (e.g., `.venv/Scripts/python.exe` for `.py` scripts, `rg`/`grep`/`git grep`, `git`, `dotnet`, `docker`, `kubectl`) and `npm`/`pnpm`/`yarn` scripts with `shell: false`, raw shells blocked, and `workingDirectory` confined to the workspace or temp directory.
+- **JS/TS execution (`execute_code`, `evaluate_expression`, `execute_file`):** Run Node.js and native TypeScript snippets or files with C++ permission model isolation, destructive-pattern blocking, and host secret scrubbing.
 - **Trigger phrases:** `"run nodejs code"`, `"execute javascript"`, `"execute typescript"`, `"run js snippet"`, `"evaluate expression"`, `"run terminal command"`.
 
 ### `sql-connector`
@@ -296,7 +298,8 @@ Reusable MCP servers located in `mcp/` providing protocol-compliant tool integra
 
 ### `nodejs-executor` (`mcp/nodejs-executor/`)
 - **Tools:** `execute_code`, `evaluate_expression`, `execute_file`, `run_package_script`, `run_terminal_command`, `get_runtime_info`
-- **Features:** Controlled terminal environment for CLI command automation (`run_terminal_command` with `shell: false` and blocked raw shells, `npm`/`pnpm`/`yarn` scripts, and hardened `--allow-child-process` execution with workspace write confinement), native type-stripping TypeScript execution on Node.js 22+, destructive-pattern blocking, and host secret scrubbing.
+- **Controlled Terminal (`run_terminal_command`, `run_package_script`):** Run direct CLI binaries (e.g., `.py` scripts via `.venv/Scripts/python.exe`, `rg`/`grep`/`git grep`, `git`, `dotnet`, `docker`, `kubectl`) and `npm`/`pnpm`/`yarn` scripts with `shell: false`, raw shells blocked (`cmd`, `powershell`, `pwsh`, `bash`, `sh`), and `workingDirectory` containment.
+- **Sandboxed JS/TS Execution (`execute_code`, `evaluate_expression`, `execute_file`):** Native Node.js 22+ TypeScript type-stripping, C++ permission model isolation (temp/workspace write confinement), destructive-pattern blocking, and host secret scrubbing.
 
 ### `project-memory` (`mcp/project-memory/`)
 - **Tools:** `save_memory`, `load_memory`, `search_memory`, `get_unprocessed_learnings`, `mark_learning_promoted`, `delete_memory`, `clear_sidecar`

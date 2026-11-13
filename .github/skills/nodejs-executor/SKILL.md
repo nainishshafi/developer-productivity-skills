@@ -50,6 +50,9 @@ Every execution defaults to **`strict`** mode for defense-in-depth protection:
 4. **Running npm / pnpm / yarn lifecycle scripts**:
    - Use `run_package_script` with `script: "build"` or `script: "test"`
    - Ensure arguments do not contain shell metacharacters (`&`, `|`, `;`, `>`, `$`).
+5. **Running direct non-shell CLI binaries (e.g., Python, `rg`, `git`, `dotnet`)**:
+   - Use `run_terminal_command` with `command` set to the executable (no spaces, e.g., `".venv/Scripts/python.exe"` or `"rg"`) and `args: [...]`.
+   - Raw shells (`cmd`, `powershell`, `pwsh`, `bash`, `sh`), shell built-ins, pipes (`|`), redirects (`>`), and `args` containing `[&|;><$\n\r]` (including regexes with `|` or `$`) are blocked. For multi-step pipelines or shell-like processing, use `execute_code` with `sandboxMode: "unrestricted"` instead.
 
 ---
 

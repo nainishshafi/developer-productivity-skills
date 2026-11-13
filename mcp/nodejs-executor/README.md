@@ -92,10 +92,31 @@ Execute an arbitrary non-shell CLI binary in a **controlled terminal environment
 
 **Parameters:**
 - `command` *(required)*: Executable name or path (no spaces or shell metacharacters; raw shells are blocked)
-- `args` *(optional)*: Array of CLI arguments (shell metacharacters rejected)
+- `args` *(optional)*: Array of CLI arguments (shell metacharacters `[&|;><$\n\r]` rejected)
 - `workingDirectory` *(optional)*: Execution directory (must be within the workspace or OS temp directory)
 - `environmentVariables` *(optional)*: Key-value map of extra environment variables
 - `timeout` *(optional)*: Timeout in ms (clamped `100`–`300000`, default `30000`)
+
+**Usage Notes & Examples:**
+You can run any direct non-shell CLI binary (such as `python`, `node`, `git`, `rg`, `grep`, `npm`, `dotnet`, `docker`, `kubectl`) in a controlled terminal environment:
+
+- **Run a Python script (using workspace `.venv`):**
+  ```json
+  { "command": ".venv/Scripts/python.exe", "args": ["path/to/script.py", "--flag", "value"] }
+  ```
+- **Search code with `rg` / `grep` / `git grep`:**
+  ```json
+  { "command": "rg", "args": ["-n", "runTerminalCommand", "mcp/nodejs-executor/src"] }
+  ```
+  ```json
+  { "command": "git", "args": ["grep", "-n", "runTerminalCommand", "mcp/nodejs-executor/src"] }
+  ```
+  *(Note: regex patterns containing `|` or `$` are rejected by the `[&|;><$\n\r]` metacharacter guard.)*
+- **Run Git / build / CLI tools:**
+  ```json
+  { "command": "git", "args": ["status", "-s"] }
+  ```
+- **Shell built-ins & pipelines:** Commands that rely on a shell (`cmd`, `powershell`, `pwsh`, `bash`, `sh`), pipes (`|`), redirects (`>`), or command chaining (`&&`) are blocked by design. Split multi-step work into separate `run_terminal_command` calls or use `execute_code` (`sandboxMode: "unrestricted"` with Node `fs` / `child_process`).
 
 ---
 
