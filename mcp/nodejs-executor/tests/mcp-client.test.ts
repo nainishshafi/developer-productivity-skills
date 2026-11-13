@@ -48,7 +48,7 @@ describe('MCP Protocol Integration', () => {
       });
 
       assert.equal(runtimeResult.isError, undefined);
-      const textContent = runtimeResult.content[0];
+      const textContent = (runtimeResult.content as Array<{ type: string; text: string }>)[0];
       assert.equal(textContent.type, 'text');
       const parsedInfo = JSON.parse(textContent.text);
       assert.ok(parsedInfo.nodeVersion.startsWith('v'));
@@ -62,7 +62,7 @@ describe('MCP Protocol Integration', () => {
       });
 
       assert.equal(execResult.isError, false);
-      const execContent = execResult.content[0];
+      const execContent = (execResult.content as Array<{ type: string; text: string }>)[0];
       const parsedExec = JSON.parse(execContent.text);
       assert.equal(parsedExec.success, true);
       assert.match(parsedExec.stdout, /MCP JSON-RPC SUCCESS!/);
@@ -75,7 +75,7 @@ describe('MCP Protocol Integration', () => {
         },
       });
       assert.equal(termResult.isError, false);
-      const termContent = termResult.content[0];
+      const termContent = (termResult.content as Array<{ type: string; text: string }>)[0];
       const parsedTerm = JSON.parse(termContent.text);
       assert.equal(parsedTerm.success, true);
       assert.match(parsedTerm.stdout.trim(), /^v\d+\.\d+\.\d+/);
