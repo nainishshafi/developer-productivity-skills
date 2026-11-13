@@ -6,7 +6,7 @@ A comprehensive architectural and operational reference for multi-stage software
 
 ## 1. Orchestration Philosophy & Architecture
 
-The **Agent Orchestrator** implements a **Hub-and-Spoke Multi-Agent Architecture** designed to execute end-to-end software development lifecycle (SDLC) tasks with high rigor and zero context degradation.
+The **Agent Orchestrator** implements a **Hub-and-Spoke Multi-Agent Architecture** (automated end-to-end by [Software Factory Agent](file:///.github/agents/software-factory-agent.md)) designed to execute end-to-end software development lifecycle (SDLC) tasks with high rigor and zero context degradation.
 
 ```
                                ┌────────────────────────┐
@@ -42,12 +42,12 @@ The Orchestrator solves this through **Bounded Stage Handoffs**:
 
 | Stage | Name | Primary Skill | Supporting Skills & Memory Bus | Gate Criteria |
 |---|---|---|---|---|
-| **1** | `plan` | `architectural-planning` | `load-memory`, `save-memory`, `trace-code-context`, `llm-as-judge`, `api-security`, `caching-queues-reviewer`, `sql-executor` | Clear problem definition, component boundaries, API/contract specs, cache/queue architecture, and test strategy.<br>**Memory**: `ledger` ADRs + `journal` planning learnings. |
-| **2** | `develop` | Language developer (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer`, `powershell-writer`) | `detect-overengineering`, `load-memory`, `save-memory`, `troubleshoot-and-fix`, `sql-connector` (ephemeral SQLite `:memory:`) | Code implements plan contracts, passes unit/integration tests, zero unhandled errors, passes in-the-loop over-engineering checks.<br>**Memory**: `sidecar` active WIP + `journal` implementation lessons. |
-| **3** | `codereview` | `code-reviewer` | `detect-overengineering`, `load-memory`, `save-memory`, `python-linter`, `design-pattern-detector`, `caching-queues-reviewer` | Clean code conventions, robust error handling, edge-case coverage, queue/cache resilience, zero accidental complexity, zero P0/P1 issues.<br>**Memory**: `journal` review findings & edge-case traps. |
-| **4** | `complexitychecks` | `algorithmic-complexity-analyzer` | `load-memory`, `save-memory`, `trace-code-context`, `sql-executor` (`explain_query`) | Asymptotic time & space efficiency verified, zero hidden quadratic loops, zero unbounded recursion, zero unindexed $O(N)$ full table scans.<br>**Memory**: `journal` Big-O optimizations. |
+| **1** | `plan` | `architectural-planning` | `load-memory`, `save-memory`, `trace-code-context`, `researcher-poc-tester`, `rag-pipeline`, `llm-as-judge`, `api-security`, `caching-queues-reviewer`, `sql-executor` | Clear problem definition, empirical PoC validation, component boundaries, API/contract specs, cache/queue architecture, and test strategy.<br>**Memory**: `ledger` ADRs + `journal` planning learnings. |
+| **2** | `develop` | Language developer (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer`, `powershell-writer`) | `rag-pipeline`, `detect-overengineering`, `load-memory`, `save-memory`, `troubleshoot-and-fix`, `test-data-creator`, `sql-connector` (ephemeral SQLite `:memory:`), `nodejs-executor` | Code implements plan contracts, synthetic testbeds seeded, passes unit/integration tests, zero unhandled errors, passes in-the-loop over-engineering checks.<br>**Memory**: `sidecar` active WIP + `journal` implementation lessons. |
+| **3** | `codereview` | `code-reviewer` | `detect-overengineering`, `load-memory`, `save-memory`, `python-linter`, `design-pattern-detector`, `caching-queues-reviewer`, `react-developer` | Clean code conventions, robust error handling, edge-case coverage, queue/cache resilience, zero accidental complexity, zero P0/P1 issues.<br>**Memory**: `journal` review findings & edge-case traps. |
+| **4** | `complexitychecks` | `algorithmic-complexity-analyzer` | `load-memory`, `save-memory`, `trace-code-context`, `nodejs-executor`, `researcher-poc-tester`, `sql-executor` (`explain_query`) | Asymptotic time & space efficiency verified, zero hidden quadratic loops, zero unbounded recursion, zero unindexed $O(N)$ full table scans.<br>**Memory**: `journal` Big-O optimizations. |
 | **5** | `architecturechecks` | `detect-overengineering` | `load-memory`, `save-memory`, `design-pattern-detector`, `trace-code-context` | No premature abstractions, zero YAGNI violations, layer depth <= 3, low overengineering risk score (< 40).<br>**Memory**: `ledger` architectural baselines + `journal` YAGNI learnings. |
-| **6** | `halucinationchecks` | `scan-halucinated-tests` | `load-memory`, `save-memory`, `trace-code-context` | Zero phantom symbols, all test mock targets verified against ground truth, valid imports.<br>**Memory**: `journal` mock corrections. |
+| **6** | `halucinationchecks` | `scan-halucinated-tests` | `load-memory`, `save-memory`, `trace-code-context`, `playwright-bdd-tester`, `rag-pipeline`, `llm-as-judge` | Zero phantom symbols, all test mock targets verified against ground truth, valid imports, E2E BDD scenarios and RAG Triad evals passing.<br>**Memory**: `journal` mock corrections. |
 | **7** | `securitychecks` | `github-security-scanner-hook`, `api-security` | `load-memory`, `save-memory`, `detect-secrets`, `semgrep`, `sql-connector` (`audit_query_safety`) | Zero leaked credentials/API keys, zero high/critical OWASP vulnerabilities, verified token/cryptographic hygiene, zero destructive SQL.<br>**Memory**: `ledger` security invariants + `journal` vulnerability mitigations. |
 
 ---
@@ -208,13 +208,17 @@ To prevent token waste, cyclic hallucinations, and churn on insoluble defects:
 
 ---
 
-## 6. Integrated Skills Directory
+## 6. Integrated Skills & Agent Directory
 
-The orchestrator integrates the following specialized skills across stages:
+The orchestrator and [Software Factory Agent](file:///.github/agents/software-factory-agent.md) integrate specialized skills across stages:
 
 - [Save Memory](file:///.github/skills/save-memory/SKILL.md) — Persist high-signal project memory into `project-memory` (`ledger`, `sidecar`, `journal`).
 - [Load Memory](file:///.github/skills/load-memory/SKILL.md) — Retrieve project memory and hybrid semantic search without context bloat.
 - [Architectural Planning](file:///.github/skills/architectural-planning/SKILL.md) — System design, interface contracts, and ADR creation.
+- [RAG Pipeline](file:///.github/skills/rag-pipeline/SKILL.md) — Chunking, hybrid search (BM25 + RRF), reranking, 5-layer testing strategy, and IR evaluation.
+- [Researcher PoC Tester](file:///.github/skills/researcher-poc-tester/SKILL.md) — Isolated side-by-side PoC benchmarks (`poc-stats-runner.py`) with P50/P95/P99 statistics.
+- [Test Data Creator](file:///.github/skills/test-data-creator/SKILL.md) — Schema-aware SQL batch seeding (`sql-connector`), streaming JSON mocks, and Pareto skew generation.
+- [Playwright BDD Tester](file:///.github/skills/playwright-bdd-tester/SKILL.md) — Declarative Gherkin BDD scenarios and Playwright E2E browser verification.
 - [API Security](file:///.github/skills/api-security/SKILL.md) — Universal API authentication, token security, and cryptographic audit.
 - [Python API Writer](file:///.github/skills/python-api-writer/SKILL.md) — Production-grade FastAPI, Django, and Django Ninja endpoint engineering.
 - [PowerShell Writer](file:///.github/skills/powershell-writer/SKILL.md) — Production-grade PowerShell scripts, advanced cmdlets, modules, and Pester v5 tests.

@@ -292,6 +292,17 @@ Reusable MCP servers located in `mcp/` providing protocol-compliant tool integra
 
 ---
 
+## 🤖 Autonomous Agents (`.github/agents/`)
+
+### `software-factory-agent` (`.github/agents/software-factory-agent.md`)
+End-to-end autonomous Software Factory Conductor binding all **35 skills** and all **3 MCP servers** (`project-memory`, `sql-connector`, `nodejs-executor`) into a closed-loop delivery pipeline:
+- **Closed-Loop Pipeline:** `Bootstrap` $\to$ `Plan & Empirical PoC` $\to$ `Develop & Testbed Seed` $\to$ `Code Review & Lint` $\to$ `Complexity & Query Plans` $\to$ `Architecture Simplification` $\to$ `Hallucination, BDD & RAG Verification` $\to$ `Security & SQL Firewall` $\to$ `Self-Healing Remediation & Finalize`.
+- **In-The-Loop Quality & Anti-Bloat:** Enforces `check-overengineering` (`score < 40`) across implementation, PR review, architecture gates (triggering an automated simplification loop when `>= 40`), and bug patches.
+- **Persistent State & Diagnostics:** Coordinates `project-memory` (`ledger`, `sidecar`, `journal` + final `clear_sidecar`), `sql-connector` (`:memory:` fixtures, `explain_query`, `audit_query_safety`), `nodejs-executor` (`benchmark-harness.mjs`), and `troubleshoot-and-fix` + `remote-pod-log-analyzer` with a strict 3-iteration circuit breaker.
+- **Trigger phrases:** `"run software factory"`, `"software-factory-agent"`, `"build feature end to end"`, `"autonomous sdlc loop"`, `"end-to-end software factory"`.
+
+---
+
 ## 🚀 Usage & Setup
 
 ### Python Environment Standard (STRICT)
@@ -303,9 +314,9 @@ Reusable MCP servers located in `mcp/` providing protocol-compliant tool integra
 >
 > Bare `python` triggers WindowsApp store redirection stubs in sandboxes, and `py` launcher fallbacks can fail. Using `.\.venv\Scripts\python.exe` ensures 100% reliable execution.
 
-### Skills Automated Validation
+### Skills & Agents Automated Validation
 
-Validate all 35 `SKILL.md` frontmatter headers and YAML rules across the repository:
+Validate all 35 `SKILL.md` frontmatter headers, `.github/agents/*.md` definitions, and YAML rules across the repository:
 ```bash
 npm run validate:skills --prefix mcp/sql-connector
 ```
@@ -349,6 +360,8 @@ developer-productivity-skills/
 │   ├── project-memory/               # SQLite hybrid-search memory MCP server
 │   └── sql-connector/                # Multi-engine DB connector with SQL firewall & frontmatter validator
 ├── .github/
+│   ├── agents/
+│   │   └── software-factory-agent.md # Autonomous end-to-end closed-loop agent (35 skills + 3 MCPs)
 │   └── skills/
 │       ├── agent-orchestrator/       # 7-stage multi-agent SDLC workflow with memory bus & in-the-loop OE checks
 │       ├── api-security/             # Universal API authentication & AppSec audit pack

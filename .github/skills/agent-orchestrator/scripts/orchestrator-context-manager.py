@@ -11,8 +11,6 @@ and in-the-loop over-engineering detection across the 7 SDLC stages:
 5. architecturechecks
 6. halucinationchecks
 7. securitychecks
-6. halucinationchecks
-7. securitychecks
 
 Usage:
     .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py init --task "Feature name or description"
@@ -45,23 +43,23 @@ STAGES = [
 STAGE_SKILLS_MAP = {
     "plan": {
         "primary_skill": "architectural-planning",
-        "supporting_skills": ["trace-code-context", "load-memory", "save-memory", "llm-as-judge", "api-security", "caching-queues-reviewer", "sql-executor"],
+        "supporting_skills": ["scan-repo-readme", "trace-code-context", "load-memory", "save-memory", "researcher-poc-tester", "rag-pipeline", "llm-as-judge", "api-security", "caching-queues-reviewer", "sql-executor"],
         "subagent_role": "Architecture & Planning Specialist",
-        "description": "System design, requirements breakdown, component boundaries, and contract definition.",
+        "description": "System design, empirical PoC benchmarking, requirements breakdown, component boundaries, and contract definition.",
         "memory_load": "load_memory(category='ledger') for architecture truths; load_memory(category='journal') for design traps.",
         "memory_save": "save_memory(category='ledger') for ADRs/contracts; save_memory(category='journal') for plan learnings.",
     },
     "develop": {
-        "primary_skill": "python-developer / typescript-developer / react-developer / java-developer / csharp-developer",
-        "supporting_skills": ["detect-overengineering", "load-memory", "save-memory", "troubleshoot-and-fix", "legacy-code-modernization", "sql-connector"],
+        "primary_skill": "python-developer / typescript-developer / react-developer / java-developer / csharp-developer / python-api-writer / powershell-writer",
+        "supporting_skills": ["rag-pipeline", "detect-overengineering", "load-memory", "save-memory", "troubleshoot-and-fix", "remote-pod-log-analyzer", "legacy-code-modernization", "test-data-creator", "sql-connector", "nodejs-executor", "skill-creator", "sync-github-forks"],
         "subagent_role": "Core Implementation & Test Engineer",
-        "description": "Production code authoring, automated unit/integration tests, legacy code modernization, and embedded over-engineering checks in the loop.",
+        "description": "Production code authoring, synthetic testbed seeding, automated unit/integration tests, legacy code modernization, and embedded over-engineering checks in the loop.",
         "memory_load": "load_memory(category='ledger') for plan contracts; load_memory(category='sidecar') for active WIP; search_memory for domain traps.",
         "memory_save": "save_memory(category='sidecar') for WIP state & touched files; save_memory(category='journal') for implementation lessons.",
     },
     "codereview": {
         "primary_skill": "code-reviewer",
-        "supporting_skills": ["detect-overengineering", "python-linter", "design-pattern-detector", "caching-queues-reviewer", "load-memory", "save-memory"],
+        "supporting_skills": ["detect-overengineering", "python-linter", "design-pattern-detector", "caching-queues-reviewer", "react-developer", "load-memory", "save-memory"],
         "subagent_role": "Senior Code Reviewer",
         "description": "Code quality, readability, style conformance, idiomatic usage, error handling, and in-the-loop over-engineering detection.",
         "memory_load": "load_memory(category='sidecar') for WIP context; search_memory for past review patterns and missed bugs.",
@@ -69,9 +67,9 @@ STAGE_SKILLS_MAP = {
     },
     "complexitychecks": {
         "primary_skill": "algorithmic-complexity-analyzer",
-        "supporting_skills": ["trace-code-context", "sql-executor", "load-memory", "save-memory"],
+        "supporting_skills": ["trace-code-context", "sql-executor", "sql-connector", "nodejs-executor", "researcher-poc-tester", "load-memory", "save-memory"],
         "subagent_role": "Algorithmic Complexity & Performance Auditor",
-        "description": "Asymptotic Big-O time and space complexity analysis, hidden quadratic loop detection, collection efficiency, and recursion depth audits.",
+        "description": "Asymptotic Big-O time and space complexity analysis, empirical doubling benchmarks, hidden quadratic loop detection, and SQL query execution plan audits.",
         "memory_load": "search_memory for known performance bottlenecks, full table scans, or quadratic loop patterns.",
         "memory_save": "save_memory(category='journal') for complexity fixes and asymptotic efficiency learnings.",
     },
@@ -85,9 +83,9 @@ STAGE_SKILLS_MAP = {
     },
     "halucinationchecks": {
         "primary_skill": "scan-halucinated-tests",
-        "supporting_skills": ["trace-code-context", "load-memory", "save-memory"],
+        "supporting_skills": ["trace-code-context", "playwright-bdd-tester", "rag-pipeline", "llm-as-judge", "load-memory", "save-memory"],
         "subagent_role": "Ground-Truth Verification Auditor",
-        "description": "Verification of test symbols, non-existent imports, fabricated APIs, and phantom dependencies against ground-truth source code.",
+        "description": "Verification of test symbols, non-existent imports, E2E BDD Playwright flows, RAG 5-layer evaluation, and fabricated APIs against ground-truth source code.",
         "memory_load": "load_memory(category='ledger') for verified API contracts; search_memory for mock drift lessons.",
         "memory_save": "save_memory(category='journal') for hallucinated test corrections and ground-truth verification learnings.",
     },
