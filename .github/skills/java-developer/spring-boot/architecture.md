@@ -40,6 +40,16 @@ Within a feature package, keep implementation classes package-private where poss
    - Never expose JPA entities directly to the client layer. Use DTO records.
    - Use mapping libraries (e.g., MapStruct) or explicit factory methods to transform between entities and DTOs.
 
+5. **Configuration & Data Connectors (`config/`)**:
+   - **Typed Settings (`@ConfigurationProperties`)**: Bind externalized config (`application.yml`, env vars) to immutable `@ConfigurationProperties` `record`s with `@Validated` (`@NotBlank`, `@Positive`) instead of scattering `@Value` strings across services.
+   - **Database Connectors (`DataSource` / HikariCP)**:
+     - *Single database*: Rely on Spring Boot's auto-configured HikariCP `DataSource` (`spring.datasource.*`) and tune `maximum-pool-size`, `connection-timeout`, and `leak-detection-threshold` rather than writing boilerplate `@Bean DataSource`.
+     - *Multiple databases*: Define one `@Configuration` class per connector (`@ConfigurationProperties(prefix = "app.datasource.reporting")`), creating dedicated `DataSource`, `JdbcClient` (or `EntityManagerFactory`), and `PlatformTransactionManager` beans. Mark the primary store `@Primary` and wire secondary connectors explicitly with `@Qualifier`.
+   - **External API / Service Connectors (`RestClient` / `@HttpExchange`)**:
+     - Wire `RestClient` or declarative `@HttpExchange` interfaces as `@Bean`s in `config/` with explicit connect/read timeouts, base URLs from `@ConfigurationProperties`, and auth/logging interceptors — never instantiate `RestClient.create()` inside `@Service` methods.
+   - **Boundary Rule**: Keep `config/` strictly for bean wiring, connection pools, and connector adapters; never place business logic inside `@Configuration` classes.
+   - See [Modular Configuration & Data Connectors](configuration-and-data-connectors.md) for full `@ConfigurationProperties`, multi-`DataSource`, `RestClient`, `@ConditionalOnProperty`, and `ApplicationContextRunner` implementation examples.
+
 ## Common Pitfalls
 
 - **`@Transactional` self-invocation**: Calling a `@Transactional` method from another method in the same class bypasses the proxy — no transaction. Move it to another bean. Same applies to `@Async` and `@Cacheable`.

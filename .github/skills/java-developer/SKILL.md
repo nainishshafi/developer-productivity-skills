@@ -79,6 +79,7 @@ Load only the modules relevant to the task.
 - [Data Pipelines, Spring Batch & Streaming](data-pipelines/spring-batch-and-streaming.md)
 - [Dependency Injection Patterns & Scopes](spring-boot/dependency-injection.md)
 - [Spring Boot Architecture](spring-boot/architecture.md)
+- [Modular Configuration & Data Connectors](spring-boot/configuration-and-data-connectors.md)
 - [Spring Boot Best Practices](spring-boot/best-practices.md)
 - [Modernization & Migration (JSP/Webflow to Spring Boot 3)](spring-boot/modernization.md)
 - [Testing & Quality Best Practices](testing/best-practices.md)
