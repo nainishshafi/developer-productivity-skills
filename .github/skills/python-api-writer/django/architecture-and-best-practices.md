@@ -4,6 +4,22 @@ Django provides an enterprise-ready foundation with a mature ORM, built-in secur
 
 ---
 
+## Architectural Pattern: Django MVT + Service Layer (vs. MVVM)
+
+Django follows **MVT (Model–View–Template)** rather than frontend **MVVM (Model–View–ViewModel)**. For API backends (DRF / Django Ninja), **follow this consistent layered pattern across every Django app** (`apps/<domain>/`):
+
+| Layer | File | Responsibility (What Goes Here) | Anti-Pattern to Avoid |
+|---|---|---|---|
+| **Model** | `models.py` | DB schema, relationships, custom `QuerySet`/`Manager` | Putting multi-model workflows or HTTP logic in `Model.save()` |
+| **Schema / Serializer** | `schemas.py` / `serializers.py` | Input validation & output shaping (acts as the API **DTO / ViewModel** boundary) | Performing DB writes or business rules inside `Serializer.create()` |
+| **Service** | `services.py` | Business logic, `@transaction.atomic` write boundaries, `transaction.on_commit` | Returning `HttpResponse` or touching `request` objects |
+| **View / Endpoint** | `api.py` / `views.py` | Thin HTTP adapter: parse input schema, call service, return response DTO | Inlining ORM queries or business calculations in views/ViewSets |
+| **Template** *(HTML only)* | `templates/` | Server-rendered HTML (omitted in pure JSON APIs) | Embedding business logic in template tags |
+
+**Agent Rule**: Apply this exact `models.py` → `schemas.py` / `serializers.py` → `services.py` → `api.py` / `views.py` separation uniformly across every app in the Django project.
+
+---
+
 ## 1. Django REST Framework (DRF) vs. Django Ninja
 
 | Architectural Dimension | Django REST Framework (DRF) | Django Ninja |
@@ -133,4 +149,16 @@ class Order(models.Model):
 # Usage in views/services:
 active_orders = Order.objects.active().for_customer(user.id).with_items_count()
 ```
+
+---
+
+## 5. Related Django & Common Reference Docs
+
+- **Django Middleware, Exception Handlers, Auth & Split Settings**: [middleware-and-app-wiring.md](middleware-and-app-wiring.md)
+- **AOP, Decorators & `@method_decorator` for CBVs**: [aop-and-decorators.md](../aspect-oriented-programming/aop-and-decorators.md)
+- **API Security, JWT vs. Sessions, CORS & Rate Limiting**: [api-security.md](../security-and-auth/api-security.md)
+- **Validation & Schemas (Pydantic v2 / Django Ninja & DRF Serializers)**: [data-validation-and-schemas.md](../validation-and-data/data-validation-and-schemas.md)
+- **Async Views & Django Async ORM (`a-` methods)**: [event-loop-hygiene.md](../async-and-concurrency/event-loop-hygiene.md)
+- **ORMs & Connection Pooling**: [orms-and-migrations.md](../persistence/orms-and-migrations.md)
+- **Automated API Testing (`pytest-django`)**: [api-testing-patterns.md](../testing/api-testing-patterns.md)
 

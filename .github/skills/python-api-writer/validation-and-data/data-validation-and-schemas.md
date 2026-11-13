@@ -10,11 +10,11 @@ A primary architectural anti-pattern in both FastAPI and Django is exposing data
 
 ```mermaid
 flowchart LR
-    ClientReq[Client HTTP Request] --> InDTO[1. Request In-DTO / Schema<br>Pydantic / Serializer]
-    InDTO --> DomainEntity[2. Domain Entity<br>Dataclass / Service Object]
-    DomainEntity --> DBModel[3. Database Model<br>SQLAlchemy / Django ORM]
+    ClientReq[Client HTTP Request] --> InDTO["1. Request In-DTO / Schema<br/>Pydantic / Serializer"]
+    InDTO --> DomainEntity["2. Domain Entity<br/>Dataclass / Service Object"]
+    DomainEntity --> DBModel["3. Database Model<br/>SQLAlchemy / Django ORM"]
     DBModel --> DomainEntity
-    DomainEntity --> OutDTO[4. Response Out-DTO / Schema<br>Filtered & Masked]
+    DomainEntity --> OutDTO["4. Response Out-DTO / Schema<br/>Filtered & Masked"]
     OutDTO --> ClientResp[Client HTTP Response]
 ```
 
@@ -187,9 +187,9 @@ In Django REST Framework (DRF), validation occurs in a defined pipeline:
 
 ```mermaid
 flowchart TD
-    RawData[Incoming JSON Payload] --> ToInternal[1. to_internal_value()]
-    ToInternal --> FieldValidation[2. validate_fieldname()]
-    FieldValidation --> ObjectValidation[3. validate() - Cross-Field]
+    RawData[Incoming JSON Payload] --> ToInternal["1. to_internal_value()"]
+    ToInternal --> FieldValidation["2. validate_fieldname()"]
+    FieldValidation --> ObjectValidation["3. validate() - Cross-Field"]
     ObjectValidation --> ValidatedData[validated_data dictionary]
 ```
 

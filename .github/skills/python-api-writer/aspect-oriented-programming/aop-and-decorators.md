@@ -10,10 +10,10 @@ In Python, AOP is implemented primarily through **Decorators**, **FastAPI Depend
 
 ```mermaid
 flowchart TD
-    Req[Incoming Request] --> MW[1. Middleware<br>Applies to ALL requests]
-    MW --> Dep[2. Dependency Injection / Depends<br>Composable, Request-Scoped]
-    Dep --> Route[3. Route Handler / Endpoint]
-    Route --> Dec[4. AOP Decorator<br>Wraps specific functions or services]
+    Req[Incoming Request] --> MW["1. Middleware<br/>Applies to ALL requests"]
+    MW --> Dep["2. Dependency Injection / Depends<br/>Composable, Request-Scoped"]
+    Dep --> Route["3. Route Handler / Endpoint"]
+    Route --> Dec["4. AOP Decorator<br/>Wraps specific functions or services"]
     Dec --> BusinessLogic[Core Business Domain Logic]
 ```
 

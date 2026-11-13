@@ -169,3 +169,15 @@ async def stream_completion(prompt: str):
     )
 ```
 
+---
+
+## 7. Related FastAPI & Common Reference Docs
+
+- **FastAPI Middleware, Exception Handlers, Config & App Wiring**: [middleware-and-app-wiring.md](middleware-and-app-wiring.md)
+- **AOP, Decorators & Middleware vs. `Depends`**: [aop-and-decorators.md](../aspect-oriented-programming/aop-and-decorators.md)
+- **API Security, CORS, JWT & Rate Limiting**: [api-security.md](../security-and-auth/api-security.md)
+- **Pydantic v2 Validation & Payload Size Limits**: [data-validation-and-schemas.md](../validation-and-data/data-validation-and-schemas.md)
+- **Async Event Loop Hygiene**: [event-loop-hygiene.md](../async-and-concurrency/event-loop-hygiene.md)
+- **SQLAlchemy 2.0, Migrations & Pooling**: [orms-and-migrations.md](../persistence/orms-and-migrations.md)
+- **Automated API Testing (`httpx.AsyncClient` & `dependency_overrides`)**: [api-testing-patterns.md](../testing/api-testing-patterns.md)
+

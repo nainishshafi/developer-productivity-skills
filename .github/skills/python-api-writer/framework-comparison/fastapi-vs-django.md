@@ -49,7 +49,7 @@ flowchart TD
     subgraph FastAPI_Stack["FastAPI Architecture (ASGI)"]
         Uvicorn[Uvicorn ASGI Server] --> Starlette[Routing & Middleware]
         Starlette --> PydanticVal[Pydantic v2 Request Validation]
-        PydanticVal --> DepInject[Depends() - DB Session & Auth]
+        PydanticVal --> DepInject["Depends() - DB Session & Auth"]
         DepInject --> AsyncEndpoint[Async Route Handler]
         AsyncEndpoint --> AsyncSQLA[SQLAlchemy 2.0 AsyncSession]
         AsyncSQLA --> AsyncDB[(PostgreSQL)]
