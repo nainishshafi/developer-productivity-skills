@@ -111,4 +111,14 @@ PowerShell's parser can distort command-line arguments containing quotes, spaces
        throw "npm test failed with exit code $LASTEXITCODE"
    }
    ```
+4. **Prevent `$` Variable Expansion in Inline Node.js / Python One-Liners**:
+   PowerShell expands `$var` and `${expr}` inside double-quoted strings (`"..."`), silently corrupting JavaScript template literals (`node -e "... ${val} ..."`):
+   - Use single-quoted PowerShell strings (`'...'`), string concatenation (`+`), backtick-escaped dollar signs (`` `$ ``), or write a dedicated script file instead of inline double-quoted one-liners.
+   ```powershell
+   # Bad: PowerShell interpolates ${name} before Node sees it
+   node -e "console.log(`Hello ${name}`)"
+
+   # Good: Single-quoted literal or dedicated script file
+   node -e 'const name = "world"; console.log(`Hello ${name}`);'
+   ```
 

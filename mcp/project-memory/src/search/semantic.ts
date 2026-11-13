@@ -142,6 +142,9 @@ export function rankMemories(
       tags: record.tags,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
+      skillStatus: record.skillStatus,
+      targetSkill: record.targetSkill ?? null,
+      promotedAt: record.promotedAt ?? null,
       relevanceScore: hybrid,
     }));
 }

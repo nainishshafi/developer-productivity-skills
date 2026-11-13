@@ -1,7 +1,7 @@
 ---
 name: powershell-writer
 description: Writes idiomatic, high-performance, and secure PowerShell scripts, modules, and automation workflows (PowerShell 7.4+ LTS & Windows PowerShell 5.1). Covers advanced functions ([CmdletBinding]), approved verbs, object pipeline streaming, error handling with Set-StrictMode, Pester v5 testing, PSScriptAnalyzer rules, and parallel concurrency. Use when asked to "write powershell", "powershell script", "create powershell module", "powershell-writer", "ps1 script", "pester test", or "powershell automation".
-version: 1.0.0
+version: 1.1.0
 ---
 
 # PowerShell Writer

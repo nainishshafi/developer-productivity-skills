@@ -16,12 +16,12 @@ export async function loadMemory(
   let memories: MemorySummary[];
 
   if (params.category) {
-    memories = activeDb.list(params.category, limit);
+    memories = activeDb.list(params.category, limit, params.skillStatus);
   } else {
     // Balanced load: active sidecar context first, followed by journal session entries and ledger truths
-    const sidecars = activeDb.list('sidecar', 3);
-    const journals = activeDb.list('journal', 3);
-    const ledgers = activeDb.list('ledger', 3);
+    const sidecars = activeDb.list('sidecar', 3, params.skillStatus);
+    const journals = activeDb.list('journal', 3, params.skillStatus);
+    const ledgers = activeDb.list('ledger', 3, params.skillStatus);
     memories = [...sidecars, ...journals, ...ledgers].slice(0, limit);
   }
 

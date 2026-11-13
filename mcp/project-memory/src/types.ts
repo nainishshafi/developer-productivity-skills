@@ -1,4 +1,5 @@
 export type MemoryCategory = 'ledger' | 'sidecar' | 'journal';
+export type SkillPromotionStatus = 'pending' | 'promoted' | 'skipped';
 
 export interface MemoryRecord {
   id: string;
@@ -10,6 +11,9 @@ export interface MemoryRecord {
   embedding: number[];
   createdAt: string;
   updatedAt: string;
+  skillStatus?: SkillPromotionStatus;
+  targetSkill?: string | null;
+  promotedAt?: string | null;
 }
 
 /**
@@ -25,6 +29,9 @@ export interface MemorySummary {
   tags: string[];
   createdAt: string;
   updatedAt: string;
+  skillStatus?: SkillPromotionStatus;
+  targetSkill?: string | null;
+  promotedAt?: string | null;
   relevanceScore?: number;
 }
 
@@ -39,6 +46,7 @@ export interface SaveMemoryParams {
 export interface LoadMemoryParams {
   category?: MemoryCategory;
   limit?: number;
+  skillStatus?: SkillPromotionStatus;
 }
 
 export interface SearchMemoryParams {
@@ -50,4 +58,16 @@ export interface SearchMemoryParams {
 
 export interface DeleteMemoryParams {
   id: string;
+}
+
+export interface GetUnprocessedLearningsParams {
+  category?: 'ledger' | 'journal';
+  tag?: string;
+  limit?: number;
+}
+
+export interface MarkLearningPromotedParams {
+  ids: string[];
+  status: 'promoted' | 'skipped';
+  targetSkill: string;
 }

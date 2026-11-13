@@ -1,7 +1,7 @@
 ---
 name: python-linter
 description: Use when the user asks to "lint python", "run the linter", "fix linting errors", "check python code style", "run ruff", "format python code", "fix imports", "check types", "run mypy", or wants to find and fix Python code quality issues using ruff and mypy.
-version: 1.1.0
+version: 1.2.0
 ---
 
 # Python Linter
@@ -16,12 +16,19 @@ Run `ruff` (lint + format) and optionally `mypy` (type checking) on Python code.
 
 ### Step 1 — Resolve Environment (`uv` or `.venv`)
 
+> [!IMPORTANT]
+> **Always use `.\.venv\Scripts\python.exe` on Windows (`.venv/bin/python` on POSIX) when `.venv` exists.**
+> Never invoke bare `python` (which can map to the Microsoft Store `WindowsApp` stub and fail with `ApplicationFailedException` / `NativeCommandFailed` in sandboxes) or `py` (`No suitable Python runtime found`).
+
 If the project uses `uv` (`uv.lock` present or `uv` on PATH), run `uv run ruff` and `uv run mypy` directly. Otherwise, use `.venv`:
 
 **Windows (PowerShell):**
 ```powershell
-if (-not (Test-Path .venv)) { python -m venv .venv }
-$PYTHON = if (Test-Path .venv\Scripts\python.exe) { ".venv\Scripts\python.exe" } else { "python" }
+if (Test-Path .\.venv\Scripts\python.exe) {
+    $PYTHON = ".\.venv\Scripts\python.exe"
+} else {
+    throw "Workspace .venv not found at .\.venv\Scripts\python.exe; create it from an absolute Python installation before running linters."
+}
 & $PYTHON -m ruff --version *> $null; if ($LASTEXITCODE -ne 0) { & $PYTHON -m pip install ruff }
 & $PYTHON -m mypy --version *> $null; if ($LASTEXITCODE -ne 0) { & $PYTHON -m pip install mypy }
 ```

@@ -33,7 +33,7 @@ The **Agent Orchestrator** is an automated multi-agent workflow conductor that c
 At each stage, the orchestrator invokes the specialized domain sub-agent, packages bounded context, embeds **`detect-overengineering`** checks directly into the development and remediation loops, tracks sub-agent outputs via **`save-memory`**, selectively retrieves useful context for downstream agents via **`load-memory`**, and evaluates explicit quality gates before proceeding.
 
 > [!TIP]
-> For autonomous end-to-end execution across all **35 skills** and **3 MCP servers** (`project-memory`, `sql-connector`, `nodejs-executor`), invoke the repository's [Software Factory Agent](file:///.github/agents/software-factory-agent.md).
+> For autonomous end-to-end execution across all **37 skills** and **3 MCP servers** (`project-memory`, `sql-connector`, `nodejs-executor`), invoke the repository's [Software Factory Agent](file:///.github/agents/software-factory-agent.md).
 
 ---
 
@@ -218,6 +218,9 @@ Sub-agents are executed in isolated contexts. State and bounded handoff payloads
 
 # Generate final delivery report
 .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py report
+
+# Periodically diagnose pending learnings for skill evolution
+.\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py skill-doctor
 ```
 
 ---
@@ -344,10 +347,11 @@ Sub-agents are executed in isolated contexts. State and bounded handoff payloads
    .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage securitychecks --status PASSED --summary "Security gate passed: 0 secrets, 0 vulnerabilities"
    ```
 
-### Step 9: Final Delivery & Cleanup
+### Step 9: Final Delivery, Cleanup & Periodic Skill Evolution
 1. Run `.\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py report`.
 2. Call `clear_sidecar` via `manage-memory` / `load-memory` to flush transient task WIP, preserving permanent `ledger` and `journal` entries.
-3. Present the user with the consolidated stage audit report and verified deliverables.
+3. If the report shows `>= 3` pending unprocessed learnings or remediation ran during delivery, invoke `skill-doctor` (`orchestrator-context-manager.py skill-doctor`) to update or scaffold skills and mark learnings via `mark_learning_promoted`.
+4. Present the user with the consolidated stage audit report and verified deliverables.
 
 ---
 
@@ -373,7 +377,8 @@ If any quality gate fails (`FAILED` or `BLOCKED`):
 
 ## References
 
-- [Software Factory Agent](file:///.github/agents/software-factory-agent.md) — Autonomous end-to-end closed-loop agent coordinating all 35 skills and 3 MCP servers.
+- [Software Factory Agent](file:///.github/agents/software-factory-agent.md) — Autonomous end-to-end closed-loop agent coordinating all 37 skills and 3 MCP servers.
+- [Skill Doctor](file:///.github/skills/skill-doctor/SKILL.md) — Periodic continuous learning skill that promotes `project-memory` learnings into skill updates or new skills.
 - [Detect Overengineering](file:///.github/skills/detect-overengineering/SKILL.md) — Anti-bloat heuristics, YAGNI auditing, and deterministic signal extractor (`extract-signals.py`).
 - [Save Memory](file:///.github/skills/save-memory/SKILL.md) — Persist high-signal project memory into `project-memory` (`ledger`, `sidecar`, `journal`).
 - [Load Memory](file:///.github/skills/load-memory/SKILL.md) — Retrieve project memory and hybrid semantic search without context bloat.

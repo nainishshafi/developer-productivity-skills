@@ -28,8 +28,10 @@ A Model Context Protocol (MCP) server providing persistent project memory backed
 | Tool | Parameters | Description |
 | :--- | :--- | :--- |
 | `save_memory` | `category` (`ledger`\|`sidecar`\|`journal`), `title`, `summary`, `learnings`, `tags?` | Validates, sanitizes, embeds, and saves memory. Requires session summary and learnings. |
-| `load_memory` | `category?`, `limit?` | Loads clean summaries (zero vectors). Defaults to balanced sidecar + journal + ledger context. |
+| `load_memory` | `category?`, `limit?`, `skillStatus?` | Loads clean summaries (zero vectors). Defaults to balanced sidecar + journal + ledger context. |
 | `search_memory` | `query`, `category?`, `limit?`, `minScore?` | Runs 40% semantic + 60% lexical hybrid search across memories. |
+| `get_unprocessed_learnings` | `category?` (`ledger`\|`journal`), `tag?`, `limit?` | Retrieves pending learnings (`skill_status = 'pending'`) for periodic `skill-doctor` review. |
+| `mark_learning_promoted` | `ids`, `status` (`promoted`\|`skipped`), `targetSkill` | Marks reviewed learnings as promoted into a skill or skipped so they are not re-processed. |
 | `delete_memory` | `id` | Deletes a specific memory entry by ID. |
 | `clear_sidecar` | None | Flushes all transient sidecar entries. |
 

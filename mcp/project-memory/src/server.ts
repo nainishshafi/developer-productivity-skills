@@ -3,7 +3,12 @@ import { z } from 'zod';
 import { saveMemory } from './tools/save-memory.js';
 import { loadMemory } from './tools/load-memory.js';
 import { searchMemory } from './tools/search-memory.js';
-import { deleteMemory, clearSidecar } from './tools/manage-memory.js';
+import {
+  deleteMemory,
+  clearSidecar,
+  getUnprocessedLearnings,
+  markLearningPromoted,
+} from './tools/manage-memory.js';
 
 async function handleToolExecution<T>(
   action: () => Promise<T> | T
@@ -81,6 +86,10 @@ export function createServer(): McpServer {
         .default(5)
         .optional()
         .describe('Maximum number of memory summaries to return (default: 5)'),
+      skillStatus: z
+        .enum(['pending', 'promoted', 'skipped'])
+        .optional()
+        .describe('Optional filter by skill-doctor promotion status ("pending", "promoted", or "skipped")'),
     },
     (params) => handleToolExecution(() => loadMemory(params))
   );
@@ -130,6 +139,44 @@ export function createServer(): McpServer {
     'Flush all transient "sidecar" working context (e.g. after a task is finished). Permanent ledger and journal entries remain untouched.',
     {},
     () => handleToolExecution(() => clearSidecar())
+  );
+
+  // Tool: get_unprocessed_learnings
+  server.tool(
+    'get_unprocessed_learnings',
+    'Retrieve journal and ledger memories whose learnings have not yet been reviewed by skill-doctor (skill_status = "pending").',
+    {
+      category: z
+        .enum(['ledger', 'journal'])
+        .optional()
+        .describe('Optional category filter ("ledger" or "journal"). Defaults to both.'),
+      tag: z.string().optional().describe('Optional exact tag filter (e.g. "powershell", "security")'),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(50)
+        .default(20)
+        .optional()
+        .describe('Maximum number of unprocessed learnings to return (default: 20, max: 50)'),
+    },
+    (params) => handleToolExecution(() => getUnprocessedLearnings(params))
+  );
+
+  // Tool: mark_learning_promoted
+  server.tool(
+    'mark_learning_promoted',
+    'Mark one or more memory IDs as "promoted" (codified into a skill) or "skipped" after skill-doctor review so they are not re-processed.',
+    {
+      ids: z.array(z.string()).min(1).describe('Array of memory IDs processed by skill-doctor'),
+      status: z
+        .enum(['promoted', 'skipped'])
+        .describe('Outcome status: "promoted" (updated/created a skill) or "skipped" (already covered or transient)'),
+      targetSkill: z
+        .string()
+        .describe('Target skill name (e.g. "powershell-writer", "new:graphql-developer", or "none")'),
+    },
+    (params) => handleToolExecution(() => markLearningPromoted(params))
   );
 
   return server;

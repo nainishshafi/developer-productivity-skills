@@ -51,7 +51,7 @@ STAGE_SKILLS_MAP = {
     },
     "develop": {
         "primary_skill": "python-developer / typescript-developer / react-developer / java-developer / csharp-developer / python-api-writer / powershell-writer",
-        "supporting_skills": ["bdd-gherkin-tester", "playwright-tester", "rag-pipeline", "detect-overengineering", "load-memory", "save-memory", "troubleshoot-and-fix", "remote-pod-log-analyzer", "legacy-code-modernization", "test-data-creator", "sql-connector", "nodejs-executor", "skill-creator", "sync-github-forks"],
+        "supporting_skills": ["bdd-gherkin-tester", "playwright-tester", "rag-pipeline", "detect-overengineering", "load-memory", "save-memory", "troubleshoot-and-fix", "remote-pod-log-analyzer", "legacy-code-modernization", "test-data-creator", "sql-connector", "nodejs-executor", "skill-creator", "skill-doctor", "sync-github-forks"],
         "subagent_role": "Core Implementation & Test Engineer",
         "description": "Production code authoring, synthetic testbed seeding, automated unit/integration tests, legacy code modernization, and embedded over-engineering checks in the loop.",
         "memory_load": "load_memory(category='ledger') for plan contracts; load_memory(category='sidecar') for active WIP; search_memory for domain traps.",
@@ -304,6 +304,40 @@ def cmd_record(args: argparse.Namespace) -> None:
         print("All pipeline stages completed successfully!")
 
 
+def count_pending_learnings() -> Optional[int]:
+    db_path = Path(".project-memory/memory.db")
+    if not db_path.exists():
+        return None
+    import sqlite3
+    conn = sqlite3.connect(str(db_path))
+    try:
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(memories)").fetchall()}
+        if not cols:
+            return 0
+        if "skill_status" in cols:
+            row = conn.execute(
+                "SELECT COUNT(*) FROM memories WHERE skill_status = 'pending' AND category IN ('journal', 'ledger')"
+            ).fetchone()
+        else:
+            row = conn.execute(
+                "SELECT COUNT(*) FROM memories WHERE category IN ('journal', 'ledger')"
+            ).fetchone()
+        return int(row[0]) if row else 0
+    finally:
+        conn.close()
+
+
+def cmd_skill_doctor(args: argparse.Namespace) -> None:
+    doctor_script = Path(".github/skills/skill-doctor/scripts/skill-doctor.py")
+    if not doctor_script.exists():
+        print(f"Error: skill-doctor.py not found at {doctor_script}", file=sys.stderr)
+        sys.exit(1)
+    import subprocess
+    cmd = [sys.executable, str(doctor_script), "diagnose", "--format", args.format]
+    result = subprocess.run(cmd)
+    sys.exit(result.returncode)
+
+
 def cmd_report(args: argparse.Namespace) -> None:
     run_dir = get_run_dir(args.run_id)
     manifest = load_manifest(run_dir)
@@ -339,6 +373,16 @@ def cmd_report(args: argparse.Namespace) -> None:
                 report_lines.append(f"- `{art}`")
     if not has_artifacts:
         report_lines.append("_No discrete file artifacts registered in manifest._")
+
+    pending_learnings = count_pending_learnings()
+    if pending_learnings is not None:
+        report_lines.append("\n## Continuous Learning & Skill Doctor Status\n")
+        trigger_note = (
+            "Periodic threshold reached (>= 3) — run `skill-doctor` now."
+            if pending_learnings >= 3
+            else "Below periodic threshold (< 3); run `skill-doctor` if Phase 8 remediation occurred."
+        )
+        report_lines.append(f"- **Pending Unprocessed Learnings:** `{pending_learnings}` ({trigger_note})")
 
     report_content = "\n".join(report_lines) + "\n"
     report_file = run_dir / "summary-report.md"
@@ -444,6 +488,10 @@ def main() -> None:
     p_report = subparsers.add_parser("report", help="Generate full markdown report")
     p_report.add_argument("--run-id", help="Optional run ID (defaults to latest)")
 
+    # skill-doctor
+    p_doctor = subparsers.add_parser("skill-doctor", help="Run periodic skill-doctor diagnostics on pending memory learnings")
+    p_doctor.add_argument("--format", choices=["text", "json"], default="text")
+
     # check-overengineering
     p_check_oe = subparsers.add_parser("check-overengineering", help="Audit files for over-engineering and accidental complexity in the loop")
     p_check_oe.add_argument("--file", help="Path to single source file to audit")
@@ -466,6 +514,8 @@ def main() -> None:
         cmd_check_overengineering(args)
     elif args.subcommand == "report":
         cmd_report(args)
+    elif args.subcommand == "skill-doctor":
+        cmd_skill_doctor(args)
 
 
 if __name__ == "__main__":

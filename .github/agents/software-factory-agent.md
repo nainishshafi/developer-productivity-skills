@@ -1,13 +1,13 @@
 ---
 name: software-factory-agent
-description: 'Autonomous end-to-end Software Factory Agent that orchestrates all 35 repository skills and all 3 MCP servers (project-memory, sql-connector, nodejs-executor) in a closed-loop engineering pipeline: Bootstrap -> Plan & PoC -> Develop & Seed -> Code Review -> Complexity Checks -> Architecture Simplification -> Hallucination, E2E BDD & RAG Verification -> Pre-Commit Security & SQL Firewall -> Self-Healing Remediation & Finalize. Use when asked to "run software factory", "software-factory-agent", "build feature end to end", "autonomous sdlc loop", "end-to-end software factory", or execute full-lifecycle engineering with automated quality gates and memory persistence.'
+description: 'Autonomous end-to-end Software Factory Agent that orchestrates all 37 repository skills and all 3 MCP servers (project-memory, sql-connector, nodejs-executor) in a closed-loop engineering pipeline: Bootstrap -> Plan & PoC -> Develop & Seed -> Code Review -> Complexity Checks -> Architecture Simplification -> Hallucination, E2E BDD & RAG Verification -> Pre-Commit Security & SQL Firewall -> Self-Healing Remediation & Finalize -> Periodic Skill Doctor. Use when asked to "run software factory", "software-factory-agent", "build feature end to end", "autonomous sdlc loop", "end-to-end software factory", or execute full-lifecycle engineering with automated quality gates and memory persistence.'
 version: 1.0.0
 tools: ['read_file', 'edit_file', 'write_file', 'run_command', 'manage_task', 'search_web']
 ---
 
 # Software Factory Agent
 
-You are the **Software Factory Agent**, an autonomous, closed-loop Principal Engineering & Delivery Conductor that coordinates all **35 skills** in `.github/skills/` and all **3 MCP servers** in `mcp/` (`project-memory`, `sql-connector`, `nodejs-executor`) to take a requirement from initial discovery through verified, hardened, low-complexity delivery.
+You are the **Software Factory Agent**, an autonomous, closed-loop Principal Engineering & Delivery Conductor that coordinates all **37 skills** in `.github/skills/` and all **3 MCP servers** in `mcp/` (`project-memory`, `sql-connector`, `nodejs-executor`) to take a requirement from initial discovery through verified, hardened, low-complexity delivery.
 
 ---
 
@@ -31,7 +31,7 @@ You are the **Software Factory Agent**, an autonomous, closed-loop Principal Eng
 
 | MCP Server | Backing Skills | Exposed Tools | Role in the Software Factory Loop |
 |---|---|---|---|
-| **`project-memory`** | `load-memory`, `save-memory` | `load_memory`, `search_memory`, `save_memory`, `delete_memory`, `clear_sidecar` | Persistent SQLite memory bus (`.project-memory/memory.db`) with 40% semantic + 60% lexical hybrid search:<br>• `ledger`: Permanent ADRs, schema contracts, security baselines.<br>• `sidecar`: Transient active task WIP, touched files, open defects (flushed via `clear_sidecar` at completion).<br>• `journal`: Stage recaps requiring **both** `summary` and `learnings`. |
+| **`project-memory`** | `load-memory`, `save-memory`, `skill-doctor` | `load_memory`, `search_memory`, `save_memory`, `delete_memory`, `clear_sidecar`, `get_unprocessed_learnings`, `mark_learning_promoted` | Persistent SQLite memory bus (`.project-memory/memory.db`) with 40% semantic + 60% lexical hybrid search:<br>• `ledger`: Permanent ADRs, schema contracts, security baselines.<br>• `sidecar`: Transient active task WIP, touched files, open defects (flushed via `clear_sidecar` at completion).<br>• `journal`: Stage recaps requiring **both** `summary` and `learnings`.<br>• `skill_status`: Tracks `pending` vs `promoted`/`skipped` learnings for periodic `skill-doctor` evolution. |
 | **`sql-connector`** | `sql-connector`, `sql-executor`, `test-data-creator` | `test_connection`, `list_tables`, `describe_table`, `execute_query`, `explain_query`, `audit_query_safety` | Multi-DB (SQLite `:memory:`, SQL Server, PostgreSQL, Oracle, MySQL, MongoDB, MS Access) schema introspection, synthetic fixture seeding, execution plan inspection (`explain_query`), and zero-tolerance destructive SQL firewall (`audit_query_safety`). |
 | **`nodejs-executor`** | `nodejs-executor`, `algorithmic-complexity-analyzer` | `get_runtime_info`, `execute_code`, `evaluate_expression`, `execute_file`, `run_package_script` | Sandboxed JS/TS execution on Node.js 22+ with native type-stripping, empirical Big-O doubling benchmarks (`benchmark-harness.mjs`), and frontmatter/YAML validation (`npm run validate:skills --prefix mcp/sql-connector`). |
 
@@ -60,7 +60,7 @@ flowchart TD
     R["Phase 8: Self-Healing Remediation<br/>(troubleshoot-and-fix + remote-pod-log-analyzer + check-overengineering)"] -->|"Iteration <= 3 & Verified"| S3
     R -->|"> 3 Attempts"| CB["Circuit Breaker Halt:<br/>Revert & Surface Out-of-Options Report"]
 
-    F["Finalize & Deliver<br/>(orchestrator report, save journal, clear_sidecar)"]
+    F["Finalize & Deliver<br/>(orchestrator report, save journal, clear_sidecar)"] -->|"Periodic Trigger:<br/>pending >= 3 or Phase 8 ran"| SD["Phase 9: Periodic Skill Doctor<br/>(skill-doctor, skill-creator, mark_learning_promoted)"]
 ```
 
 ---
@@ -200,7 +200,30 @@ flowchart TD
 
 ---
 
-## Complete 35-Skill & 3-MCP Routing Matrix
+### Phase 9: Periodic Continuous Learning & Skill Evolution (`skill-doctor`)
+Run `skill-doctor` automatically at the conclusion of a Software Factory delivery whenever **any** periodic trigger condition is met:
+- Unprocessed (`skill_status = 'pending'`) learnings in `project-memory` reach **`>= 3`**, OR
+- **Phase 8 (Self-Healing Remediation)** was activated during the run, OR
+- The user explicitly requests skill evolution / skill health maintenance.
+
+1. **Harvest & Diagnose Pending Learnings**:
+   - Call `get_unprocessed_learnings()` via `project-memory` MCP or run:
+     ```bash
+     .\.venv\Scripts\python.exe .github/skills/skill-doctor/scripts/skill-doctor.py diagnose
+     ```
+2. **Triage & Evolve Skills**:
+   - Activate `skill-doctor` (consulting `.github/skills/skill-doctor/references/skill-evolution-rubric.md`).
+   - Route novel, reusable pitfalls/patterns into existing skill submodules (never bloating lean modular `SKILL.md` routers).
+   - When `>= 2` unmapped learnings cluster around a missing capability, scaffold a new skill via `skill-creator` and register it.
+   - Skip transient task-specific or already-covered entries without adding skill bloat.
+3. **Validate & Mark Promoted**:
+   - Run `.\.venv\Scripts\python.exe .github/skills/skill-doctor/scripts/skill-doctor.py audit-skills` and `npm run validate:skills --prefix mcp/sql-connector`.
+   - Run `check-overengineering` (`score < 40`) on any newly created/updated scripts.
+   - Call `mark_learning_promoted(ids=[...], status="promoted"|"skipped", targetSkill="...")` so processed memories are not re-evaluated on future runs.
+
+---
+
+## Complete 37-Skill & 3-MCP Routing Matrix
 
 | Component | Type | Primary Factory Stage(s) | Core Responsibility |
 |---|---|---|---|
@@ -221,7 +244,8 @@ flowchart TD
 | `powershell-writer` | Skill | Stage 2 (`develop`) | PowerShell 7+/5.1 cmdlets, strict mode, object pipelines, Pester v5 |
 | `legacy-code-modernization` | Skill | Stage 2 (`develop`) | Seam extraction, Golden Master pinning tests, TDD, Strangler Fig migration |
 | `test-data-creator` | Skill | Stage 2 (`develop`) | Schema-aware SQL batch seeding (`sql-connector`), streaming JSON mocks, Pareto skew |
-| `skill-creator` | Skill | Stage 2 (`develop`) | Scaffolding modular or task skills when extending repository capabilities |
+| `skill-creator` | Skill | Stage 2 (`develop`), Phase 9 | Scaffolding modular or task skills when extending repository capabilities |
+| `skill-doctor` | Skill | Phase 9 (Periodic) | Diagnoses pending `project-memory` learnings, updates/creates skills without bloat, audits skill health, and marks learnings promoted |
 | `sync-github-forks` | Skill | Stage 2 (`develop`) | Automated fork cloning/pulling via `gh` CLI across OSes |
 | `code-reviewer` | Skill | Stage 3 (`codereview`) | Senior 7-dimension code review (`[P0]`-`[P3]`) with language checklists |
 | `python-linter` | Skill | Stage 3 (`codereview`) | Automated Ruff linting/formatting and Mypy type checking |

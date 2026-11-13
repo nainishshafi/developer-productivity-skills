@@ -50,6 +50,7 @@ These skills provide ready-made workflows for modern software engineering across
 | [`researcher-poc-tester`](#researcher-poc-tester) | **Research & Benchmarking** | Isolated side-by-side PoCs, JIT warmup & percentile stats (VThreads, Polars, DB throughput) | `"test this concept"` |
 | [`legacy-code-modernization`](#legacy-code-modernization) | **Modernization** | 4-phase safe modernization (Extract $\to$ Pin $\to$ TDD $\to$ Strangler) | `"modernize legacy code"` |
 | [`skill-creator`](#skill-creator) | **Tooling & Automation** | Scaffolds modular knowledge-packs and task skills | `"create a new skill"` |
+| [`skill-doctor`](#skill-doctor) | **Tooling & Automation** | Promotes unprocessed `project-memory` learnings into skill updates or new skills | `"run skill doctor"` |
 | [`github-security-scanner-hook`](#github-security-scanner-hook) | **Tooling & Automation** | Pre-commit secret scanning & Semgrep OWASP rules | `"scan for security vulnerabilities"` |
 | [`python-linter`](#python-linter) | **Tooling & Automation** | Automated Ruff linting, formatting & Mypy typing | `"lint python"` |
 | [`sync-github-forks`](#sync-github-forks) | **Tooling & Automation** | Automated cross-platform syncing of all GitHub forks | `"sync github forks"` |
@@ -241,6 +242,10 @@ Systematic, language-independent framework for safely refactoring and modernizin
 Scaffolds and writes new skills following repository conventions. Supports **Modular Knowledge-Pack Skills** (`--modular`), Task/Action skills with scripts, and Lightweight Reference skills. Includes dual cross-platform scaffold scripts in Node.js (`scripts/scaffold-skill.js`) and Python (`scripts/scaffold-skill.py`).
 - **Trigger phrases:** `"create a new skill"`, `"add a skill"`, `"write a skill"`, `"scaffold a skill"`, `"build a skill"`.
 
+### `skill-doctor`
+Closed-loop skill evolution utility that periodically harvests unprocessed `journal` and `ledger` learnings from `project-memory`, triages them against existing skills, updates modular submodules without router bloat or scaffolds new skills via `skill-creator`, audits all skill frontmatter/links, and marks processed learnings as `promoted` or `skipped`.
+- **Trigger phrases:** `"skill doctor"`, `"run skill doctor"`, `"update skills from memory"`, `"evolve skills from learnings"`, `"promote learnings to skills"`, `"audit skill health"`.
+
 ### `github-security-scanner-hook`
 Scans staged files for secrets and code vulnerabilities prior to git commits using `detect-secrets` and 24 Semgrep OWASP rules (command injection, path traversal, hardcoded tokens, XSS, dangerous subprocesses).
 - **Trigger phrases:** `"scan for security vulnerabilities"`, `"check for secrets in code"`, `"set up a pre-commit security hook"`, `"scan staged files for secrets"`.
@@ -288,8 +293,8 @@ Reusable MCP servers located in `mcp/` providing protocol-compliant tool integra
 - **Features:** Native type-stripping TypeScript execution on Node.js 22+, AST sanitization, and secret scrubbing.
 
 ### `project-memory` (`mcp/project-memory/`)
-- **Tools:** `save_memory`, `load_memory`, `search_memory`, `delete_memory`, `clear_sidecar`
-- **Features:** SQLite backend (`node:sqlite`), zero external C++ dependencies, anti-bloat filters, and hybrid semantic/lexical search ($40\% \text{ semantic} + 60\% \text{ lexical}$).
+- **Tools:** `save_memory`, `load_memory`, `search_memory`, `get_unprocessed_learnings`, `mark_learning_promoted`, `delete_memory`, `clear_sidecar`
+- **Features:** SQLite backend (`node:sqlite`), zero external C++ dependencies, anti-bloat filters, `skill_status` learning-promotion tracking for `skill-doctor`, and hybrid semantic/lexical search ($40\% \text{ semantic} + 60\% \text{ lexical}$).
 - **Database Location:** `.project-memory/memory.db`.
 
 ### `sql-connector` (`mcp/sql-connector/`)
@@ -301,8 +306,8 @@ Reusable MCP servers located in `mcp/` providing protocol-compliant tool integra
 ## 🤖 Autonomous Agents (`.github/agents/`)
 
 ### `software-factory-agent` (`.github/agents/software-factory-agent.md`)
-End-to-end autonomous Software Factory Conductor binding all **35 skills** and all **3 MCP servers** (`project-memory`, `sql-connector`, `nodejs-executor`) into a closed-loop delivery pipeline:
-- **Closed-Loop Pipeline:** `Bootstrap` $\to$ `Plan & Empirical PoC` $\to$ `Develop & Testbed Seed` $\to$ `Code Review & Lint` $\to$ `Complexity & Query Plans` $\to$ `Architecture Simplification` $\to$ `Hallucination, BDD & RAG Verification` $\to$ `Security & SQL Firewall` $\to$ `Self-Healing Remediation & Finalize`.
+End-to-end autonomous Software Factory Conductor binding all **37 skills** and all **3 MCP servers** (`project-memory`, `sql-connector`, `nodejs-executor`) into a closed-loop delivery pipeline:
+- **Closed-Loop Pipeline:** `Bootstrap` $\to$ `Plan & Empirical PoC` $\to$ `Develop & Testbed Seed` $\to$ `Code Review & Lint` $\to$ `Complexity & Query Plans` $\to$ `Architecture Simplification` $\to$ `Hallucination, BDD & RAG Verification` $\to$ `Security & SQL Firewall` $\to$ `Self-Healing Remediation & Finalize` $\to$ `Periodic Skill Doctor`.
 - **In-The-Loop Quality & Anti-Bloat:** Enforces `check-overengineering` (`score < 40`) across implementation, PR review, architecture gates (triggering an automated simplification loop when `>= 40`), and bug patches.
 - **Persistent State & Diagnostics:** Coordinates `project-memory` (`ledger`, `sidecar`, `journal` + final `clear_sidecar`), `sql-connector` (`:memory:` fixtures, `explain_query`, `audit_query_safety`), `nodejs-executor` (`benchmark-harness.mjs`), and `troubleshoot-and-fix` + `remote-pod-log-analyzer` with a strict 3-iteration circuit breaker.
 - **Trigger phrases:** `"run software factory"`, `"software-factory-agent"`, `"build feature end to end"`, `"autonomous sdlc loop"`, `"end-to-end software factory"`.
@@ -322,7 +327,7 @@ End-to-end autonomous Software Factory Conductor binding all **35 skills** and a
 
 ### Skills & Agents Automated Validation
 
-Validate all 35 `SKILL.md` frontmatter headers, `.github/agents/*.md` definitions, and YAML rules across the repository:
+Validate all 37 `SKILL.md` frontmatter headers, `.github/agents/*.md` definitions, and YAML rules across the repository:
 ```bash
 npm run validate:skills --prefix mcp/sql-connector
 ```
@@ -367,7 +372,7 @@ developer-productivity-skills/
 │   └── sql-connector/                # Multi-engine DB connector with SQL firewall & frontmatter validator
 ├── .github/
 │   ├── agents/
-│   │   └── software-factory-agent.md # Autonomous end-to-end closed-loop agent (35 skills + 3 MCPs)
+│   │   └── software-factory-agent.md # Autonomous end-to-end closed-loop agent (37 skills + 3 MCPs)
 │   └── skills/
 │       ├── agent-orchestrator/       # 7-stage multi-agent SDLC workflow with memory bus & in-the-loop OE checks
 │       ├── api-security/             # Universal API authentication & AppSec audit pack
@@ -398,6 +403,7 @@ developer-productivity-skills/
 │       ├── scan-halucinated-tests/   # AST-based test hallucination scanner
 │       ├── scan-repo-readme/         # Semantic repository README searcher
 │       ├── skill-creator/            # Modular & task skill scaffolding generator
+│       ├── skill-doctor/             # Periodic learning-to-skill evolution & health auditor
 │       ├── sql-connector/            # Multi-database query & safety firewall skill
 │       ├── sql-executor/             # Multi-engine SQL tuning, joins & validation pack
 │       ├── sync-github-forks/        # Automated fork synchronization tool

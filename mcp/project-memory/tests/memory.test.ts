@@ -7,7 +7,8 @@ import { sanitizeMemoryInput } from '../dist/utils/sanitizer.js';
 import { saveMemory } from '../dist/tools/save-memory.js';
 import { loadMemory } from '../dist/tools/load-memory.js';
 import { searchMemory } from '../dist/tools/search-memory.js';
-import { clearSidecar, deleteMemory } from '../dist/tools/manage-memory.js';
+import { clearSidecar, deleteMemory, getUnprocessedLearnings, markLearningPromoted } from '../dist/tools/manage-memory.js';
+import { DatabaseSync } from 'node:sqlite';
 import { generateEmbedding, cosineSimilarity, rankMemories } from '../dist/search/semantic.js';
 
 async function runTests() {
@@ -152,8 +153,79 @@ async function runTests() {
     assert.equal(delRes.success, true);
     console.log('✓ clear_sidecar flushed WIP, delete_memory deleted item successfully.');
 
-    // 7. Security: Path Traversal Containment Check
-    console.log('[Test 7] Testing Path Traversal Containment...');
+    // 7. Skill-Doctor Unprocessed Learnings & Promotion Tracking
+    console.log('[Test 7] Testing getUnprocessedLearnings, markLearningPromoted, and skillStatus filter...');
+    const extraJournal = await saveMemory({
+      category: 'journal',
+      title: 'Session: PowerShell quoting fix',
+      summary: 'Fixed inline JS template literal dollar-sign expansion inside PowerShell double quotes.',
+      learnings: 'Never leave unescaped $ inside double-quoted inline scripts in PowerShell.',
+      tags: ['powershell', 'escaping'],
+    });
+    assert.equal(extraJournal.memory.skillStatus, 'pending');
+
+    const pendingAll = await getUnprocessedLearnings();
+    assert.ok(pendingAll.total >= 2);
+    assert.ok(pendingAll.learnings.every((m) => m.skillStatus === 'pending' && m.category !== 'sidecar'));
+
+    const pendingFiltered = await getUnprocessedLearnings({ tag: 'powershell' });
+    assert.equal(pendingFiltered.total, 1);
+    assert.equal(pendingFiltered.learnings[0].id, extraJournal.memory.id);
+
+    const markRes = await markLearningPromoted({
+      ids: [extraJournal.memory.id],
+      status: 'promoted',
+      targetSkill: 'powershell-writer',
+    });
+    assert.equal(markRes.success, true);
+    assert.equal(markRes.updatedCount, 1);
+
+    const promotedLoaded = await loadMemory({ category: 'journal', skillStatus: 'promoted' });
+    assert.equal(promotedLoaded.memories.length, 1);
+    assert.equal(promotedLoaded.memories[0].targetSkill, 'powershell-writer');
+    assert.ok(promotedLoaded.memories[0].promotedAt);
+
+    const afterMarkPending = await getUnprocessedLearnings({ tag: 'powershell' });
+    assert.equal(afterMarkPending.total, 0);
+    console.log('✓ Unprocessed learnings retrieval, tag filtering, and promotion tracking verified.');
+
+    // 8. Legacy DB Migration Check
+    console.log('[Test 8] Testing idempotent schema migration on legacy memories table...');
+    const legacyDbPath = path.join(os.tmpdir(), `test_legacy_${Date.now()}.db`);
+    const rawLegacy = new DatabaseSync(legacyDbPath);
+    rawLegacy.exec(`
+      CREATE TABLE memories (
+        id TEXT PRIMARY KEY,
+        category TEXT NOT NULL,
+        title TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        learnings TEXT NOT NULL,
+        tags TEXT NOT NULL,
+        embedding TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      INSERT INTO memories VALUES (
+        'mem_legacy_1', 'journal', 'Legacy Row', 'Old session work', 'Always run .venv python on Windows.',
+        '["python","venv"]', '[]', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z'
+      );
+    `);
+    rawLegacy.close();
+
+    const migratedDb = new MemoryDatabase(legacyDbPath);
+    try {
+      const legacyPending = migratedDb.getUnprocessedLearnings();
+      assert.equal(legacyPending.length, 1);
+      assert.equal(legacyPending[0].id, 'mem_legacy_1');
+      assert.equal(legacyPending[0].skillStatus, 'pending');
+    } finally {
+      migratedDb.close();
+      if (fs.existsSync(legacyDbPath)) fs.unlinkSync(legacyDbPath);
+    }
+    console.log('✓ Legacy database migrated seamlessly with pending default status.');
+
+    // 9. Security: Path Traversal Containment Check
+    console.log('[Test 9] Testing Path Traversal Containment...');
     assert.throws(
       () => new MemoryDatabase('C:\\Windows\\System32\\unauthorized.db'),
       /Security Exception/

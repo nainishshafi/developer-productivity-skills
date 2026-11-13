@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { DatabaseSync } from 'node:sqlite';
-import { MemoryCategory, MemoryRecord, MemorySummary } from '../types.js';
+import { MemoryCategory, MemoryRecord, MemorySummary, SkillPromotionStatus } from '../types.js';
 import { generateEmbedding, rankMemories } from '../search/semantic.js';
 
 let defaultInstance: MemoryDatabase | null = null;
@@ -90,11 +90,43 @@ export class MemoryDatabase {
         tags TEXT NOT NULL,
         embedding TEXT NOT NULL,
         created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
+        updated_at TEXT NOT NULL,
+        skill_status TEXT NOT NULL DEFAULT 'pending' CHECK(skill_status IN ('pending', 'promoted', 'skipped')),
+        target_skill TEXT,
+        promoted_at TEXT
       );
       CREATE INDEX IF NOT EXISTS idx_memories_category ON memories(category);
       CREATE INDEX IF NOT EXISTS idx_memories_updated_at ON memories(updated_at DESC);
     `);
+
+    const cols = this.db.prepare('PRAGMA table_info(memories)').all() as Array<{ name: string }>;
+    const existingCols = new Set(cols.map((c) => c.name));
+    if (!existingCols.has('skill_status')) {
+      this.db.exec("ALTER TABLE memories ADD COLUMN skill_status TEXT NOT NULL DEFAULT 'pending'");
+    }
+    if (!existingCols.has('target_skill')) {
+      this.db.exec('ALTER TABLE memories ADD COLUMN target_skill TEXT');
+    }
+    if (!existingCols.has('promoted_at')) {
+      this.db.exec('ALTER TABLE memories ADD COLUMN promoted_at TEXT');
+    }
+    this.db.exec('CREATE INDEX IF NOT EXISTS idx_memories_skill_status ON memories(skill_status)');
+  }
+
+  private rowToSummary(r: any): MemorySummary {
+    return {
+      id: r.id,
+      category: r.category as MemoryCategory,
+      title: r.title,
+      summary: r.summary,
+      learnings: r.learnings,
+      tags: JSON.parse(r.tags || '[]'),
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+      skillStatus: (r.skill_status || 'pending') as SkillPromotionStatus,
+      targetSkill: r.target_skill ?? null,
+      promotedAt: r.promoted_at ?? null,
+    };
   }
 
   /**
@@ -118,8 +150,8 @@ export class MemoryDatabase {
     const embedding = generateEmbedding(fullTextForEmbedding);
 
     const stmt = this.db.prepare(`
-      INSERT INTO memories (id, category, title, summary, learnings, tags, embedding, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO memories (id, category, title, summary, learnings, tags, embedding, created_at, updated_at, skill_status, target_skill, promoted_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NULL, NULL)
       ON CONFLICT(id) DO UPDATE SET
         category = excluded.category,
         title = excluded.title,
@@ -127,7 +159,10 @@ export class MemoryDatabase {
         learnings = excluded.learnings,
         tags = excluded.tags,
         embedding = excluded.embedding,
-        updated_at = excluded.updated_at
+        updated_at = excluded.updated_at,
+        skill_status = 'pending',
+        target_skill = NULL,
+        promoted_at = NULL
     `);
 
     stmt.run(
@@ -151,45 +186,128 @@ export class MemoryDatabase {
       tags: data.tags,
       createdAt: now,
       updatedAt: now,
+      skillStatus: 'pending',
+      targetSkill: null,
+      promotedAt: null,
     };
   }
 
   /**
    * List memories without returning raw vectors.
    */
-  public list(category?: MemoryCategory, limit = 5): MemorySummary[] {
+  public list(category?: MemoryCategory, limit = 5, skillStatus?: SkillPromotionStatus): MemorySummary[] {
     const safeLimit = Math.max(1, Math.min(20, limit));
+    const conditions: string[] = [];
+    const params: Array<string | number> = [];
 
-    let rows: any[];
     if (category) {
-      const stmt = this.db.prepare(`
-        SELECT id, category, title, summary, learnings, tags, created_at, updated_at
-        FROM memories
-        WHERE category = ?
-        ORDER BY updated_at DESC
-        LIMIT ?
-      `);
-      rows = stmt.all(category, safeLimit);
-    } else {
-      const stmt = this.db.prepare(`
-        SELECT id, category, title, summary, learnings, tags, created_at, updated_at
-        FROM memories
-        ORDER BY updated_at DESC
-        LIMIT ?
-      `);
-      rows = stmt.all(safeLimit);
+      conditions.push('category = ?');
+      params.push(category);
+    }
+    if (skillStatus) {
+      conditions.push('skill_status = ?');
+      params.push(skillStatus);
     }
 
-    return rows.map((r) => ({
-      id: r.id,
-      category: r.category as MemoryCategory,
-      title: r.title,
-      summary: r.summary,
-      learnings: r.learnings,
-      tags: JSON.parse(r.tags || '[]'),
-      createdAt: r.created_at,
-      updatedAt: r.updated_at,
-    }));
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const stmt = this.db.prepare(`
+      SELECT id, category, title, summary, learnings, tags, created_at, updated_at, skill_status, target_skill, promoted_at
+      FROM memories
+      ${whereClause}
+      ORDER BY updated_at DESC
+      LIMIT ?
+    `);
+    const rows = stmt.all(...params, safeLimit);
+    return rows.map((r) => this.rowToSummary(r));
+  }
+
+  /**
+   * Retrieve unprocessed learnings (skill_status = 'pending') for skill-doctor review.
+   * Defaults to 'journal' and 'ledger' categories (excludes transient 'sidecar').
+   */
+  public getUnprocessedLearnings(options: {
+    category?: 'ledger' | 'journal';
+    tag?: string;
+    limit?: number;
+  } = {}): MemorySummary[] {
+    const safeLimit = Math.max(1, Math.min(50, options.limit ?? 20));
+    const conditions: string[] = ["skill_status = 'pending'"];
+    const params: Array<string | number> = [];
+
+    if (options.category) {
+      conditions.push('category = ?');
+      params.push(options.category);
+    } else {
+      conditions.push("category IN ('journal', 'ledger')");
+    }
+
+    const sql = `
+      SELECT id, category, title, summary, learnings, tags, created_at, updated_at, skill_status, target_skill, promoted_at
+      FROM memories
+      WHERE ${conditions.join(' AND ')}
+      ORDER BY updated_at DESC
+      ${options.tag ? '' : 'LIMIT ?'}
+    `;
+
+    const rows = options.tag
+      ? this.db.prepare(sql).all(...params)
+      : this.db.prepare(sql).all(...params, safeLimit);
+
+    let summaries = rows.map((r) => this.rowToSummary(r));
+    if (options.tag) {
+      const targetTag = options.tag.trim().toLowerCase();
+      summaries = summaries
+        .filter((m) => m.tags.some((t) => t.toLowerCase() === targetTag))
+        .slice(0, safeLimit);
+    }
+    return summaries;
+  }
+
+  /**
+   * Mark memories as promoted or skipped after skill-doctor processing.
+   */
+  public markLearningPromoted(
+    ids: string[],
+    status: 'promoted' | 'skipped',
+    targetSkill: string
+  ): {
+    updatedCount: number;
+    updatedIds: string[];
+    status: 'promoted' | 'skipped';
+    targetSkill: string;
+    promotedAt: string;
+  } {
+    const cleanIds = Array.from(new Set(ids.map((id) => id.trim()).filter(Boolean)));
+    if (cleanIds.length === 0) {
+      throw new Error('At least one valid memory ID is required.');
+    }
+    const cleanSkill = targetSkill.trim();
+    if (!cleanSkill) {
+      throw new Error('targetSkill cannot be empty.');
+    }
+
+    const now = new Date().toISOString();
+    const stmt = this.db.prepare(`
+      UPDATE memories
+      SET skill_status = ?, target_skill = ?, promoted_at = ?
+      WHERE id = ?
+    `);
+
+    const updatedIds: string[] = [];
+    for (const id of cleanIds) {
+      const res: any = stmt.run(status, cleanSkill, now, id);
+      if ((res?.changes ?? 0) > 0) {
+        updatedIds.push(id);
+      }
+    }
+
+    return {
+      updatedCount: updatedIds.length,
+      updatedIds,
+      status,
+      targetSkill: cleanSkill,
+      promotedAt: now,
+    };
   }
 
   /**
@@ -205,14 +323,14 @@ export class MemoryDatabase {
     let rows: any[];
     if (category) {
       const stmt = this.db.prepare(`
-        SELECT id, category, title, summary, learnings, tags, embedding, created_at, updated_at
+        SELECT id, category, title, summary, learnings, tags, embedding, created_at, updated_at, skill_status, target_skill, promoted_at
         FROM memories
         WHERE category = ?
       `);
       rows = stmt.all(category);
     } else {
       const stmt = this.db.prepare(`
-        SELECT id, category, title, summary, learnings, tags, embedding, created_at, updated_at
+        SELECT id, category, title, summary, learnings, tags, embedding, created_at, updated_at, skill_status, target_skill, promoted_at
         FROM memories
       `);
       rows = stmt.all();
@@ -228,6 +346,9 @@ export class MemoryDatabase {
       embedding: JSON.parse(r.embedding || '[]'),
       createdAt: r.created_at,
       updatedAt: r.updated_at,
+      skillStatus: (r.skill_status || 'pending') as SkillPromotionStatus,
+      targetSkill: r.target_skill ?? null,
+      promotedAt: r.promoted_at ?? null,
     }));
 
     return rankMemories(query, records, limit, minScore);

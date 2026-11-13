@@ -38,7 +38,7 @@ describe('Project Memory MCP Protocol Integration', () => {
       await client.connect(transport);
 
       const toolsList = await client.listTools();
-      assert.ok(toolsList.tools.length >= 5);
+      assert.ok(toolsList.tools.length >= 7);
 
       const toolNames = toolsList.tools.map((t) => t.name);
       assert.ok(toolNames.includes('save_memory'));
@@ -46,6 +46,8 @@ describe('Project Memory MCP Protocol Integration', () => {
       assert.ok(toolNames.includes('search_memory'));
       assert.ok(toolNames.includes('delete_memory'));
       assert.ok(toolNames.includes('clear_sidecar'));
+      assert.ok(toolNames.includes('get_unprocessed_learnings'));
+      assert.ok(toolNames.includes('mark_learning_promoted'));
 
       // 1. Call save_memory (journal session summary with learnings)
       const saveRes = await client.callTool({
@@ -89,6 +91,36 @@ describe('Project Memory MCP Protocol Integration', () => {
       const searchContent = JSON.parse((searchRes.content[0] as any).text);
       assert.ok(searchContent.results.length >= 1);
       assert.equal(searchContent.results[0].category, 'journal');
+
+      // 4. Call get_unprocessed_learnings and mark_learning_promoted
+      const unprocessedRes = await client.callTool({
+        name: 'get_unprocessed_learnings',
+        arguments: { category: 'journal' },
+      });
+      assert.equal(unprocessedRes.isError, false);
+      const unprocessedContent = JSON.parse((unprocessedRes.content[0] as any).text);
+      assert.equal(unprocessedContent.total, 1);
+
+      const memId = unprocessedContent.learnings[0].id;
+      const markRes = await client.callTool({
+        name: 'mark_learning_promoted',
+        arguments: {
+          ids: [memId],
+          status: 'promoted',
+          targetSkill: 'load-memory',
+        },
+      });
+      assert.equal(markRes.isError, false);
+      const markContent = JSON.parse((markRes.content[0] as any).text);
+      assert.equal(markContent.success, true);
+      assert.equal(markContent.updatedCount, 1);
+
+      const postMarkRes = await client.callTool({
+        name: 'get_unprocessed_learnings',
+        arguments: {},
+      });
+      const postMarkContent = JSON.parse((postMarkRes.content[0] as any).text);
+      assert.equal(postMarkContent.total, 0);
     } finally {
       await client.close();
       if (fs.existsSync(testDb)) {

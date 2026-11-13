@@ -1,7 +1,7 @@
 ---
 name: load-memory
 description: Use when the user asks to "load memory", "check project memory", "what was I working on", "retrieve ledger", "search memory", "check past mistakes", "what did we learn", "load project context", "recall decisions", or at the beginning of a complex task to retrieve architectural rules, active WIP context, and past mistakes to avoid.
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Load Memory Skill
@@ -22,10 +22,12 @@ Load concise, high-signal project memories from the **`project-memory`** MCP ser
 
 - **`load_memory`**: Fast retrieval of memory summaries.
   - Without arguments: returns a balanced snapshot containing active `sidecar` (current WIP), recent `journal` (mistakes avoided), and core `ledger` (architecture).
-  - With `category`: filters specifically to `"ledger"`, `"sidecar"`, or `"journal"`.
+  - With `category` / `skillStatus`: filters specifically to `"ledger"`, `"sidecar"`, or `"journal"` and/or `"pending"`, `"promoted"`, `"skipped"`.
 - **`search_memory`**: Hybrid search with **40% semantic cosine search + 60% lexical match**.
   - Matches concepts even with different phrasing (e.g. query "sqlite build crash" finds "node-gyp compilation failure").
   - Always returns clean summaries (never returns raw vector arrays).
+- **`get_unprocessed_learnings`**: Retrieves `journal` and `ledger` memories with `skill_status = 'pending'` for periodic `skill-doctor` triage.
+- **`mark_learning_promoted`**: Marks reviewed memory IDs as `"promoted"` or `"skipped"` with `targetSkill` so `skill-doctor` never re-processes them.
 - **`clear_sidecar`**: Flushes active task WIP when transitioning tasks while preserving permanent ledger and journal records.
 
 ---

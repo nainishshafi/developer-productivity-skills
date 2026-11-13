@@ -1,7 +1,7 @@
 ---
 name: github-security-scanner-hook
 description: Use when the user asks to "scan for security vulnerabilities", "check for secrets in code", "set up a pre-commit security hook", "install security scanning", "scan staged files for secrets", "check for hardcoded credentials", "run a security scan before commit", "detect leaked API keys", "add a git commit hook for security", "security check before push", "scan for SQL injection", "check for XSS vulnerabilities", "detect injection flaws", "check for command injection", "audit subprocess security", or wants to prevent committing security issues to git.
-version: 1.2.0
+version: 1.3.0
 ---
 
 # GitHub Security Scanner Hook
@@ -105,6 +105,11 @@ For each HIGH or MEDIUM finding the user wants to fix:
 4. **For code vulnerabilities & weak cryptography (semgrep):** Fix injection vectors (use parameterized queries, `subprocess.run([...], shell=False)`) and replace insecure hashes (`hashlib.md5` → `hashlib.sha256`, `random` → `secrets`)
 5. **For false positives:** Add to the `.secrets.baseline` allowlist using `python -m detect_secrets audit .secrets.baseline`
 6. Re-stage the fixed files and re-run Step 2 to confirm all HIGH findings are resolved
+7. **For hardcoded personal filesystem paths / PII:** Replace machine-specific home directory paths (Windows user profile folders or POSIX `/home/` directories) in code, configs, tests, and docs with portable relative paths (`./`) or generic placeholders (`/path/to/...`).
+
+## Audit Guardrails
+
+- Never rely solely on manual visual inspection for security sign-off; always execute `scan-staged.py` (running `detect-secrets` and bundled `semgrep` rules) against the actual staged files or git diff.
 
 ## Additional Resources
 

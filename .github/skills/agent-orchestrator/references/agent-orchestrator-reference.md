@@ -214,6 +214,7 @@ The orchestrator and [Software Factory Agent](file:///.github/agents/software-fa
 
 - [Save Memory](file:///.github/skills/save-memory/SKILL.md) — Persist high-signal project memory into `project-memory` (`ledger`, `sidecar`, `journal`).
 - [Load Memory](file:///.github/skills/load-memory/SKILL.md) — Retrieve project memory and hybrid semantic search without context bloat.
+- [Skill Doctor](file:///.github/skills/skill-doctor/SKILL.md) — Periodically harvest unprocessed `project-memory` learnings to update existing skills or scaffold new skills.
 - [Architectural Planning](file:///.github/skills/architectural-planning/SKILL.md) — System design, interface contracts, and ADR creation.
 - [RAG Pipeline](file:///.github/skills/rag-pipeline/SKILL.md) — Chunking, hybrid search (BM25 + RRF), reranking, 5-layer testing strategy, and IR evaluation.
 - [Researcher PoC Tester](file:///.github/skills/researcher-poc-tester/SKILL.md) — Isolated side-by-side PoC benchmarks (`poc-stats-runner.py`) with P50/P95/P99 statistics.
