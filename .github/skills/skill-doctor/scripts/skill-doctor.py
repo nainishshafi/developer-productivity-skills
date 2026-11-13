@@ -66,10 +66,27 @@ def parse_frontmatter(text: str) -> Dict[str, str]:
     if not match:
         return {}
     fields: Dict[str, str] = {}
+    current_key: Optional[str] = None
+    multiline_parts: List[str] = []
     for line in match.group(1).splitlines():
+        if line.startswith((" ", "\t")) and current_key is not None:
+            multiline_parts.append(line.strip())
+            continue
+        if current_key is not None:
+            fields[current_key] = " ".join(multiline_parts).strip()
+            current_key = None
+            multiline_parts = []
         if ":" in line and not line.startswith(" "):
             key, val = line.split(":", 1)
-            fields[key.strip()] = val.strip().strip("'\"")
+            k = key.strip()
+            v = val.strip()
+            if v in (">", ">-", "|", "|-"):
+                current_key = k
+                multiline_parts = []
+            else:
+                fields[k] = v.strip("'\"")
+    if current_key is not None:
+        fields[current_key] = " ".join(multiline_parts).strip()
     return fields
 
 
@@ -300,6 +317,68 @@ def cmd_mark(args: argparse.Namespace) -> None:
     }, indent=2))
 
 
+def audit_skill_quality(sdir: Path, content: str, fm: Dict[str, str]) -> List[Dict[str, str]]:
+    """Diagnose trigger quality, instruction bloat, orphan files, and missing verification."""
+    warnings: List[Dict[str, str]] = []
+    desc = fm.get("description", "")
+    desc_lower = desc.lower()
+    if desc and (len(desc) < 80 or ('"' not in desc and "'" not in desc and "use when" not in desc_lower)):
+        warnings.append({
+            "skill": sdir.name,
+            "severity": "WARN",
+            "issue": "Vague trigger description (add 'Use when...' scenarios and quoted trigger phrases).",
+        })
+
+    lines = content.splitlines()
+    submodules = [p for p in sdir.rglob("*.md") if p.name != "SKILL.md" and "references" not in p.parts]
+    is_modular = len(submodules) >= 2
+    if is_modular and len(lines) > 65:
+        warnings.append({
+            "skill": sdir.name,
+            "severity": "WARN",
+            "issue": f"Modular SKILL.md router is {len(lines)} lines (> 65); move details into topical submodules.",
+        })
+    elif not is_modular and len(lines) > 1000:
+        warnings.append({
+            "skill": sdir.name,
+            "severity": "WARN",
+            "issue": f"SKILL.md is {len(lines)} lines (> 1000); split supporting details into references/.",
+        })
+
+    scripts = [
+        p for p in (sdir / "scripts").rglob("*")
+        if p.is_file() and p.name != ".gitkeep" and "__pycache__" not in p.parts
+    ] if (sdir / "scripts").exists() else []
+    refs = list((sdir / "references").rglob("*.md")) if (sdir / "references").exists() else []
+    for asset in scripts + refs:
+        if asset.name not in content:
+            rel = str(asset.relative_to(sdir)).replace("\\", "/")
+            warnings.append({
+                "skill": sdir.name,
+                "severity": "WARN",
+                "issue": f"Orphan asset '{rel}' is not referenced in SKILL.md.",
+            })
+
+    if scripts and not any(k in content.lower() for k in ("verify", "validate", "test", "exit code", "output")):
+        warnings.append({
+            "skill": sdir.name,
+            "severity": "WARN",
+            "issue": "Skill includes scripts/ but lacks verification or expected-output guidance in SKILL.md.",
+        })
+
+    for block in FENCED_BLOCK_RE.findall(content):
+        for bline in block.splitlines():
+            stripped = bline.strip()
+            if re.match(r"^(python3?|py)\s+", stripped) and "venv" not in stripped:
+                warnings.append({
+                    "skill": sdir.name,
+                    "severity": "WARN",
+                    "issue": f"Bare Python command '{stripped[:50]}' in SKILL.md; prefer .venv Python resolution.",
+                })
+                break
+    return warnings
+
+
 def cmd_audit_skills(args: argparse.Namespace) -> None:
     skills_dir = Path(args.skills_dir)
     if not skills_dir.exists():
@@ -308,6 +387,12 @@ def cmd_audit_skills(args: argparse.Namespace) -> None:
 
     issues: List[Dict[str, str]] = []
     skill_dirs = sorted(p for p in skills_dir.iterdir() if p.is_dir())
+    if args.skill:
+        skill_dirs = [p for p in skill_dirs if p.name == args.skill]
+        if not skill_dirs:
+            print(f"Error: Skill '{args.skill}' not found in {skills_dir}", file=sys.stderr)
+            sys.exit(1)
+
     for sdir in skill_dirs:
         skill_md = sdir / "SKILL.md"
         if not skill_md.exists():
@@ -328,15 +413,23 @@ def cmd_audit_skills(args: argparse.Namespace) -> None:
                 if not target.exists():
                     rel = str(md_file.relative_to(skills_dir)).replace("\\", "/")
                     issues.append({"skill": sdir.name, "severity": "ERROR", "issue": f"Broken link '{link}' in {rel}"})
+        issues.extend(audit_skill_quality(sdir, content, fm))
 
-    result = {"skills_audited": len(skill_dirs), "issues_count": len(issues), "issues": issues}
+    errors = [i for i in issues if i["severity"] == "ERROR"]
+    warnings = [i for i in issues if i["severity"] == "WARN"]
+    result = {
+        "skills_audited": len(skill_dirs),
+        "errors_count": len(errors),
+        "warnings_count": len(warnings),
+        "issues": issues,
+    }
     if args.format == "json":
         print(json.dumps(result, indent=2))
     else:
-        print(f"Audited {len(skill_dirs)} skills | Issues: {len(issues)}")
+        print(f"Audited {len(skill_dirs)} skill(s) | Errors: {len(errors)} | Warnings: {len(warnings)}")
         for item in issues:
             print(f"  [{item['severity']}] {item['skill']}: {item['issue']}")
-    if issues:
+    if errors or (args.strict and warnings):
         sys.exit(1)
 
 
@@ -355,8 +448,10 @@ def main() -> None:
     p_mark.add_argument("--target-skill", required=True, help="Target skill name or 'none'")
     p_mark.add_argument("--db", default=str(DEFAULT_DB_PATH), help="Path to SQLite memory.db")
 
-    p_audit = subparsers.add_parser("audit-skills", help="Audit SKILL.md frontmatter and internal markdown links")
+    p_audit = subparsers.add_parser("audit-skills", help="Audit SKILL.md frontmatter, links, and skill quality")
     p_audit.add_argument("--skills-dir", default=str(DEFAULT_SKILLS_DIR), help="Path to skills directory")
+    p_audit.add_argument("--skill", help="Optional single skill name to audit")
+    p_audit.add_argument("--strict", action="store_true", help="Exit non-zero on WARN findings as well as ERRORs")
     p_audit.add_argument("--format", choices=["text", "json"], default="text")
 
     args = parser.parse_args()

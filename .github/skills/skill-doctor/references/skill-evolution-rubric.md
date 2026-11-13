@@ -50,3 +50,16 @@ Decision framework used by **`skill-doctor`** to turn raw `project-memory` entri
 2. **Remediation Trigger**: Phase 8 (`troubleshoot-and-fix`) was activated during the pipeline run (meaning a real defect was diagnosed and fixed).
 3. **Explicit Request**: User asks to run `skill-doctor`, evolve skills, or audit skill health.
 
+---
+
+## 5. Skill Quality & Optimization Checklist (Mode B)
+
+When auditing an existing skill (`SKILL.md`, `references/`, `scripts/`), diagnose and patch these four weakness categories:
+
+| Weakness | Symptoms | Targeted Patch |
+|---|---|---|
+| **Vague Trigger `description`** | Under ~80 chars, generic verb ("helps with X"), no quoted user trigger phrases or `Use when...` scenarios. | Expand `description` with 5–8 realistic quoted trigger phrases and concrete invocation scenarios. |
+| **Bloated / Noisy Instructions** | Modular `SKILL.md` router `> 65` lines; monolithic `SKILL.md` `> 1,000` lines; duplicated examples; orphan files in `references/` or `scripts/`. | Move deep content into `references/` or topical submodules; link or remove orphan assets. |
+| **Edge-Case Blind Spots** | Bare `python`/`py` commands, unquoted PowerShell `$` strings, missing Windows/POSIX notes, or scripts scoring `>= 40` on `check-overengineering`. | Switch to `.venv` Python paths, add OS/quoting caveats, and simplify bloated script helpers. |
+| **Missing Verification Steps** | Task skill executes `scripts/` or mutates files without stating how to verify success (expected stdout, exit codes, or validator command). | Add a concise verification step with exact command and expected pass criteria. |
+

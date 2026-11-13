@@ -2,7 +2,10 @@
 
 A curated suite of enterprise-grade AI skills and Model Context Protocol (MCP) servers for **Claude Code**, **Antigravity**, and **GitHub Copilot**. 
 
-Designed as **architectural guidance, decision frameworks, and engineering heuristics for AI agents** rather than rigid or deterministic rules — empowering agents to respect existing codebase baselines, reason through real-world trade-offs, and deliver high-signal, pragmatic engineering solutions.
+Designed as **architectural guidance, decision frameworks, and engineering heuristics for AI agents** — anchored by the autonomous [**`software-factory-agent`**](.github/agents/software-factory-agent.md) — rather than rigid or deterministic rules, empowering agents to respect existing codebase baselines, reason through real-world trade-offs, and deliver high-signal, pragmatic engineering solutions.
+
+> [!TIP]
+> **Autonomous End-to-End Delivery**: Use the [**Software Factory Agent**](.github/agents/software-factory-agent.md) (`"run software factory"` — see [details](#software-factory-agent-githubagentssoftware-factory-agentmd)) as a single entry point to orchestrate all repository skills and MCP servers (`project-memory`, `sql-connector`, `nodejs-executor`) across planning, BDD specs, quality gates, self-healing remediation, and periodic `skill-doctor` evolution.
 
 These skills provide ready-made workflows for modern software engineering across ten core engineering disciplines:
 
@@ -245,9 +248,9 @@ Scaffolds and writes new skills following repository conventions. Supports **Mod
 - **Trigger phrases:** `"create a new skill"`, `"add a skill"`, `"write a skill"`, `"scaffold a skill"`, `"build a skill"`.
 
 ### `skill-doctor`
-Closed-loop skill evolution utility that periodically harvests unprocessed `journal` and `ledger` learnings from `project-memory`, triages them against existing skills (`UPDATE_EXISTING_SKILL`, `CREATE_NEW_SKILL`, `SKIP_TRANSIENT`), updates modular submodules without router bloat or scaffolds new skills via `skill-creator`, audits all skill frontmatter/links, and marks processed learnings as `promoted` or `skipped`.
-- **CLI Utility:** `.\.venv\Scripts\python.exe .github/skills/skill-doctor/scripts/skill-doctor.py` (`diagnose`, `mark`, `audit-skills`).
-- **Trigger phrases:** `"skill doctor"`, `"run skill doctor"`, `"update skills from memory"`, `"evolve skills from learnings"`, `"promote learnings to skills"`, `"audit skill health"`.
+Closed-loop skill evolution and optimization utility that periodically harvests unprocessed `journal` and `ledger` learnings from `project-memory`, triages them against existing skills (`UPDATE_EXISTING_SKILL`, `CREATE_NEW_SKILL`, `SKIP_TRANSIENT`), updates modular submodules without router bloat or scaffolds new skills via `skill-creator`, audits and optimizes existing skills (diagnosing vague triggers, instruction bloat, orphan assets, edge-case blind spots, and missing verification steps), and marks processed learnings as `promoted` or `skipped`.
+- **CLI Utility:** `.\.venv\Scripts\python.exe .github/skills/skill-doctor/scripts/skill-doctor.py` (`diagnose`, `mark`, `audit-skills [--skill <name>] [--strict]`).
+- **Trigger phrases:** `"skill doctor"`, `"run skill doctor"`, `"update skills from memory"`, `"evolve skills from learnings"`, `"promote learnings to skills"`, `"audit skill health"`, `"optimize skill"`.
 
 ### `github-security-scanner-hook`
 Scans staged files for secrets and code vulnerabilities prior to git commits using `detect-secrets` and 24 Semgrep OWASP rules (command injection, path traversal, hardcoded tokens, hardcoded personal paths/PII, XSS, dangerous subprocesses). Enforces executing concrete scanner rules (`scan-staged.py`) against diffs rather than manual visual sign-off.

@@ -1,8 +1,8 @@
 ---
 name: skill-doctor
 description: >-
-  Reads unprocessed learnings from project-memory (journal and ledger), triages whether each lesson should update an existing skill, scaffold a new skill via skill-creator, or be skipped, applies anti-bloat edits to the right skill module, validates frontmatter/links, and marks learnings as promoted so they are not re-processed. Runs periodically inside software-factory-agent or on demand. Use when asked to "skill doctor", "run skill doctor", "update skills from memory", "evolve skills from learnings", "heal skills", "promote learnings to skills", or "audit skill health".
-version: 1.0.0
+  Reads unprocessed learnings from project-memory (journal and ledger), triages whether each lesson should update an existing skill, scaffold a new skill via skill-creator, or be skipped, applies anti-bloat edits to the right skill module, audits and optimizes existing skills (diagnosing vague triggers, bloated instructions, orphan assets, edge-case blind spots, and missing verification steps to propose targeted patches), and marks learnings as promoted. Runs periodically inside software-factory-agent or on demand. Use when asked to "skill doctor", "run skill doctor", "update skills from memory", "evolve skills from learnings", "heal skills", "promote learnings to skills", "audit skill health", "audit skill", "optimize skill", or "inspect skill quality".
+version: 1.1.0
 ---
 
 # Skill Doctor
@@ -15,11 +15,12 @@ Closed-loop continuous improvement skill that converts hard-won `project-memory`
 
 - Periodically at the end of a `software-factory-agent` run (when `>= 3` unprocessed learnings accumulate or Phase 8 remediation was triggered).
 - After debugging a tricky platform, security, framework, or tooling trap that future sessions must not repeat.
-- When asked to `"run skill doctor"`, `"update skills from memory"`, `"evolve skills from learnings"`, `"promote learnings to skills"`, or `"audit skill health"`.
+- When auditing or optimizing an existing skill's `SKILL.md`, `references/`, and `scripts/` for vague triggers, instruction bloat, edge-case blind spots, or missing verification steps.
+- When asked to `"run skill doctor"`, `"update skills from memory"`, `"evolve skills from learnings"`, `"promote learnings to skills"`, `"audit skill health"`, or `"optimize skill <name>"`.
 
 ---
 
-## Workflow
+## Mode A — Memory-Driven Skill Evolution
 
 ### Step 1 — Harvest Unprocessed Learnings
 
@@ -91,6 +92,26 @@ When `CREATE_NEW_SKILL` is selected:
    .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py check-overengineering --file <modified-script>
    ```
 4. Mark processed memory IDs via `project-memory` MCP `mark_learning_promoted` (or CLI `skill-doctor.py mark --ids <id1,id2> --status promoted --target-skill <skill>`).
+
+---
+
+## Mode B — Skill Auditor & Optimizer
+
+Use this mode when asked to audit, diagnose, or optimize an existing skill (or all skills):
+
+1. **Run Static Quality & Structural Audit**:
+   ```powershell
+   .\.venv\Scripts\python.exe .github/skills/skill-doctor/scripts/skill-doctor.py audit-skills --skill <skill-name>
+   ```
+   *(Omit `--skill <skill-name>` to audit the entire `.github/skills/` catalog; add `--strict` to fail on warnings.)*
+2. **Inspect Skill Files & Diagnose Semantic Weaknesses**:
+   Read the target skill's `SKILL.md`, `references/*.md`, and `scripts/*`, evaluating against [references/skill-evolution-rubric.md](references/skill-evolution-rubric.md):
+   - **Vague Trigger Descriptions**: Missing concrete `"Use when..."` scenarios or 5–8 quoted trigger phrases.
+   - **Bloated / Noisy Instructions**: Modular `SKILL.md` routers exceeding ~65 lines, redundant prose, or unlinked orphan files in `references/` / `scripts/`.
+   - **Edge-Case Blind Spots**: Bare `python`/`py` calls instead of `.venv`, unsafe shell quoting, or missing platform caveats (Windows vs POSIX).
+   - **Missing Verification Steps**: Task skills with `scripts/` lacking expected output, exit-code, or post-edit validation commands (and run `check-overengineering` on scripts).
+3. **Propose & Apply Targeted Patches**:
+   - Present or apply **minimal, localized diffs** (do not rewrite working sections from scratch), bump `version` in `SKILL.md` frontmatter, and re-run `audit-skills --skill <skill-name>` + `npm run validate:skills --prefix mcp/sql-connector` to verify zero errors.
 
 ---
 
