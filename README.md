@@ -38,6 +38,7 @@ These skills provide ready-made workflows for modern software engineering across
 | [`code-reviewer`](#code-reviewer) | **Architecture & Quality** | 7-dimension senior review ([P0] Blocker to [P3] Nit) | `"review code"` |
 | [`api-security`](#api-security) | **Architecture & Quality** | JWT, OAuth 2.1 PKCE, session cookies, API keys, mTLS, HMAC | `"review api security"` |
 | [`algorithmic-complexity-analyzer`](#algorithmic-complexity-analyzer) | **Architecture & Quality** | Big-O time/space audits ($O(1) \dots O(2^n)$), hidden loop traps | `"check time complexity"` |
+| [`memory-analyzer`](#memory-analyzer) | **Architecture & Quality** | Language-independent OOM, stack overflow, unbounded growth & memory leak analysis | `"analyze memory"` |
 | [`caching-queues-reviewer`](#caching-queues-reviewer) | **Architecture & Quality** | Redis, Kafka, Lua scripts, stampede defense, multi-language caching | `"review caching code"` |
 | [`sql-executor`](#sql-executor) | **Architecture & Quality** | Cross-engine joins, GIN/GiST/BRIN indexes, CTEs, #temp tables, OLAP cubing, TVFs | `"write a sql join"` |
 | [`detect-overengineering`](#detect-overengineering) | **Architecture & Quality** | YAGNI audits, layer bloat, trampoline pass-throughs, in-the-loop checks | `"check for over-engineering"` |
@@ -131,6 +132,11 @@ Language-independent asymptotic complexity auditing (Big-O). Audits worst-case t
 - **Trigger phrases:** `"check time complexity"`, `"analyze big o"`, `"check algorithmic logic"`, `"optimize loop performance"`, `"audit algorithmic complexity"`, `"check for o(n) vs o(1)"`, `"find hidden quadratic loops"`.
 - **Supported languages:** Universal (Python, TypeScript/JavaScript, Java, Go, C++, Rust, C#).
 - **Empirical MCP Harness:** Available via `execute_code` in `nodejs-executor` or standalone at `.github/skills/algorithmic-complexity-analyzer/scripts/benchmark-harness.mjs`.
+
+### `memory-analyzer`
+Language-independent static and dynamic memory risk analysis to prevent Out-of-Memory (OOM) errors, stack overflow crashes, memory leaks, and unbounded heap/stack growth. Audits call-stack risks (unbounded/cyclic recursion, oversized stack frames, re-entrant call chains), heap risks (unbounded caches/queues, full-payload buffering vs. streaming, unbounded concurrency fan-out, quadratic string/buffer copies), and retained references/handle leaks (closures, unsubscribed listeners, sub-slice pinning, native/platform handles), with steady-state RSS/heap verification guidance.
+- **Trigger phrases:** `"analyze memory"`, `"check for oom"`, `"check for stack overflow"`, `"memory leak analysis"`, `"audit memory safety"`.
+- **Supported languages:** Universal (language-independent).
 
 ### `detect-overengineering`
 Analyzes source code to detect premature abstractions, speculative generality (YAGNI violations), layer bloat, and trampoline pass-through methods. Uses structural AST/regex extraction to score over-engineering risk (0–100) and outputs simplified refactoring diffs. Embedded directly **in the loop** across development, code review, architecture gates, and bug remediation.
