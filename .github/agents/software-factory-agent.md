@@ -45,7 +45,7 @@ flowchart TD
     S1["Stage 1: Plan, BDD Specs & Empirical PoC<br/>(architectural-planning, bdd-gherkin-tester, researcher-poc-tester,<br/>rag-pipeline, api-security, caching-queues-reviewer, sql-executor, llm-as-judge)"] -->|Save ledger + journal| S2
     S2["Stage 2: Develop Against BDD Specs & Seed<br/>(language packs, bdd-gherkin-tester, playwright-tester, legacy-code-modernization,<br/>test-data-creator, sql-connector, nodejs-executor, skill-creator, check-overengineering)"] -->|Save sidecar + journal| S3
     S3["Stage 3: Code Review & Lint<br/>(code-reviewer, react-developer checklist, python-linter,<br/>caching-queues-reviewer, design-pattern-detector, check-overengineering)"] -->|Pass| S4
-    S4["Stage 4: Complexity & Query Plan<br/>(algorithmic-complexity-analyzer, nodejs-executor harness,<br/>sql-executor + sql-connector explain_query)"] -->|Pass| S5
+    S4["Stage 4: Complexity, Memory & Query Plan<br/>(algorithmic-complexity-analyzer, memory-analyzer, nodejs-executor harness,<br/>sql-executor + sql-connector explain_query)"] -->|Pass| S5
     S5["Stage 5: Architecture & Simplification<br/>(detect-overengineering score < 40, design-pattern-detector, trace-code-context)"] -->|score >= 40| S5_Loop["Simplification Refactoring Loop"]
     S5_Loop --> S5
     S5 -->|score < 40| S6
@@ -136,13 +136,14 @@ flowchart TD
 
 ---
 
-### Stage 4: Asymptotic Big-O & Query Execution Plan Gate (`complexitychecks`)
+### Stage 4: Asymptotic Big-O, Memory Safety & Query Execution Plan Gate (`complexitychecks`)
 1. **Handoff & Memory**: `handoff --stage complexitychecks`, `search_memory("quadratic loop full table scan complexity")`.
-2. **Audit Time, Space & Query Plans**:
+2. **Audit Time, Space, Memory Safety & Query Plans**:
    - Activate `algorithmic-complexity-analyzer` to catch hidden $O(N^2)$ traps (`.includes()`, `in list`, `shift()`, unmemoized recursion).
+   - Activate `memory-analyzer` for language-independent OOM, stack overflow (unbounded recursion, oversized stack frames), unbounded collection/cache growth, full-payload buffering, and retained reference/handle leak checks.
    - Run empirical $T(2N)/T(N)$ doubling benchmarks via `nodejs-executor` + `.github/skills/algorithmic-complexity-analyzer/scripts/benchmark-harness.mjs` where hot paths are JS/TS, or `researcher-poc-tester` (`poc-stats-runner.py`) for Python/Java.
    - Audit SQL queries via `sql-executor` and `sql-connector` (`explain_query`) to eliminate unindexed $O(N)$ full table scans and N+1 query loops.
-3. **Gate Criteria**: Zero `[P0]`/`[P1]` complexity regressions. Record in `journal` and `record --stage complexitychecks --status PASSED`.
+3. **Gate Criteria**: Zero `[P0]`/`[P1]` complexity or memory-safety regressions. Record in `journal` and `orchestrator-context-manager.py record --stage complexitychecks --status PASSED`.
 
 ---
 
@@ -251,6 +252,7 @@ Run `skill-doctor` automatically at the conclusion of a Software Factory deliver
 | `python-linter` | Skill | Stage 3 (`codereview`) | Automated Ruff linting/formatting and Mypy type checking |
 | `design-pattern-detector` | Skill | Stage 3 (`codereview`), Stage 5 | AST pattern recognition & anti-pattern (God Object, Feature Envy) detection |
 | `algorithmic-complexity-analyzer` | Skill | Stage 4 (`complexitychecks`) | Big-O time/space audits, hidden $O(N^2)$ trap elimination, doubling benchmarks |
+| `memory-analyzer` | Skill | Stage 4 (`complexitychecks`) | Language-independent OOM, stack overflow, unbounded growth, and memory leak analysis |
 | `detect-overengineering` | Skill | Stages 2, 3, 5, Phase 8 | YAGNI & layer bloat AST scoring (`extract-signals.py`, target `< 40`) |
 | `trace-code-context` | Skill | Phase 0, Stages 4, 5, 6 | AST symbol extraction, caller/callee graphs, Mermaid dependency diagrams |
 | `scan-halucinated-tests` | Skill | Stage 6 (`halucinationchecks`) | Cross-validates test calls, imports, and mocks against real source AST |

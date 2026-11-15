@@ -67,9 +67,9 @@ STAGE_SKILLS_MAP = {
     },
     "complexitychecks": {
         "primary_skill": "algorithmic-complexity-analyzer",
-        "supporting_skills": ["trace-code-context", "sql-executor", "sql-connector", "nodejs-executor", "researcher-poc-tester", "load-memory", "save-memory"],
+        "supporting_skills": ["memory-analyzer", "trace-code-context", "sql-executor", "sql-connector", "nodejs-executor", "researcher-poc-tester", "load-memory", "save-memory"],
         "subagent_role": "Algorithmic Complexity & Performance Auditor",
-        "description": "Asymptotic Big-O time and space complexity analysis, empirical doubling benchmarks, hidden quadratic loop detection, and SQL query execution plan audits.",
+        "description": "Asymptotic Big-O time and space complexity analysis, language-independent OOM/stack-overflow/memory-leak audits, empirical doubling benchmarks, hidden quadratic loop detection, and SQL query execution plan audits.",
         "memory_load": "search_memory for known performance bottlenecks, full table scans, or quadratic loop patterns.",
         "memory_save": "save_memory(category='journal') for complexity fixes and asymptotic efficiency learnings.",
     },
