@@ -256,3 +256,29 @@ class UnitOfWork:
         return SqlOrderRepository(self.session)
 ```
 
+---
+
+### 2.6 Composition Over Inheritance (Protocols & Collaborators vs. Mixin/ABC Soup)
+**Intent**: Avoid fragile MRO (Method Resolution Order) coupling, hidden `self.*` state dependencies, and deep `ABC` hierarchies.
+
+- Prefer **constructor-injected `typing.Protocol` collaborators**, **first-class callables**, and **`@dataclass` composition** over multiple-inheritance mixins or `BaseService` subclasses.
+
+```python
+# ❌ ANTI-PATTERN: Mixin soup with implicit MRO & hidden attribute coupling
+class OrderService(LoggingMixin, RetryMixin, AuditMixin, BaseService):
+    def submit(self, order: Order) -> None:
+        self.log("submitting")      # Where does self.log come from?
+        self.retry(self._save, order)
+
+# ✅ BEST PRACTICE: Explicit collaborator composition typed with Protocols
+class OrderService:
+    def __init__(self, repo: OrderRepo, logger: Logger, retrier: Retrier) -> None:
+        self._repo = repo
+        self._logger = logger
+        self._retrier = retrier
+
+    def submit(self, order: Order) -> None:
+        self._logger.info("submitting", order_id=order.id)
+        self._retrier.run(lambda: self._repo.save(order))
+```
+

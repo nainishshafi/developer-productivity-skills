@@ -12,6 +12,8 @@ Senior-level review checklist for modern Java (21+) applications, cross-referenc
   - Are switch expressions used exhaustively with pattern matching (`switch (shape) { case Circle c -> ...; case Rectangle r -> ...; }`)?
 - [ ] **Sealed Classes**:
   - Are restricted domain hierarchies defined using `sealed interface` / `permits` to enforce closed polymorphism?
+- [ ] **Composition Over Inheritance**:
+  - Are deep `abstract` / `extends BaseService` hierarchies avoided in favor of `final` classes with constructor-injected collaborators and functional hooks (`Function`, `Consumer`)?
 - [ ] **Text Blocks**:
   - Are multi-line SQL queries, JSON templates, or XML defined using `"""` text blocks rather than string concatenations?
 

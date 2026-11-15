@@ -15,6 +15,8 @@ Senior-level review checklist for modern C# (12+) and .NET (8/9) applications, c
   - Are primary constructors used on classes and records to reduce constructor boilerplate?
 - [ ] **Pattern Matching**:
   - Are complex conditional branches modeled using switch expressions and property patterns (`user is { IsActive: true, Role: "Admin" }`)?
+- [ ] **Composition Over Inheritance**:
+  - Are concrete classes marked `sealed` by default? Are `BaseService` / `BaseController` god-base classes and deep `abstract`/`virtual` hierarchies avoided in favor of primary-constructor collaborator injection, keyed services, or decorators?
 
 ---
 

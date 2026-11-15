@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: Conducts rigorous, senior-level code reviews across languages (Python, TypeScript/JavaScript, React/Next.js, Java, C#, Go, SQL, PowerShell). Audits code changes for logical correctness, edge-case coverage, error handling, security, maintainability, clean code principles, distributed caching/queues, database performance, and algorithmic efficiency. Use when asked to "review code", "code review", "review pull request", "audit code changes", "code review checklist", or "review this diff".
-version: 1.4.0
+version: 1.4.1
 ---
 
 # Code Reviewer Skill
@@ -41,6 +41,7 @@ Evaluate every code change against these 7 dimensions:
 
 ### 2. Architecture & Anti-Bloat
 - Does the code adhere to SOLID, DRY, and KISS without speculative generality?
+- **Composition Over Inheritance**: Are deep inheritance hierarchies ($\ge 3$ levels), god base classes (`BaseService`, `BaseController`), or fragile `virtual`/`override` hooks avoided in favor of collaborator composition, `sealed`/`final` classes, `Protocol`s, or discriminated unions?
 - Are abstractions warranted, or is there layer bloat and premature design patterns? (Consult [Detect Overengineering](file:///.github/skills/detect-overengineering/SKILL.md)).
 - Is there clean separation of concerns between domain logic, data persistence, and transport layers?
 

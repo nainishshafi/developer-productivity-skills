@@ -1,7 +1,7 @@
 ---
 name: python-developer
 description: Architectural and engineering guidance for modern Python development (3.10–3.13). Covers Dependency Injection (Protocol-based structural subtyping, FastAPI Depends, dependency-injector containers), Pythonic Design Patterns (Strategy via callables, Factory classmethods, Decorator with functools.wraps, Adapter, Repository/UnitOfWork), NumPy vs Polars/Pandas data engines, Python built-in data structure selection (list, deque, set, dict, heapq, bisect, array.array), clean architecture, and asyncio hygiene. Use when designing, writing, reviewing, or refactoring Python code, or when the user asks to "write python code", "develop python service", "python dependency injection", "python design patterns", "numpy vs polars", "python data structures", "polars dataframe", "python architecture best practices", "design python backend", or "refactor python".
-version: 2.2.0
+version: 2.2.1
 ---
 
 # Python Developer Skill

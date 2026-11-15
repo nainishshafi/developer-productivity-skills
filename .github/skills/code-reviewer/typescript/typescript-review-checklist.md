@@ -14,6 +14,7 @@ Senior-level review checklist for TypeScript codebases.
 - [ ] **Nullish Coalescing vs. Logical OR**:
   - Is `??` used instead of `||` when default values should only apply to `null` and `undefined` (allowing `0` and `""` to pass)?
 - [ ] **Discriminated Unions**: Are complex state representations modeled with discriminated unions (`type State = { status: 'idle' } | { status: 'loading' } | { status: 'success'; data: T }`) rather than optional property bags?
+- [ ] **Composition Over Inheritance**: Are `abstract class` / `extends BaseService` inheritance chains avoided in favor of interface collaborator injection, higher-order function composition, and discriminated unions?
 
 ---
 

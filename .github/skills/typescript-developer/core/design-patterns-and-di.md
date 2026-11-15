@@ -286,3 +286,29 @@ export class PrismaUnitOfWork {
 }
 ```
 
+---
+
+### 2.7 Composition Over Class Inheritance (Collaborators & Higher-Order Functions)
+**Intent**: Prevent fragile base-class coupling (`extends BaseService`, `abstract class` Template Methods) by composing focused collaborators, functions, and discriminated unions.
+
+```typescript
+// ❌ ANTI-PATTERN: Abstract base class forcing inheritance for shared cross-cutting logic
+abstract class BaseJobHandler<T> {
+  async run(payload: T): Promise<void> {
+    await this.beforeExecute(payload);
+    await this.execute(payload);
+  }
+  protected async beforeExecute(_payload: T): Promise<void> {}
+  protected abstract execute(payload: T): Promise<void>;
+}
+
+// ✅ BEST PRACTICE: Higher-order function or collaborator composition
+export interface JobRunner {
+  run<T>(name: string, task: (payload: T) => Promise<void>, payload: T): Promise<void>;
+}
+
+export const createSyncOrdersJob = (runner: JobRunner, repo: OrderRepository) =>
+  (payload: SyncPayload) =>
+    runner.run('sync-orders', (p) => repo.sync(p), payload);
+```
+

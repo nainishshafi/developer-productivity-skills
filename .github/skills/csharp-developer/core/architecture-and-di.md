@@ -212,4 +212,40 @@ public class SendConfirmationEmailHandler(IEmailSender emailSender) : INotificat
 }
 ```
 
+---
+
+### 5.4 Composition Over Inheritance (`sealed` Classes & Collaborator Injection)
+Avoid `BaseService` / `BaseController` god-base classes and `abstract` Template Method hierarchies with `protected virtual` hooks. Mark concrete classes `sealed` by default (enabling JIT devirtualization and preventing fragile base-class coupling) and compose behavior via primary-constructor collaborators or delegates:
+
+```csharp
+// ❌ ANTI-PATTERN: Fragile base class coupling via inheritance
+public abstract class BaseOrderProcessor
+{
+    public async Task ProcessAsync(Order order, CancellationToken ct)
+    {
+        await ValidateAsync(order, ct);
+        var total = CalculateDiscount(order); // Tightly coupled virtual hook
+        await SaveAsync(order, total, ct);
+    }
+
+    protected virtual decimal CalculateDiscount(Order order) => order.Subtotal;
+    protected abstract Task ValidateAsync(Order order, CancellationToken ct);
+    protected abstract Task SaveAsync(Order order, decimal total, CancellationToken ct);
+}
+
+// ✅ BEST PRACTICE: Sealed class composing focused collaborators via primary constructor
+public sealed class OrderProcessor(
+    IOrderValidator validator,
+    IPricingStrategy pricing,
+    IOrderRepository repository)
+{
+    public async Task ProcessAsync(Order order, CancellationToken ct)
+    {
+        await validator.ValidateAsync(order, ct);
+        var total = pricing.CalculateTotal(order);
+        await repository.SaveAsync(order, total, ct);
+    }
+}
+```
+
 

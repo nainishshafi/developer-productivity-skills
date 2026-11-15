@@ -6,12 +6,12 @@ description: Use when the user asks to "detect design patterns", "find patterns 
   "check for god file", "check for strategy pattern", "scan for design patterns", "what patterns does this code use",
   "find anti-patterns", "pattern audit", "detect dependency injection", or wants to identify design patterns and
   anti-patterns in a source file or across the entire repository.
-version: 1.3.0
+version: 1.4.0
 ---
 
 # Design Pattern Detector
 
-Analyze source files to detect common design patterns (Singleton, Factory, Observer, Strategy, Builder, Decorator, Repository, Command, Template Method, Facade, Dependency Injection) and anti-patterns (God Object / God File, Long Method, Feature Envy). Uses deterministic structural extraction for signal detection combined with contextual source analysis. Language-agnostic with specialized support for Python (AST), Java, JS/TS, Go, and C# (structural regex).
+Analyze source files to detect common design patterns (Singleton, Factory, Observer, Strategy, Builder, Decorator, Repository, Command, Template Method, Facade, Dependency Injection) and anti-patterns (God Object / God File, Long Method, Feature Envy, Fragile / Deep Inheritance). Uses deterministic structural extraction for signal detection combined with contextual source analysis. Language-agnostic with specialized support for Python (AST), Java, JS/TS, Go, and C# (structural regex).
 
 **Extraction approach:** `scripts/extract-patterns.py` deterministically extracts class structure, method signatures, fields, metrics, and 13 boolean structural signals (ground truth), then the agent (or a delegated subagent for repo-wide batch scans) reads the source for business context and classifies patterns with confidence scores.
 
@@ -212,6 +212,7 @@ You are a design pattern analyzer. Your task is to identify design patterns and 
 - HIGH: abstract base class + `@abstractmethod` hook methods + at least one concrete method calling those hooks
 - MEDIUM: class inherits from ABC/abstract base + mix of abstract and concrete methods
 - LOW: class named `Abstract*` or `Base*` + defines some concrete template logic
+- Refactoring note: Flag if hooks proliferate; prefer Strategy, Decorator, or functional composition over deep inheritance.
 
 ### Facade
 - Signals: `has_facade_pattern`
@@ -243,6 +244,12 @@ You are a design pattern analyzer. Your task is to identify design patterns and 
 - Cannot be detected from signals — requires reading the source
 - MEDIUM: method clearly operates primarily on external object data
 - LOW: method has some external access patterns
+
+### Fragile / Deep Inheritance (Inheritance Over Composition)
+- Signals: `classes[].bases` + `has_abstract_template_steps` + source reading
+- HIGH: multi-mixin inheritance (`len(bases) >= 3`), inheritance depth `>= 3`, or `BaseService`/`BaseController`/`BaseHandler` subclassing that couples unrelated cross-cutting concerns via `super()` / `protected virtual` overrides
+- MEDIUM: concrete class extends a `Base*` / `Abstract*` implementation class solely to reuse utility methods or override hooks where collaborator injection (Strategy/Decorator) would decouple it
+- LOW: missing `sealed` / `final` on leaf domain/service classes that are not designed for extension (excluding framework-required base classes like `Exception`, `BaseModel`, `DbContext`, `ControllerBase`)
 
 ## Output Format
 

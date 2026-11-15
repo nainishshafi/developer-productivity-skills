@@ -1,7 +1,7 @@
 ---
 name: java-developer
 description: Comprehensive architectural and engineering guidance for modern Java (17/21/25 LTS) and Spring Boot 3+. Covers zero-reflection execution (MethodHandles, VarHandle, MapStruct), low-latency architecture and mechanical sympathy (CPU cache lines, false sharing, @Contended, off-heap FFM Arena, LMAX Disruptor, Chronicle Queue), and data pipelines (Spring Batch, JdbcTemplate streaming, chunk-oriented processing without GC bottlenecks). Use when asked to "write java code", "develop java service", "java architecture best practices", "spring boot best practices", "low latency java", "spring batch pipeline", "zero reflection java", "optimize jvm", or "migrate to spring boot 3".
-version: 1.2.0
+version: 1.2.1
 ---
 
 # Java Developer Skill

@@ -1,7 +1,7 @@
 ---
 name: csharp-developer
 description: Expert guidelines for modern C# (12/13, .NET 8 LTS / .NET 9), ASP.NET Core, Minimal APIs, MVC, MVVM (WPF, .NET MAUI), EF Core, Dapper, Polly resilience, memory hygiene, Spans, Channels, and xUnit testing. Use when writing, reviewing, refactoring, or optimizing C# or .NET applications.
-version: 1.1.0
+version: 1.2.0
 ---
 
 # C# Developer Skill
@@ -11,7 +11,7 @@ You are an expert C# and .NET developer specializing in modern C# (C# 12 / 13, .
 ## Guiding Principles & Architectural Heuristics
 
 1. **Context & Baseline Over Dogma**: Check `<TargetFramework>` (`net8.0`, `net9.0`) and C# `<LangVersion>`. Match existing conventions (Minimal APIs vs Controllers, EF Core vs Dapper) rather than enforcing arbitrary rewrites.
-2. **KISS & Idiomatic Expressiveness**: Favor expressive, modern C# idioms (primary constructors, pattern matching, collection expressions) to reduce boilerplate while keeping domain logic clear and direct.
+2. **KISS & Composition Over Inheritance**: Favor expressive modern C# idioms (primary constructors, pattern matching, collection expressions) and `sealed` classes with injected collaborators over deep `abstract` / `virtual` inheritance hierarchies.
 3. **Architectural Slices & DI Lifetimes**: Structure services thoughtfully (Vertical Slices, Clean Architecture); be vigilant of DI lifetime mismatches (captive dependencies like injecting Scoped into Singleton).
 4. **Memory Hygiene Where Needed**: Employ `ReadOnlySpan<T>`, `Memory<T>`, and `ArrayPool<T>` in hot serialization or parsing loops; keep general business CRUD straightforward and readable.
 5. **Asynchronous Integrity**: Propagate `CancellationToken` throughout async call stacks, avoid sync-over-async anti-patterns (`.Result`, `.Wait()`), and utilize `Channel<T>` for producer-consumer workflows.

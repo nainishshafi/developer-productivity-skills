@@ -196,6 +196,8 @@ Reference guide for the `design-pattern-detector` skill — pattern catalog, det
 | JS/TS | No native abstract; convention-based | Method throws `new Error('abstract')` | Concrete method in base |
 | Go | Interface defines hooks; struct implements template | Interface methods | Exported function calling interface |
 
+**Modern Refactoring Note:** When a Template Method hierarchy grows beyond 1–2 subclasses or requires multiple `protected virtual` / `@abstractmethod` hooks, recommend refactoring to **Strategy** (injected collaborator) or **Functional Composition** (passing `Callable` / `Function` / `Consumer` parameters).
+
 ---
 
 ### 10. Facade
@@ -280,6 +282,24 @@ Flagged from `metrics.max_method_loc`. The subagent should identify which specif
 **Confidence scoring:**
 - **MEDIUM:** method clearly operates primarily on external object data
 - **LOW:** method has some external access patterns
+
+---
+
+### 4. Fragile / Deep Inheritance (Inheritance Over Composition)
+
+**Definition:** Over-reliance on class inheritance (`extends`, `abstract class`, multiple-inheritance mixins) for code reuse or behavioral variation instead of composing focused collaborators (Strategy, Decorator, DI, `Protocol`s).
+
+**Detection signals:**
+- `classes[].bases` — inspect base class list length (`len(bases) >= 3` for mixin soup) and base names (`Base*`, `Abstract*`, `*Mixin`)
+- `has_abstract_template_steps` — proliferation of `protected virtual` / `@abstractmethod` hooks across subclasses
+- Source reading — `super()` chains, overridden concrete methods that alter base invariants, or subclasses inheriting unused methods
+
+**Confidence scoring:**
+- **HIGH:** `len(bases) >= 3` (mixin soup with MRO/attribute coupling), inheritance hierarchy depth `>= 3`, or `BaseService`/`BaseController` hierarchies coupling unrelated concerns via `super()` / `virtual` overrides
+- **MEDIUM:** Concrete class inherits from a `Base*` / `Abstract*` class purely for implementation reuse where constructor collaborator injection or Decorator would decouple it
+- **LOW:** Leaf service/domain class left unsealed (`sealed` in C#, `final` in Java) despite having no intended subtypes
+
+**Exclusions:** Do not flag standard framework/language base classes (`Exception`/`Error`, `BaseModel`, `DbContext`, `ControllerBase`, `Component`, `Enum`).
 
 ---
 

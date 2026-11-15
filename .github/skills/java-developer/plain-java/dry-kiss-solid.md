@@ -10,7 +10,36 @@
 - If a simple `for-each` loop is clearer than a multi-stage stream pipeline, prefer the simple loop.
 - Avoid premature optimization. Write clean, readable code; profile before optimizing.
 - **YAGNI (You Aren't Gonna Need It)**: Don't create single-implementation interfaces (`OrderService` + `OrderServiceImpl`) unless there is a true architectural boundary, multiple implementations, or an SPI seam.
-- **Composition over Inheritance**: Favor composing small collaborator objects over deep `abstract` class hierarchies.
+- **Composition over Inheritance**:
+  - Favor composing small, constructor-injected collaborators over deep `abstract` class or `BaseService` hierarchies.
+  - Mark concrete domain and service classes `final` unless explicitly designed for extension; use `sealed interface` + `record` for closed algebraic variants and functional interfaces (`Function`, `Consumer`) instead of Template Method subclassing (see [Design Patterns](../design-patterns/patterns.md)).
+
+```java
+// ❌ ANTI-PATTERN: Fragile BaseService inheritance
+public abstract class BaseReportService {
+    public final Report generate(ReportRequest req) {
+        var rows = fetchRows(req);
+        return format(rows); // Subclass overrides protected hooks
+    }
+    protected abstract List<Row> fetchRows(ReportRequest req);
+    protected abstract Report format(List<Row> rows);
+}
+
+// ✅ BEST PRACTICE: Final class composing focused collaborators
+public final class ReportService {
+    private final RowFetcher fetcher;
+    private final ReportFormatter formatter;
+
+    public ReportService(RowFetcher fetcher, ReportFormatter formatter) {
+        this.fetcher = fetcher;
+        this.formatter = formatter;
+    }
+
+    public Report generate(ReportRequest req) {
+        return formatter.format(fetcher.fetch(req));
+    }
+}
+```
 
 ## 3. SOLID Principles
 

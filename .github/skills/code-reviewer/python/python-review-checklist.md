@@ -10,6 +10,7 @@ Staff-level review guidelines and checklist for modern Python (3.11+) applicatio
 - [ ] **Nullable Types**: Are nullable values explicitly annotated with `T | None` (or `Optional[T]`) rather than assuming non-null?
 - [ ] **Collection Generics**: Are collections using standard generics (`list[T]`, `dict[K, V]`, `set[T]`) rather than deprecated `typing.List` or `typing.Dict`?
 - [ ] **Protocols & Duck Typing**: Are structural interfaces defined using `typing.Protocol` rather than rigid ABC hierarchies when multiple unrelated implementations exist?
+- [ ] **Composition Over Inheritance**: Are deep `ABC` hierarchies and multi-mixin inheritance (`class Foo(MixinA, MixinB, Base)`) avoided in favor of `typing.Protocol` collaborator injection, `@dataclass` composition, or first-class callables?
 - [ ] **Any & Type Casts**: Are `Any` and `cast(...)` avoided unless strictly necessary for third-party boundary interop? Flag unvalidated `cast()` as `[P1]`.
 
 ---
