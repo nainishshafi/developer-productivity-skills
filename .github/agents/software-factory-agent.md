@@ -49,7 +49,8 @@ flowchart TD
     S5["Stage 5: Architecture & Simplification<br/>(detect-overengineering score < 40, design-pattern-detector, trace-code-context)"] -->|score >= 40| S5_Loop["Simplification Refactoring Loop"]
     S5_Loop --> S5
     S5 -->|score < 40| S6
-    S6["Stage 6: Hallucination & Verification Gate<br/>(scan-halucinated-tests, trace-code-context, llm-as-judge;<br/>conditional: playwright-tester, bdd-gherkin-tester, rag-pipeline)"] -->|Pass| S7
+    S6["Stage 6: Hallucination & Verification Gate<br/>(scan-halucinated-tests, trace-code-context, llm-as-judge;<br/>conditional: playwright-tester, bdd-gherkin-tester, rag-pipeline)"] -->|More BDD Slices| S2
+    S6 -->|All Slices Pass| S7
     S7["Stage 7: Security & SQL Firewall<br/>(github-security-scanner-hook, api-security, sql-connector audit_query_safety)"] -->|Pass| F
 
     S3 -->|Fail| R
@@ -85,6 +86,10 @@ flowchart TD
 1. **Generate Stage Handoff**: `orchestrator-context-manager.py handoff --stage plan`.
 2. **Define BDD Behavior First (`bdd-gherkin-tester`)**:
    - Before writing production code, author declarative Gherkin `.feature` scenarios (`Given`/`When`/`Then`) capturing business intent, edge cases, and acceptance criteria.
+   - For multi-feature or phased BDD specs, register the ordered feature files or `@tag` phases in the orchestrator inner loop:
+     ```bash
+     .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py slices --add "<feature-1.feature>" "<feature-2.feature>"
+     ```
 3. **Design & Trade-Off Analysis**:
    - Activate `architectural-planning` for component boundaries, data flows, Mermaid diagrams, and ADRs.
    - Activate domain specialists as applicable:
@@ -103,7 +108,7 @@ flowchart TD
 ---
 
 ### Stage 2: Implementation, Modernization & Testbed Seeding (`develop`)
-1. **Generate Stage Handoff**: `orchestrator-context-manager.py handoff --stage develop`, then `load_memory(category="ledger")`.
+1. **Generate Stage Handoff**: `orchestrator-context-manager.py handoff --stage develop`, then `load_memory(category="ledger")`. If BDD slices are registered, `handoff` outputs the active slice (`[i/N]`); scope implementation and step definitions to that slice.
 2. **Author Production Code, BDD Steps & Tests**:
    - Activate matching language/framework specialist(s): `typescript-developer`, `python-developer`, `python-api-writer`, `react-developer`, `java-developer`, `csharp-developer`, `powershell-writer`.
    - Implement step definitions (`bdd-gherkin-tester`) and Playwright Page Objects / E2E specs (`playwright-tester`) to satisfy Stage 1 `.feature` scenarios.
@@ -164,11 +169,11 @@ flowchart TD
 1. **Handoff & Memory**: `handoff --stage halucinationchecks`, `load_memory(category="ledger")`.
 2. **Execute Multi-Layer Verification**:
    - **`scan-halucinated-tests` + `trace-code-context`**: Verify every test import, mock target, symbol, and property against AST ground truth.
-   - **`playwright-tester` & `bdd-gherkin-tester`**: When browser/UI flows are modified, execute Playwright E2E specs (`storageState`, accessible locators, auto-waiting) and declarative Gherkin BDD scenarios.
+   - **`playwright-tester` & `bdd-gherkin-tester`**: When browser/UI flows are modified, execute Playwright E2E specs (`storageState`, accessible locators, auto-waiting) and declarative Gherkin BDD scenarios for the active slice (and the full BDD regression suite on the final slice).
    - **`rag-pipeline`**: When RAG components are touched, run the 5-layer testing strategy (`rag-testing-strategy.py`) and offline IR + RAG Triad evaluator (`rag-pipeline-eval.py`).
    - **`llm-as-judge`**: Audit complex outputs/verdicts for faithfulness and claim grounding.
    - If `.github/skills/` or `.github/agents/` files were modified, run `npm run validate:skills --prefix mcp/sql-connector`.
-3. **Gate Criteria**: Zero phantom/hallucinated test symbols, all verification suites passing. Record in `journal` and `record --stage halucinationchecks --status PASSED`.
+3. **Gate Criteria & Inner-Loop Advance**: Zero phantom/hallucinated test symbols, all verification suites passing. Record in `journal` and `record --stage halucinationchecks --status PASSED`. If more BDD slices remain, `record` automatically advances `current_index` and loops back to Stage 2 (`develop`) for the next slice; after the final slice passes, it advances to Stage 7 (`securitychecks`).
 
 ---
 

@@ -40,6 +40,14 @@ STAGES = [
     "securitychecks",
 ]
 
+SLICE_LOOP_STAGES = [
+    "develop",
+    "codereview",
+    "complexitychecks",
+    "architecturechecks",
+    "halucinationchecks",
+]
+
 STAGE_SKILLS_MAP = {
     "plan": {
         "primary_skill": "architectural-planning",
@@ -184,6 +192,53 @@ def cmd_init(args: argparse.Namespace) -> None:
     print(f"Initial stage: plan")
 
 
+def get_active_slice(manifest: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    bdd = manifest.get("bdd_slices")
+    if not bdd or not bdd.get("items"):
+        return None
+    idx = bdd.get("current_index", 0)
+    items = bdd["items"]
+    if 0 <= idx < len(items):
+        return {
+            "index": idx,
+            "total": len(items),
+            "name": items[idx]["name"],
+            "items": items,
+        }
+    return None
+
+
+def cmd_slices(args: argparse.Namespace) -> None:
+    run_dir = get_run_dir(args.run_id)
+    manifest = load_manifest(run_dir)
+    bdd = manifest.setdefault("bdd_slices", {"items": [], "current_index": 0})
+
+    if args.add:
+        existing = {item["name"] for item in bdd["items"]}
+        added = []
+        for raw in args.add:
+            for name in [p.strip() for p in raw.split(",") if p.strip()]:
+                if name not in existing:
+                    bdd["items"].append({"name": name, "status": "PENDING", "completed_at": None})
+                    existing.add(name)
+                    added.append(name)
+        if bdd["items"] and all(i["status"] == "PENDING" for i in bdd["items"]):
+            bdd["current_index"] = 0
+            bdd["items"][0]["status"] = "IN_PROGRESS"
+        save_manifest(run_dir, manifest)
+        print(f"Registered {len(added)} BDD slice(s): {', '.join(added) if added else '(none new)'}")
+
+    items = bdd.get("items", [])
+    if not items:
+        print("No BDD feature slices registered for this run.")
+        return
+    idx = bdd.get("current_index", 0)
+    print(f"BDD Feature Slices ({len(items)} total, active index {idx + 1}/{len(items)}):")
+    for i, item in enumerate(items):
+        marker = "->" if i == idx and item["status"] != "PASSED" else "  "
+        print(f"  {marker} [{i + 1}/{len(items)}] {item['name']} ({item['status']})")
+
+
 def cmd_status(args: argparse.Namespace) -> None:
     run_dir = get_run_dir(args.run_id)
     manifest = load_manifest(run_dir)
@@ -192,6 +247,9 @@ def cmd_status(args: argparse.Namespace) -> None:
     print(f"ORCHESTRATOR RUN: {manifest['run_id']}")
     print(f"Task: {manifest['task']}")
     print(f"Overall Status: {manifest['status']} | Current Stage: {manifest.get('current_stage', 'done')}")
+    active_slice = get_active_slice(manifest)
+    if active_slice:
+        print(f"Active BDD Slice: [{active_slice['index'] + 1}/{active_slice['total']}] {active_slice['name']}")
     print("=" * 70)
     print(f"{'Stage':<22} | {'Status':<12} | {'Skill / Tool':<28}")
     print("-" * 70)
@@ -240,6 +298,18 @@ def cmd_handoff(args: argparse.Namespace) -> None:
     print("\n## Task Objective")
     print(f"{manifest['task']}")
 
+    active_slice = get_active_slice(manifest)
+    if active_slice and stage in SLICE_LOOP_STAGES:
+        print("\n## Active BDD Feature Slice")
+        print(f"- **Current Slice:** `[{active_slice['index'] + 1}/{active_slice['total']}]` `{active_slice['name']}`")
+        completed = [s["name"] for s in active_slice["items"] if s["status"] == "PASSED"]
+        remaining = [s["name"] for s in active_slice["items"][active_slice["index"] + 1:]]
+        if completed:
+            print(f"- **Completed Slices:** `{', '.join(completed)}`")
+        if remaining:
+            print(f"- **Remaining Slices:** `{', '.join(remaining)}`")
+        print("- **Scope Rule:** Implement, review, and verify only this slice; run full BDD regression on the final slice.")
+
     print("\n## Upstream Pipeline Context & Findings")
     if not previous_context:
         print("_This is the first stage in the pipeline (no upstream stages)._")
@@ -284,9 +354,40 @@ def cmd_record(args: argparse.Namespace) -> None:
         if args.artifact not in artifacts:
             artifacts.append(args.artifact)
 
-    # Determine next stage
+    # Determine next stage (handling BDD feature-slice inner loop at halucinationchecks)
     stage_idx = STAGES.index(stage)
-    if status == "PASSED" or status == "SKIPPED":
+    active_slice = get_active_slice(manifest)
+    if status in ("PASSED", "SKIPPED"):
+        if stage == "halucinationchecks" and active_slice:
+            bdd = manifest["bdd_slices"]
+            cur_idx = active_slice["index"]
+            bdd["items"][cur_idx]["status"] = "PASSED"
+            bdd["items"][cur_idx]["completed_at"] = now_iso
+
+            if cur_idx + 1 < len(bdd["items"]):
+                bdd["current_index"] = cur_idx + 1
+                bdd["items"][cur_idx + 1]["status"] = "IN_PROGRESS"
+                for loop_stage in SLICE_LOOP_STAGES:
+                    s_entry = manifest["stages"][loop_stage]
+                    history = s_entry.setdefault("slice_history", [])
+                    history.append({
+                        "slice": active_slice["name"],
+                        "status": s_entry.get("status"),
+                        "summary": s_entry.get("summary"),
+                        "artifacts": list(s_entry.get("artifacts", [])),
+                    })
+                    s_entry["status"] = "PENDING"
+                    s_entry["summary"] = None
+                    s_entry["completed_at"] = None
+                    s_entry["artifacts"] = []
+                manifest["current_stage"] = "develop"
+                manifest["stages"]["develop"]["status"] = "READY"
+                save_manifest(run_dir, manifest)
+                next_slice = bdd["items"][cur_idx + 1]["name"]
+                print(f"Successfully recorded stage '{stage}' as {status} for slice '{active_slice['name']}'.")
+                print(f"Advancing BDD slice [{cur_idx + 2}/{len(bdd['items'])}]: '{next_slice}' -> looping back to stage 'develop'.")
+                return
+
         if stage_idx + 1 < len(STAGES):
             manifest["current_stage"] = STAGES[stage_idx + 1]
             manifest["stages"][manifest["current_stage"]]["status"] = "READY"
@@ -360,6 +461,12 @@ def cmd_report(args: argparse.Namespace) -> None:
         role = s.get("subagent_role", STAGE_SKILLS_MAP[stage]["subagent_role"])
         summary = (s.get("summary") or "").replace("\n", " ").strip()
         report_lines.append(f"| `{stage}` | **{status}** | `{skill}` | {role} | {summary} |")
+
+    bdd = manifest.get("bdd_slices")
+    if bdd and bdd.get("items"):
+        report_lines.append("\n## BDD Feature Slices\n")
+        for i, item in enumerate(bdd["items"], start=1):
+            report_lines.append(f"{i}. `{item['name']}` — **{item['status']}**")
 
     report_lines.append("\n## Stage Artifacts & Deliverables\n")
     has_artifacts = False
@@ -492,6 +599,11 @@ def main() -> None:
     p_doctor = subparsers.add_parser("skill-doctor", help="Run periodic skill-doctor diagnostics on pending memory learnings")
     p_doctor.add_argument("--format", choices=["text", "json"], default="text")
 
+    # slices
+    p_slices = subparsers.add_parser("slices", help="Register or list BDD feature slices for the inner loop")
+    p_slices.add_argument("--add", nargs="+", help="BDD .feature file(s) or @tag phase(s) to register")
+    p_slices.add_argument("--run-id", help="Optional run ID (defaults to latest)")
+
     # check-overengineering
     p_check_oe = subparsers.add_parser("check-overengineering", help="Audit files for over-engineering and accidental complexity in the loop")
     p_check_oe.add_argument("--file", help="Path to single source file to audit")
@@ -510,6 +622,8 @@ def main() -> None:
         cmd_handoff(args)
     elif args.subcommand == "record":
         cmd_record(args)
+    elif args.subcommand == "slices":
+        cmd_slices(args)
     elif args.subcommand == "check-overengineering":
         cmd_check_overengineering(args)
     elif args.subcommand == "report":
