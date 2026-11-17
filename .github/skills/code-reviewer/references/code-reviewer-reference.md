@@ -111,6 +111,8 @@ When reviewing controllers, middleware, or auth handlers, cross-reference [`api-
 
 ### D. Architecture & Anti-Bloat Auditing
 When reviewing abstractions, interfaces, and module structure, cross-reference [`detect-overengineering`](file:///.github/skills/detect-overengineering/SKILL.md):
+- **Single Source of Truth (SSOT)**: Data, schemas, constants, and type declarations must have a single authoritative definition; flag duplicated declarations or mirrored state that can drift out of sync.
+- **Design for Testability**: Business logic must be decoupled from I/O, static global state, and non-deterministic system calls (time, random, env) so units can be verified deterministically without invasive monkey-patching.
 - **Layer Depth**: Call chains must be limited to $\le 3$ layers (e.g., Controller $\to$ Service $\to$ Repository).
 - **Speculative Interfaces**: Interfaces with only one implementation and no polymorphism or test mock justification must be flattened.
 - **Trampoline Methods**: Pass-through methods that simply forward arguments to the next layer without transformation or logic must be eliminated.

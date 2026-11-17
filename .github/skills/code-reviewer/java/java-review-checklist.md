@@ -14,6 +14,8 @@ Senior-level review checklist for modern Java (21+) applications, cross-referenc
   - Are restricted domain hierarchies defined using `sealed interface` / `permits` to enforce closed polymorphism?
 - [ ] **Composition Over Inheritance**:
   - Are deep `abstract` / `extends BaseService` hierarchies avoided in favor of `final` classes with constructor-injected collaborators and functional hooks (`Function`, `Consumer`)?
+- [ ] **Single Source of Truth & Testability**:
+  - Are constants, domain constraints, and configuration (`@ConfigurationProperties` records) defined in a single authoritative place, and are collaborators + `java.time.Clock` constructor-injected so classes are unit-testable without reflection (`ReflectionTestUtils`)?
 - [ ] **Text Blocks**:
   - Are multi-line SQL queries, JSON templates, or XML defined using `"""` text blocks rather than string concatenations?
 

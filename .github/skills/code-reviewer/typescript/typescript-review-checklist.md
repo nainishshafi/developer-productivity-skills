@@ -14,6 +14,7 @@ Senior-level review checklist for TypeScript codebases.
 - [ ] **Nullish Coalescing vs. Logical OR**:
   - Is `??` used instead of `||` when default values should only apply to `null` and `undefined` (allowing `0` and `""` to pass)?
 - [ ] **Discriminated Unions**: Are complex state representations modeled with discriminated unions (`type State = { status: 'idle' } | { status: 'loading' } | { status: 'success'; data: T }`) rather than optional property bags?
+- [ ] **Single Source of Truth for Types & Schemas**: Are TypeScript types derived directly from runtime schemas (`z.infer<typeof Schema>`, `as const` tuples, `satisfies`) rather than maintaining parallel hand-written `interface` and schema declarations that can drift?
 - [ ] **Composition Over Inheritance**: Are `abstract class` / `extends BaseService` inheritance chains avoided in favor of interface collaborator injection, higher-order function composition, and discriminated unions?
 
 ---
@@ -46,6 +47,7 @@ Senior-level review checklist for TypeScript codebases.
 
 ## 4. Linting, Formatting & Testing
 
+- [ ] **Design for Testability**: Are business rules pure or accepting narrow injected dependencies (clock, config, repositories) rather than importing stateful singletons or reading `process.env` / `Date.now()` deep inside domain logic?
 - [ ] **ESLint & Prettier**: Does the code conform to strict ESLint configurations (`@typescript-eslint/recommended-type-checked`)?
 - [ ] **Test Coverage**: Are unit tests written in Vitest/Jest with high branch coverage?
 - [ ] **Mock Legitimacy**: Are test mocks validating against actual interface contracts (e.g. `mock<UserService>()`) rather than untyped objects?

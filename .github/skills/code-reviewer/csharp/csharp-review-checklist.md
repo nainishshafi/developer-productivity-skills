@@ -17,6 +17,8 @@ Senior-level review checklist for modern C# (12+) and .NET (8/9) applications, c
   - Are complex conditional branches modeled using switch expressions and property patterns (`user is { IsActive: true, Role: "Admin" }`)?
 - [ ] **Composition Over Inheritance**:
   - Are concrete classes marked `sealed` by default? Are `BaseService` / `BaseController` god-base classes and deep `abstract`/`virtual` hierarchies avoided in favor of primary-constructor collaborator injection, keyed services, or decorators?
+- [ ] **Single Source of Truth & Testability**:
+  - Are options (`IOptions<T>`), constants, and domain contracts defined in a single canonical place, and are non-deterministic dependencies (`TimeProvider`, external I/O) injected via constructors for deterministic unit testing?
 
 ---
 

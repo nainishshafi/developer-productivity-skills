@@ -10,6 +10,7 @@ Staff-level review guidelines and checklist for modern Python (3.11+) applicatio
 - [ ] **Nullable Types**: Are nullable values explicitly annotated with `T | None` (or `Optional[T]`) rather than assuming non-null?
 - [ ] **Collection Generics**: Are collections using standard generics (`list[T]`, `dict[K, V]`, `set[T]`) rather than deprecated `typing.List` or `typing.Dict`?
 - [ ] **Protocols & Duck Typing**: Are structural interfaces defined using `typing.Protocol` rather than rigid ABC hierarchies when multiple unrelated implementations exist?
+- [ ] **Single Source of Truth (SSOT)**: Are schemas, constants, enums (`StrEnum`), and type definitions declared once (e.g., single Pydantic model or `dataclass` / `Literal` source) without duplicated magic literals or parallel dicts/classes?
 - [ ] **Composition Over Inheritance**: Are deep `ABC` hierarchies and multi-mixin inheritance (`class Foo(MixinA, MixinB, Base)`) avoided in favor of `typing.Protocol` collaborator injection, `@dataclass` composition, or first-class callables?
 - [ ] **Any & Type Casts**: Are `Any` and `cast(...)` avoided unless strictly necessary for third-party boundary interop? Flag unvalidated `cast()` as `[P1]`.
 
@@ -44,6 +45,7 @@ Staff-level review guidelines and checklist for modern Python (3.11+) applicatio
 
 ## 4. Testing & Code Quality
 
+- [ ] **Design for Testability**: Are I/O, system clock, and external clients injected (or isolated at boundaries) rather than hard-wired at module import time or buried inside business logic?
 - [ ] **Test Coverage**: Are happy path, edge cases (empty list, 0, negative values, `None`), and error branches covered in `pytest`?
 - [ ] **Fixture Hygiene**: Are fixtures scoped appropriately (`function`, `module`, `session`) without leaking test state?
 - [ ] **Mock Verification**: Are mocks authentic AST symbols (`spec=Service`) rather than unconstrained magic mocks?

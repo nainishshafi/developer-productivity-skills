@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
-description: Conducts rigorous, senior-level code reviews across languages (Python, TypeScript/JavaScript, React/Next.js, Java, C#, Go, SQL, PowerShell). Audits code changes for logical correctness, edge-case coverage, error handling, security, maintainability, clean code principles, distributed caching/queues, database performance, and algorithmic efficiency. Use when asked to "review code", "code review", "review pull request", "audit code changes", "code review checklist", or "review this diff".
-version: 1.4.1
+description: Conducts rigorous, senior-level code reviews across languages (Python, TypeScript/JavaScript, React/Next.js, Java, C#, Go, SQL, PowerShell). Audits code changes for logical correctness, edge-case coverage, error handling, security, maintainability, clean code principles, testability, single source of truth (SSOT), distributed caching/queues, database performance, and algorithmic efficiency. Use when asked to "review code", "code review", "review pull request", "audit code changes", "code review checklist", or "review this diff".
+version: 1.4.2
 ---
 
 # Code Reviewer Skill
@@ -41,6 +41,8 @@ Evaluate every code change against these 7 dimensions:
 
 ### 2. Architecture & Anti-Bloat
 - Does the code adhere to SOLID, DRY, and KISS without speculative generality?
+- **Single Source of Truth (SSOT)**: Do data, state, constants, configuration, schemas, and type declarations have a single canonical definition? Are duplicated magic values, parallel hand-maintained type/schema declarations, or redundant synchronized state variables eliminated in favor of deriving types and values from one authoritative source?
+- **Design for Testability**: Is the code structured to be deterministically testable in isolation—separating pure domain logic from I/O side effects, injecting external collaborators and non-deterministic inputs (clock, randomness, environment config) explicitly, and avoiding hidden global state, module-import side effects, or hard-wired `new` singletons?
 - **Composition Over Inheritance**: Are deep inheritance hierarchies ($\ge 3$ levels), god base classes (`BaseService`, `BaseController`), or fragile `virtual`/`override` hooks avoided in favor of collaborator composition, `sealed`/`final` classes, `Protocol`s, or discriminated unions?
 - Are abstractions warranted, or is there layer bloat and premature design patterns? (Consult [Detect Overengineering](file:///.github/skills/detect-overengineering/SKILL.md)).
 - Is there clean separation of concerns between domain logic, data persistence, and transport layers?
@@ -51,7 +53,8 @@ Evaluate every code change against these 7 dimensions:
 - Does the system fail fast with informative error messages that do not leak sensitive internals?
 - Are defects isolated and verified before patching? (Consult [Troubleshoot and Fix](file:///.github/skills/troubleshoot-and-fix/SKILL.md)).
 
-### 4. Test Coverage & Test Authenticity
+### 4. Testability, Test Coverage & Test Authenticity
+- **Testability & Seam Hygiene**: Can units and workflows be tested directly through public contracts and narrow seams, or does the code force tests to monkey-patch private internals, mutate globals, or bootstrap heavy unrelated infrastructure?
 - Are there unit tests covering both the happy path and edge-case failure paths?
 - Do tests test observable behavior rather than internal private implementation details?
 - Are mock targets authentic and aligned with ground truth (no hallucinated APIs)? (Consult [Scan Hallucinated Tests](file:///.github/skills/scan-halucinated-tests/SKILL.md)).

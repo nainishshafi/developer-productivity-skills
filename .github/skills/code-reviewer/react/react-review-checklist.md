@@ -14,6 +14,8 @@ Senior-level review checklist for React (v18 & v19) applications, cross-referenc
   - Are imperative `for` loops inside JSX components extracted into pure, testable selector functions (`filter`, `map`, `Object.groupBy`)?
 - [ ] **Functional Core, Imperative Shell**:
   - Are sequential `useEffect` state-mutation chains banned? Derived values compute during render, state transitions live in pure reducers/helpers, and side effects execute explicitly in event handlers (`onClick`, `onSubmit`).
+- [ ] **Single Source of Truth & Derived State**:
+  - Is state stored in a single canonical location (URL params, TanStack Query cache, or one owner component/store) with derived values computed during render, avoiding duplicated `useState` mirrors synchronized via `useEffect`?
 - [ ] **SOLID, Composition & Naming Hygiene**:
   - Single Responsibility Principle: Components exceeding 200–250 lines decompose cleanly into focused subcomponents or custom hooks without pointless micro-component splitting.
   - Open/Closed Composition & Zero "Prop Drilling Hell": Prefer `children`, slot props, or Compound Components over 5+ boolean layout flags (`hasHeader`, `isCompact`). Flag trampoline pass-through props threaded across $\ge 3$ intermediate layers as `[P1 - Major]`; resolve via `children`/slots $\to$ TanStack Query/RSC colocation $\to$ scoped Context $\to$ atomic Zustand selectors.

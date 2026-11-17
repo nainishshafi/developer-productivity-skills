@@ -8,6 +8,8 @@ Senior-level review checklist for modern Go (1.21+) microservices and tooling.
 
 - [ ] **Accept Interfaces, Return Structs**:
   - Do functions accept narrow interface parameters while concrete constructors return concrete structs (`*Service`)?
+- [ ] **Single Source of Truth & Testability**:
+  - Are constants, config structs, and domain types defined in a single canonical package without duplication, and are external I/O and clocks injectable via narrow consumer-defined interfaces rather than package-level globals?
 - [ ] **Zero Value Usability**:
   - Are structs designed so their zero value is immediately useful without complex initialization (e.g. `sync.Mutex`, `bytes.Buffer`)?
 - [ ] **Package Organization**:
