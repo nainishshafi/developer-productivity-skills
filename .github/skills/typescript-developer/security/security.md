@@ -71,3 +71,26 @@ export function timingSafeTokenEqual(a: string, b: string): boolean {
 }
 ```
 
+---
+
+## 4. Safe HTML Templating & URL Scheme Validation
+
+When embedding dynamic data or JSON into HTML templates:
+- **Use a replacer function** (`() => value`) in `String.prototype.replace` / `replaceAll`, because passing a raw string replacement interprets `$&`, `$$`, `` $` ``, and `$'` sequences and corrupts payloads containing `$`.
+- **Escape `<` as `\u003c`** when embedding JSON inside `<script type="application/json">` to prevent `</script>` breakout.
+- **Validate URL schemes** (`http:` / `https:`) before rendering `<a href>` links so `javascript:` or `data:` URLs cannot execute script.
+
+```typescript
+const safeJson = JSON.stringify(data).replace(/</g, '\\u003c');
+const html = template.replace('{{DATA_JSON}}', () => safeJson);
+
+export function safeHref(rawUrl: string): string {
+  try {
+    const parsed = new URL(rawUrl);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? rawUrl : '#';
+  } catch {
+    return '#';
+  }
+}
+```
+

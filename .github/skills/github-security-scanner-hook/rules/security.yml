@@ -412,7 +412,7 @@ rules:
     severity: ERROR
 
   - id: prompt-injection-stealth-unicode
-    pattern-regex: '[\u202A-\u202E\u2066-\u2069]'
+    pattern-regex: '[\x{202A}-\x{202E}\x{2066}-\x{2069}]'
     paths:
       exclude:
         - "**/github-security-scanner-hook/**"

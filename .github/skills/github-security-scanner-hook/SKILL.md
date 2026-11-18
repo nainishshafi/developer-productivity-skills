@@ -1,7 +1,7 @@
 ---
 name: github-security-scanner-hook
 description: Use when the user asks to "scan for security vulnerabilities", "check for secrets in code", "set up a pre-commit security hook", "install security scanning", "scan staged files for secrets", "check for hardcoded credentials", "run a security scan before commit", "detect leaked API keys", "add a git commit hook for security", "security check before push", "scan for SQL injection", "check for XSS vulnerabilities", "check for prompt injection", "scan for SSTI", "check for unsafe deserialization", "scan for SSRF", "detect weak cryptography", "detect injection flaws", "check for command injection", "audit subprocess security", or wants to prevent committing security issues to git.
-version: 1.4.0
+version: 1.4.2
 ---
 
 # GitHub Security Scanner Hook
@@ -20,27 +20,29 @@ Can run as a one-off manual scan or install as an automated git pre-commit hook.
 
 ## Workflow
 
-### Step 1 — Set Up `.venv` and Install Tools
+### Step 1 — Select Python Venv and Install Tools
 
-Always use `.venv` — create it if it does not exist, then optionally install `detect-secrets` and `semgrep`:
+Prefer a shared agent venv if configured (e.g., `~/.gemini/agent-venv/Scripts/python.exe` on Windows or `~/.gemini/agent-venv/bin/python` on POSIX) or an existing project `.venv`; otherwise create `.venv` and optionally install `detect-secrets` and `semgrep`:
 
 **Windows (PowerShell):**
 ```powershell
-if (-not (Test-Path .venv)) { python -m venv .venv }
-$PYTHON = if (Test-Path .venv\Scripts\python.exe) { ".venv\Scripts\python.exe" } else { "python" }
+$SHARED_PY = Join-Path $HOME ".gemini\agent-venv\Scripts\python.exe"
+$PYTHON = if (Test-Path $SHARED_PY) { $SHARED_PY } elseif (Test-Path .venv\Scripts\python.exe) { ".venv\Scripts\python.exe" } else { python -m venv .venv; ".venv\Scripts\python.exe" }
 & $PYTHON -m pip show detect-secrets *> $null; if ($LASTEXITCODE -ne 0) { & $PYTHON -m pip install detect-secrets }
 & $PYTHON -m pip show semgrep *> $null; if ($LASTEXITCODE -ne 0) { & $PYTHON -m pip install semgrep }
 ```
 
 **Unix / macOS (Bash):**
 ```bash
-[ -d .venv ] || python -m venv .venv
-PYTHON=$(if [ -f .venv/Scripts/python ]; then echo .venv/Scripts/python; else echo .venv/bin/python; fi)
-$PYTHON -m pip show detect-secrets > /dev/null 2>&1 || $PYTHON -m pip install detect-secrets
-$PYTHON -m pip show semgrep > /dev/null 2>&1 || $PYTHON -m pip install semgrep
+SHARED_PY="$HOME/.gemini/agent-venv/bin/python"
+if [ -x "$SHARED_PY" ]; then PYTHON="$SHARED_PY"
+elif [ -x .venv/bin/python ]; then PYTHON=".venv/bin/python"
+else python3 -m venv .venv && PYTHON=".venv/bin/python"; fi
+"$PYTHON" -m pip show detect-secrets > /dev/null 2>&1 || "$PYTHON" -m pip install detect-secrets
+"$PYTHON" -m pip show semgrep > /dev/null 2>&1 || "$PYTHON" -m pip install semgrep
 ```
 
-Both `detect-secrets` and `semgrep` are optional independently — if either is missing (e.g., offline environments), `scan-staged.py` automatically falls back to its built-in secret, OWASP code, and prompt-injection rules. When `semgrep` is installed, it uses the bundled rules in `rules/security.yml` (no login or network access required).
+Both `detect-secrets` and `semgrep` are optional independently — if either is missing (e.g., offline environments), `scan-staged.py` automatically falls back to its built-in secret, OWASP code, and prompt-injection rules. When `semgrep` is installed (in `.venv`, alongside the selected `python`, or on `PATH`), it uses the bundled rules in `rules/security.yml` (no login or network access required).
 
 ### Step 2 — Run Security Scan on Staged Files
 

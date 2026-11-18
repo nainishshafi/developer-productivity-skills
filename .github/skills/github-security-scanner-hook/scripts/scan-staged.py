@@ -23,6 +23,7 @@ Exit codes:
 import argparse
 import json
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -533,17 +534,23 @@ def check_tool(python: Path, package_name: str) -> bool:
     return run([str(python), "-m", "pip", "show", package_name]).returncode == 0
 
 
-def resolve_semgrep() -> Path | None:
-    """Return the semgrep binary from the .venv, or None if not installed."""
+def resolve_semgrep(python: Path | None = None) -> Path | None:
+    """Return the semgrep binary from .venv, the active Python Scripts dir, or PATH."""
     candidates = [
         Path(".venv") / "Scripts" / "semgrep.exe",
         Path(".venv") / "Scripts" / "semgrep",
         Path(".venv") / "bin" / "semgrep",
     ]
+    if python is not None:
+        candidates.extend([
+            python.parent / "semgrep.exe",
+            python.parent / "semgrep",
+        ])
     for candidate in candidates:
         if candidate.exists():
             return candidate
-    return None
+    which_semgrep = shutil.which("semgrep")
+    return Path(which_semgrep) if which_semgrep else None
 
 
 # ---------------------------------------------------------------------------
@@ -743,7 +750,7 @@ def main() -> None:
         )
         findings.extend(run_builtin_fallback(existing_files, BUILTIN_SECRET_RULES))
 
-    semgrep = resolve_semgrep()
+    semgrep = resolve_semgrep(python)
     if semgrep:
         findings.extend(run_semgrep(semgrep, existing_files))
         findings.extend(run_builtin_fallback(existing_files, BUILTIN_PROMPT_RULES))
