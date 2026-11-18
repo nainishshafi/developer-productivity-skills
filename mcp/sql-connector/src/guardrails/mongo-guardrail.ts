@@ -9,6 +9,18 @@ export interface MongoCommandPayload {
   options?: Record<string, unknown>;
 }
 
+const UNSAFE_MONGO_OPERATOR_RE = /"(?:\$where|\$function|\$accumulator)"|\$(?:where|function|accumulator)\s*:/i;
+const WRITE_PIPELINE_STAGE_RE = /"\$(?:out|merge)"|\$(?:out|merge)\s*:/i;
+
+function hasKeyRecursive(obj: unknown, keys: Set<string>): boolean {
+  if (!obj || typeof obj !== 'object') return false;
+  if (Array.isArray(obj)) return obj.some((item) => hasKeyRecursive(item, keys));
+  for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+    if (keys.has(k) || hasKeyRecursive(v, keys)) return true;
+  }
+  return false;
+}
+
 /**
  * Parses and audits MongoDB JSON or string commands for destructive actions
  */
@@ -21,17 +33,18 @@ export function auditMongoQuery(
   let isReadOnly = true;
   let detectedOperation = 'UNKNOWN';
 
-  // 1. Check for shell-style destructive commands
   if (/\b(dropDatabase|dropIndexes|dropCollection)\b/i.test(normalizedQuery) || /\.drop\s*\(/i.test(normalizedQuery)) {
     violations.push("CRITICAL: Destructive operation 'drop' is strictly blocked by MongoDB guardrails.");
   }
 
-  // 2. Check for empty deleteMany or remove
   if (/\b(deleteMany|remove)\s*\(\s*\{\s*\}\s*\)/i.test(normalizedQuery)) {
     violations.push("CRITICAL: Unbounded 'deleteMany({})' without filter is strictly blocked.");
   }
 
-  // 3. Try to parse JSON structured command
+  if (UNSAFE_MONGO_OPERATOR_RE.test(normalizedQuery)) {
+    violations.push('CRITICAL: Server-side JavaScript execution ($where/$function/$accumulator) is strictly blocked.');
+  }
+
   let parsedPayload: MongoCommandPayload | null = null;
   if (normalizedQuery.startsWith('{')) {
     try {
@@ -48,24 +61,26 @@ export function auditMongoQuery(
     const readOps = ['find', 'findone', 'aggregate', 'countdocuments', 'distinct', 'estimateddocumentcount'];
     isReadOnly = readOps.includes(op);
 
-    // Destructive command checks
     if (['drop', 'dropdatabase', 'dropcollection', 'dropindexes'].includes(op)) {
       violations.push(`CRITICAL: Destructive operation '${op}' is strictly blocked.`);
     }
 
-    // Check deleteMany without filter or empty filter
-    if (op === 'deletemany' || op === 'delete') {
-      const filter = parsedPayload.filter;
-      if (!filter || Object.keys(filter).length === 0) {
-        violations.push("CRITICAL: Unbounded 'deleteMany' with empty filter is strictly blocked.");
-      }
+    if (
+      hasKeyRecursive(parsedPayload.filter, new Set(['$where', '$function', '$accumulator'])) ||
+      hasKeyRecursive(parsedPayload.pipeline, new Set(['$where', '$function', '$accumulator']))
+    ) {
+      violations.push('CRITICAL: Server-side JavaScript execution ($where/$function/$accumulator) is strictly blocked.');
     }
 
-    // Check updateMany without filter
-    if (op === 'updatemany') {
+    if (op === 'aggregate' && hasKeyRecursive(parsedPayload.pipeline, new Set(['$out', '$merge']))) {
+      isReadOnly = false;
+      violations.push('CRITICAL: Write pipeline stages ($out/$merge) are blocked in aggregate queries.');
+    }
+
+    if (op === 'deletemany' || op === 'delete' || op === 'updatemany' || op === 'updateone') {
       const filter = parsedPayload.filter;
       if (!filter || Object.keys(filter).length === 0) {
-        violations.push("CRITICAL: Unbounded 'updateMany' with empty filter is strictly blocked.");
+        violations.push(`CRITICAL: Unbounded '${op}' with empty filter is strictly blocked.`);
       }
     }
 
@@ -73,7 +88,11 @@ export function auditMongoQuery(
       violations.push(`POLICY: MongoDB mutation '${op}' is not permitted in 'read-only' mode. Set mode to 'guarded-write' to execute verified writes.`);
     }
   } else {
-    // Regex checks for shell string
+    if (WRITE_PIPELINE_STAGE_RE.test(normalizedQuery)) {
+      isReadOnly = false;
+      violations.push('CRITICAL: Write pipeline stages ($out/$merge) are blocked in aggregate queries.');
+    }
+
     const matchOp = normalizedQuery.match(/\.(find|findOne|aggregate|count|insertOne|updateOne|updateMany|deleteOne|deleteMany|remove|drop)\b/);
     if (matchOp) {
       detectedOperation = matchOp[1];

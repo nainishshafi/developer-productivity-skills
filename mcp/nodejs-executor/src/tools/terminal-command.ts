@@ -3,22 +3,22 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { runProcess } from '../process/runner.js';
 import { sanitizeEnvironment } from '../security/sanitizer.js';
-import { preExecutionSecurityCheck } from '../security/validator.js';
+import { isAllowedWorkspaceOrTempPath, preExecutionSecurityCheck } from '../security/validator.js';
 import type { ExecutionResult, RunTerminalCommandOptions } from '../types.js';
 
 const SHELL_METACHARS = /[&|;><`$\n\r]/;
 const MAX_TIMEOUT_MS = 300000;
 const BLOCKED_BINARIES = new Set([
   'cmd', 'cmd.exe', 'powershell', 'powershell.exe', 'pwsh', 'pwsh.exe',
-  'bash', 'bash.exe', 'sh', 'zsh', 'fish', 'wsl', 'wsl.exe',
+  'bash', 'bash.exe', 'sh', 'sh.exe', 'zsh', 'zsh.exe', 'fish', 'fish.exe',
+  'dash', 'ksh', 'csh', 'tcsh', 'wsl', 'wsl.exe',
   'diskpart', 'diskpart.exe', 'format', 'format.com', 'mkfs', 'fdisk',
   'reg', 'reg.exe', 'regedit', 'regedit.exe',
+  'wscript', 'wscript.exe', 'cscript', 'cscript.exe', 'mshta', 'mshta.exe',
+  'rundll32', 'rundll32.exe', 'regsvr32', 'regsvr32.exe',
+  'certutil', 'certutil.exe', 'bitsadmin', 'bitsadmin.exe', 'msiexec', 'msiexec.exe',
 ]);
-
-function isPathContained(parent: string, target: string): boolean {
-  const rel = path.relative(path.resolve(parent).toLowerCase(), path.resolve(target).toLowerCase());
-  return !rel.startsWith('..') && !path.isAbsolute(rel);
-}
+const BLOCKED_GIT_FLAGS = new Set(['-c', '--exec-path', '--upload-pack', '--receive-pack']);
 
 function rejectResult(stderr: string, error: string): ExecutionResult {
   return {
@@ -61,6 +61,15 @@ export async function runTerminalCommand(
         'Forbidden shell metacharacters detected in arguments'
       );
     }
+    if (
+      (baseBinary === 'git' || baseBinary === 'git.exe') &&
+      (BLOCKED_GIT_FLAGS.has(arg) || arg.startsWith('--exec-path=') || arg.startsWith('--upload-pack=') || arg.startsWith('--receive-pack='))
+    ) {
+      return rejectResult(
+        `Security rejection: Git flag "${arg}" is blocked by terminal policy.`,
+        `Blocked git flag "${arg}"`
+      );
+    }
   }
 
   const safety = preExecutionSecurityCheck(`${command} ${args.join(' ')}`);
@@ -70,7 +79,7 @@ export async function runTerminalCommand(
 
   const rootCwd = process.cwd();
   const targetCwd = options.workingDirectory ? path.resolve(rootCwd, options.workingDirectory) : rootCwd;
-  if (!isPathContained(rootCwd, targetCwd) && !isPathContained(os.tmpdir(), targetCwd)) {
+  if (!isAllowedWorkspaceOrTempPath(targetCwd, rootCwd)) {
     return rejectResult(
       `Security rejection: workingDirectory "${targetCwd}" must reside within workspace (${rootCwd}) or temp directory.`,
       'workingDirectory outside allowed boundary'
@@ -93,4 +102,3 @@ export async function runTerminalCommand(
 
   return { ...result, stdoutLogFile };
 }
-

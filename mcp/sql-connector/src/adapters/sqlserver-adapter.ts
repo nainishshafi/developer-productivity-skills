@@ -7,7 +7,7 @@ import {
   TableColumnMetadata,
   TableMetadata,
 } from '../types.js';
-import { auditSqlQuery } from '../guardrails/sql-guardrail.js';
+import { auditExplainQuery, auditSqlQuery } from '../guardrails/sql-guardrail.js';
 import { withTimeout } from '../utils.js';
 
 export class SqlServerAdapter implements DatabaseAdapter {
@@ -42,7 +42,7 @@ export class SqlServerAdapter implements DatabaseAdapter {
         options: {
           port,
           database: this.config.database,
-          trustServerCertificate: true,
+          trustServerCertificate: false,
           encrypt: this.config.ssl !== false,
           rowCollectionOnRequestCompletion: true,
         },
@@ -218,7 +218,7 @@ export class SqlServerAdapter implements DatabaseAdapter {
   }
 
   async explain(query: string, options?: QueryOptions): Promise<ExplainResult> {
-    const audit = auditSqlQuery(query, 'read-only');
+    const audit = auditExplainQuery(query);
     if (!audit.allowed) {
       throw new Error(`Explain blocked by SQL guardrails: ${audit.violations.join('; ')}`);
     }

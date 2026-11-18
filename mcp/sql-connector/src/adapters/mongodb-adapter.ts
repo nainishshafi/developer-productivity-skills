@@ -107,8 +107,11 @@ export class MongoAdapter implements DatabaseAdapter {
           truncated: rows.length >= maxRows,
         };
       } else if (op === 'aggregate') {
-        const cursor = coll.aggregate(payload.pipeline || []).maxTimeMS(timeoutMs);
-        const rows = await withTimeout<any[]>(cursor.toArray(), timeoutMs, 'MongoDB aggregate');
+        const pipeline = [...(payload.pipeline || []), { $limit: maxRows + 1 }];
+        const cursor = coll.aggregate(pipeline).maxTimeMS(timeoutMs);
+        const rawRows = await withTimeout<any[]>(cursor.toArray(), timeoutMs, 'MongoDB aggregate');
+        const truncated = rawRows.length > maxRows;
+        const rows = truncated ? rawRows.slice(0, maxRows) : rawRows;
         const executionTimeMs = Math.round(performance.now() - startTime);
 
         return {
@@ -119,7 +122,7 @@ export class MongoAdapter implements DatabaseAdapter {
           rowCount: rows.length,
           columns: rows.length > 0 ? Object.keys(rows[0]) : [],
           executionTimeMs,
-          truncated: rows.length >= maxRows,
+          truncated,
         };
       } else if (op === 'countdocuments' || op === 'count') {
         const count = await coll.countDocuments(payload.filter || {});
@@ -145,6 +148,9 @@ export class MongoAdapter implements DatabaseAdapter {
           executionTimeMs,
         };
       } else if (op === 'updateone') {
+        if (!payload.filter || Object.keys(payload.filter).length === 0) {
+          throw new Error("Security rejection: 'updateOne' requires a non-empty filter.");
+        }
         const res = await coll.updateOne(payload.filter, payload.update);
         const executionTimeMs = Math.round(performance.now() - startTime);
         return {

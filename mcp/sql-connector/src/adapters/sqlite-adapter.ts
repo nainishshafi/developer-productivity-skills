@@ -8,7 +8,8 @@ import {
   TableColumnMetadata,
   TableMetadata,
 } from '../types.js';
-import { auditSqlQuery } from '../guardrails/sql-guardrail.js';
+import { auditExplainQuery, auditSqlQuery } from '../guardrails/sql-guardrail.js';
+import { validateDatabaseFilePath } from '../utils.js';
 
 export class SqliteAdapter implements DatabaseAdapter {
   readonly engine = 'sqlite' as const;
@@ -25,8 +26,11 @@ export class SqliteAdapter implements DatabaseAdapter {
     if (this.db) {
       return;
     }
-    const path = this.config.filePath || ':memory:';
-    this.db = new DatabaseSync(path);
+    const dbPath = validateDatabaseFilePath(
+      this.config.filePath || ':memory:',
+      [':memory:', '.db', '.sqlite', '.sqlite3']
+    );
+    this.db = new DatabaseSync(dbPath);
     this.connected = true;
   }
 
@@ -151,7 +155,7 @@ export class SqliteAdapter implements DatabaseAdapter {
   async explain(query: string, options?: QueryOptions): Promise<ExplainResult> {
     if (!this.db) await this.connect();
 
-    const audit = auditSqlQuery(query, 'read-only');
+    const audit = auditExplainQuery(query);
     if (!audit.allowed) {
       throw new Error(`Explain blocked by SQL guardrails: ${audit.violations.join('; ')}`);
     }

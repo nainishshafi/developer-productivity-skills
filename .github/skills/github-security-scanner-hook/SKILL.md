@@ -1,28 +1,28 @@
 ---
 name: github-security-scanner-hook
-description: Use when the user asks to "scan for security vulnerabilities", "check for secrets in code", "set up a pre-commit security hook", "install security scanning", "scan staged files for secrets", "check for hardcoded credentials", "run a security scan before commit", "detect leaked API keys", "add a git commit hook for security", "security check before push", "scan for SQL injection", "check for XSS vulnerabilities", "detect injection flaws", "check for command injection", "audit subprocess security", or wants to prevent committing security issues to git.
-version: 1.3.0
+description: Use when the user asks to "scan for security vulnerabilities", "check for secrets in code", "set up a pre-commit security hook", "install security scanning", "scan staged files for secrets", "check for hardcoded credentials", "run a security scan before commit", "detect leaked API keys", "add a git commit hook for security", "security check before push", "scan for SQL injection", "check for XSS vulnerabilities", "check for prompt injection", "scan for SSTI", "check for unsafe deserialization", "scan for SSRF", "detect weak cryptography", "detect injection flaws", "check for command injection", "audit subprocess security", or wants to prevent committing security issues to git.
+version: 1.4.0
 ---
 
 # GitHub Security Scanner Hook
 
-Scan staged files for secrets and code-level security vulnerabilities before every git commit.
-Works with any language or file type — `detect-secrets` finds hardcoded credentials and API keys; `semgrep` finds injection flaws, command injection, shell execution risks, XSS, path traversal, destructive filesystem operations, and OWASP Top 10 patterns across Python, JavaScript/TypeScript, Go, Ruby, Java, C#, and more.
+Scan staged files for secrets, prompt injection, and code-level security vulnerabilities before every git commit.
+Works with any language or file type — `detect-secrets` finds hardcoded credentials and API keys; `semgrep` (plus built-in fallback rules) finds **XSS & SSTI**, **Prompt Injection & Stealth Unicode (OWASP LLM01/LLM02/LLM06)**, **SQL/NoSQL injection**, **command/shell injection**, **code injection & unsafe deserialization**, **path traversal & destructive filesystem deletion**, **SSRF & open redirects**, **weak cryptography & TLS verification bypass**, **subprocess secret leaks**, and **hardcoded personal paths / PII** across Python, JavaScript/TypeScript, Go, C#, PowerShell, Markdown, and configs.
 Can run as a one-off manual scan or install as an automated git pre-commit hook.
 
 ## Prerequisites
 
-- Python 3.8+ available on PATH (to create the `.venv`)
-- Git repository (any language — Python, JS/TS, Go, Ruby, Java, C#, etc.)
+- Python 3.8+ available (via local `.venv`)
+- Git repository (any language — Python, JS/TS, Go, C#, PowerShell, Markdown, etc.)
 - Staged files to scan, or `--full-repo` to scan everything
-- Internet access on first run only (to pip-install `detect-secrets` and `semgrep`)
+- Internet access on first run only if installing optional `detect-secrets` and `semgrep` packages (`scan-staged.py` also runs zero-dependency built-in fallback rules offline)
 - Write access to `.git/hooks/` (for hook installation only)
 
 ## Workflow
 
 ### Step 1 — Set Up `.venv` and Install Tools
 
-Always use `.venv` — create it if it does not exist, then install `detect-secrets` and `semgrep`:
+Always use `.venv` — create it if it does not exist, then optionally install `detect-secrets` and `semgrep`:
 
 **Windows (PowerShell):**
 ```powershell
@@ -40,7 +40,7 @@ $PYTHON -m pip show detect-secrets > /dev/null 2>&1 || $PYTHON -m pip install de
 $PYTHON -m pip show semgrep > /dev/null 2>&1 || $PYTHON -m pip install semgrep
 ```
 
-Both tools are optional independently — if `semgrep` is not installed the scan still runs with `detect-secrets` only. Semgrep uses the bundled rules in `rules/security.yml` (no login or network access required).
+Both `detect-secrets` and `semgrep` are optional independently — if either is missing (e.g., offline environments), `scan-staged.py` automatically falls back to its built-in secret, OWASP code, and prompt-injection rules. When `semgrep` is installed, it uses the bundled rules in `rules/security.yml` (no login or network access required).
 
 ### Step 2 — Run Security Scan on Staged Files
 
@@ -102,18 +102,21 @@ For each HIGH or MEDIUM finding the user wants to fix:
 1. Open the flagged file at the reported line number
 2. **For hardcoded credentials:** Replace with an environment variable (`os.environ["KEY_NAME"]`) or a secrets manager call
 3. **For private keys:** Remove the key, revoke it immediately (assume it is compromised), generate a new one, and add the key file pattern to `.gitignore`
-4. **For code vulnerabilities & weak cryptography (semgrep):** Fix injection vectors (use parameterized queries, `subprocess.run([...], shell=False)`) and replace insecure hashes (`hashlib.md5` → `hashlib.sha256`, `random` → `secrets`)
-5. **For false positives:** Add to the `.secrets.baseline` allowlist using `python -m detect_secrets audit .secrets.baseline`
-6. Re-stage the fixed files and re-run Step 2 to confirm all HIGH findings are resolved
-7. **For hardcoded personal filesystem paths / PII:** Replace machine-specific home directory paths (Windows user profile folders or POSIX `/home/` directories) in code, configs, tests, and docs with portable relative paths (`./`) or generic placeholders (`/path/to/...`).
+4. **For XSS & SSTI:** Use `textContent` / `insertAdjacentText()`, sanitise HTML with DOMPurify before `innerHTML`/`outerHTML`/`dangerouslySetInnerHTML`, replace Flask `Markup()` / Django `mark_safe()` with `format_html()`, use `render_template()` instead of `render_template_string()`, and enable `autoescape=select_autoescape()` in Jinja2
+5. **For Prompt Injection & Stealth Unicode:** Remove adversarial override phrases or hidden HTML comments, strip bidirectional control characters (`U+202A–U+202E`, `U+2066–U+2069`), keep LLM `system` prompts static, and isolate untrusted user/RAG text inside passive `<sources>` XML delimiters
+6. **For SQL/NoSQL, Command/Code Injection & Unsafe Deserialization:** Use parameterized queries (`?` / `$1` / `ExecuteSqlInterpolated`), replace MongoDB `$where`, use `subprocess.run([...], shell=False)` / `execFile()` / `spawn(..., { shell: false })`, eliminate `Invoke-Expression`, remove `eval()`/`exec()`/`new Function()`, and replace `pickle.loads()`/`yaml.load()` with JSON or `yaml.safe_load()`
+7. **For SSRF, Open Redirects, Weak Crypto & TLS Bypass:** Allowlist HTTPS schemes/hosts and block private/link-local IPs for outbound requests and redirects, replace MD5/SHA-1 with SHA-256 or argon2/bcrypt/scrypt, and remove `verify=False` / `rejectUnauthorized: false` / `NODE_TLS_REJECT_UNAUTHORIZED=0`
+8. **For hardcoded personal filesystem paths / PII & env leaks:** Scrub `process.env`/`os.environ` before spawning subprocesses, constrain paths inside allowed base directories, and replace machine-specific user directory paths with portable relative paths (`./`) or generic placeholders (`/path/to/...`)
+9. **For false positives:** Add secrets to `.secrets.baseline` using `$PYTHON -m detect_secrets audit .secrets.baseline`, or suppress reviewed code patterns inline with `# nosemgrep`
+10. Re-stage the fixed files and re-run Step 2 to confirm all HIGH findings are resolved
 
 ## Audit Guardrails
 
-- Never rely solely on manual visual inspection for security sign-off; always execute `scan-staged.py` (running `detect-secrets` and bundled `semgrep` rules) against the actual staged files or git diff.
+- Never rely solely on manual visual inspection for security sign-off; always execute `scan-staged.py` (running `detect-secrets`, bundled `semgrep` rules, or built-in fallback rules) against the actual staged files or git diff.
 
 ## Additional Resources
 
-- **`references/github-security-scanner-hook-reference.md`** — Full severity classification table, detect-secrets plugin mapping, semgrep vulnerability types with remediation examples, `.secrets.baseline` workflow, false-positive handling, CI/CD integration YAML, `--no-verify` warning, and secret rotation checklist
-- **`rules/security.yml`** — Bundled semgrep rules covering SQL injection, command injection, path traversal, XSS, eval/exec, and open redirects across Python, JavaScript/TypeScript, and Go
-- **`scripts/scan-staged.py`** — Scans staged (or all tracked) files using detect-secrets and semgrep; outputs structured JSON with findings and severity summary
+- **`references/github-security-scanner-hook-reference.md`** — Full severity classification table, detect-secrets plugin mapping, all semgrep & fallback vulnerability types with remediation examples (XSS/SSTI, Prompt Injection, Deserialization, SSRF, Weak Crypto/TLS, SQLi/Command Injection), `.secrets.baseline` workflow, false-positive handling, CI/CD integration YAML, `--no-verify` warning, and secret rotation checklist
+- **`rules/security.yml`** — Bundled Semgrep rules (53 rules) covering SQL/NoSQL injection, command/shell injection, XSS & SSTI, prompt injection & stealth Unicode, code injection & unsafe deserialization, path traversal & destructive FS, SSRF & open redirects, weak crypto & TLS bypass, subprocess env leaks, and hardcoded personal paths across Python, JS/TS, Go, C#, PowerShell, and generic files
+- **`scripts/scan-staged.py`** — Scans staged (or all tracked) files using `detect-secrets`, `semgrep`, and zero-dependency built-in fallback/prompt-injection rules; outputs structured JSON with findings and severity summary
 - **`scripts/install-hook.py`** — Installs or extends the git pre-commit hook to automate scanning on every future commit

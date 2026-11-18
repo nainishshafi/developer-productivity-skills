@@ -2,10 +2,11 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import * as crypto from 'node:crypto';
+import * as vm from 'node:vm';
 import { runProcess } from '../process/runner.js';
 import { getPermissionFlags } from '../security/permissions.js';
 import { sanitizeEnvironment } from '../security/sanitizer.js';
-import { preExecutionSecurityCheck } from '../security/validator.js';
+import { isAllowedWorkspaceOrTempPath, preExecutionSecurityCheck } from '../security/validator.js';
 import type { EvaluateExpressionOptions, ExpressionResult } from '../types.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
@@ -15,6 +16,32 @@ export async function evaluateExpression(options: EvaluateExpressionOptions): Pr
   const sandboxMode = options.sandboxMode ?? 'strict';
   const timeoutMs = Math.min(Math.max(options.timeout ?? DEFAULT_TIMEOUT_MS, 100), MAX_TIMEOUT_MS);
   const cwd = options.workingDirectory ? path.resolve(options.workingDirectory) : process.cwd();
+
+  if (!isAllowedWorkspaceOrTempPath(cwd)) {
+    return {
+      success: false,
+      error: 'workingDirectory outside allowed boundary',
+      stderr: `Security rejection: workingDirectory "${cwd}" must reside within workspace or temp directory.`,
+      durationMs: 0,
+      timedOut: false,
+      sandboxMode,
+    };
+  }
+
+  // Enforce single-expression syntax at parse time to prevent wrapper breakout
+  try {
+    new vm.Script(`[${options.expression}]`);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      success: false,
+      error: `Invalid expression syntax: ${msg}`,
+      stderr: `Security rejection: evaluate_expression requires a single valid JavaScript expression (${msg}).`,
+      durationMs: 0,
+      timedOut: false,
+      sandboxMode,
+    };
+  }
 
   const safetyCheck = preExecutionSecurityCheck(options.expression, sandboxMode);
   if (!safetyCheck.allowed) {
@@ -141,4 +168,3 @@ const DELIMITER_END = '${delimiterEnd}';
     } catch {}
   }
 }
-

@@ -443,4 +443,54 @@ describe('Node.js Executor MCP Test Suite', () => {
       assert.equal(typeof info.typescriptNativeSupport, 'boolean');
     });
   });
+
+  describe('Security Regression Hardening Suite', () => {
+    test('evaluateExpression rejects expression wrapper breakout', async () => {
+      const res = await evaluateExpression({
+        expression: '1); console.log("BREAKOUT"); (1',
+      });
+      assert.equal(res.success, false);
+      assert.match(res.stderr ?? '', /single valid JavaScript expression/i);
+    });
+
+    test('runPackageScript rejects cmd.exe metacharacters and external projectPath', async () => {
+      const badArg = await runPackageScript({
+        script: 'build',
+        args: ['%PATH%'],
+      });
+      assert.equal(badArg.success, false);
+      assert.match(badArg.stderr, /forbidden shell metacharacters/i);
+
+      const badPath = await runPackageScript({
+        script: 'build',
+        projectPath: path.resolve(path.parse(process.cwd()).root, 'nonexistent_outside_dir'),
+      });
+      assert.equal(badPath.success, false);
+      assert.match(badPath.stderr, /must reside within workspace/i);
+    });
+
+    test('executeFile rejects paths outside workspace and temp directory', async () => {
+      const outside = path.resolve(path.parse(process.cwd()).root, 'outside_script.mjs');
+      const res = await executeFile({ filePath: outside });
+      assert.equal(res.success, false);
+      assert.match(res.stderr, /must reside within workspace/i);
+    });
+
+    test('executeCode blocks allowFsWritePaths outside tempDir in strict mode and filters NODE_OPTIONS', async () => {
+      const res = await executeCode({
+        code: 'console.log("hi");',
+        sandboxMode: 'strict',
+        allowFsWritePaths: [process.cwd()],
+      });
+      assert.equal(res.success, false);
+      assert.match(res.error ?? '', /not permitted in strict mode/i);
+
+      const envRes = await executeCode({
+        code: 'console.log("NODE_OPTIONS=" + process.env.NODE_OPTIONS);',
+        environmentVariables: { NODE_OPTIONS: '--require /tmp/evil.js' },
+      });
+      assert.equal(envRes.success, true);
+      assert.match(envRes.stdout, /NODE_OPTIONS=undefined/);
+    });
+  });
 });

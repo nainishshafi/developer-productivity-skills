@@ -7,7 +7,7 @@ import {
   TableColumnMetadata,
   TableMetadata,
 } from '../types.js';
-import { auditSqlQuery } from '../guardrails/sql-guardrail.js';
+import { auditExplainQuery, auditSqlQuery } from '../guardrails/sql-guardrail.js';
 import { withTimeout } from '../utils.js';
 
 export class MySqlAdapter implements DatabaseAdapter {
@@ -157,7 +157,7 @@ export class MySqlAdapter implements DatabaseAdapter {
   }
 
   async explain(query: string, options?: QueryOptions): Promise<ExplainResult> {
-    const audit = auditSqlQuery(query, 'read-only');
+    const audit = auditExplainQuery(query);
     if (!audit.allowed) {
       throw new Error(`Explain blocked by SQL guardrails: ${audit.violations.join('; ')}`);
     }

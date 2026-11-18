@@ -1,9 +1,9 @@
 rules:
 
   # ---------------------------------------------------------------------------
-  # SQL Injection
-  # Detects string-formatted SQL queries where user-controlled data may be
-  # interpolated directly, bypassing parameterization.
+  # SQL & NoSQL Injection
+  # Detects string-formatted SQL queries or unsafe NoSQL operators where
+  # user-controlled data may be interpolated directly.
   # ---------------------------------------------------------------------------
 
   - id: sql-injection-python-percent
@@ -30,6 +30,14 @@ rules:
     languages: [python]
     severity: ERROR
 
+  - id: sql-injection-python-concat
+    pattern: $DB.execute("..." + $X)
+    message: >
+      SQL injection: string concatenation used to build SQL query. Use parameterized
+      queries instead: cursor.execute("SELECT ... WHERE x = ?", (value,))
+    languages: [python]
+    severity: ERROR
+
   - id: sql-injection-go-sprintf
     pattern-either:
       - pattern: $DB.Query(fmt.Sprintf(...))
@@ -51,8 +59,26 @@ rules:
     languages: [javascript, typescript]
     severity: ERROR
 
+  - id: sql-injection-csharp-raw
+    pattern-either:
+      - pattern: $CTX.Database.ExecuteSqlRaw($"...")
+      - pattern: $SET.FromSqlRaw($"...")
+    message: >
+      SQL injection: interpolated string ($"...") used in raw EF Core SQL execution.
+      Use ExecuteSqlInterpolated / FromSqlInterpolated or explicit SqlParameter parameters.
+    languages: [csharp]
+    severity: ERROR
+
+  - id: nosql-injection-js-where
+    pattern: '$COLLECTION.find({ ..., $where: $CODE, ... })'
+    message: >
+      NoSQL injection risk: MongoDB $where operator executes arbitrary JavaScript
+      on the database server. Replace with structured query operators.
+    languages: [javascript, typescript]
+    severity: ERROR
+
   # ---------------------------------------------------------------------------
-  # Command Injection
+  # Command & Shell Injection
   # Detects where unsanitised data may reach OS command execution.
   # ---------------------------------------------------------------------------
 
@@ -63,6 +89,16 @@ rules:
     message: >
       Command injection risk: os.system() called with a non-literal argument.
       Use subprocess.run([...], shell=False) with a fixed command list instead.
+    languages: [python]
+    severity: ERROR
+
+  - id: command-injection-python-os-popen
+    patterns:
+      - pattern: os.popen($CMD)
+      - pattern-not: os.popen("...")
+    message: >
+      Command injection risk: os.popen() invokes a subshell with a non-literal argument.
+      Use subprocess.run([...], shell=False) with an argument list instead.
     languages: [python]
     severity: ERROR
 
@@ -121,6 +157,28 @@ rules:
     languages: [javascript, typescript]
     severity: ERROR
 
+  - id: command-injection-powershell-iex
+    pattern-regex: '(?i)\b(?:Invoke-Expression|iex)\s+\$[a-zA-Z0-9_]+'
+    paths:
+      exclude:
+        - "**/github-security-scanner-hook/**"
+        - "**/tests/**"
+        - "**/test/**"
+        - "**/.venv/**"
+        - "**/node_modules/**"
+        - "**/.git/**"
+    message: >
+      Command injection risk: Invoke-Expression (iex) called with a variable.
+      Avoid Invoke-Expression on dynamic strings; use direct cmdlet invocation or the call operator (&) with argument arrays.
+    languages: [generic]
+    severity: ERROR
+
+  # ---------------------------------------------------------------------------
+  # Path Traversal & Destructive Filesystem Operations
+  # Detects file operations where paths may escape intended boundaries or
+  # delete directories recursively without validation.
+  # ---------------------------------------------------------------------------
+
   - id: destructive-fs-deletion-js
     pattern-either:
       - pattern: 'fs.rmSync($PATH, {..., recursive: true, ...})'
@@ -134,25 +192,15 @@ rules:
     languages: [javascript, typescript]
     severity: WARNING
 
-  - id: secret-leak-env-inheritance-js
-    pattern-either:
-      - pattern: 'spawn($CMD, $ARGS, {..., env: process.env, ...})'
-      - pattern: 'spawn($CMD, {..., env: process.env, ...})'
-      - pattern: 'exec($CMD, {..., env: process.env, ...})'
-      - pattern: 'child_process.spawn($CMD, $ARGS, {..., env: process.env, ...})'
-      - pattern: 'child_process.spawn($CMD, {..., env: process.env, ...})'
+  - id: destructive-fs-deletion-python
+    patterns:
+      - pattern: shutil.rmtree($PATH, ...)
+      - pattern-not: shutil.rmtree("...", ...)
     message: >
-      Sensitive credential leak risk: process.env passed directly to child process.
-      Host environment may contain API keys or tokens (AWS_*, GITHUB_*, *TOKEN*).
-      Scrub sensitive environment variables before passing to subprocesses.
-    languages: [javascript, typescript]
+      Destructive filesystem deletion: shutil.rmtree() called with a dynamic path.
+      Verify the resolved path stays strictly within an allowed base directory before deleting.
+    languages: [python]
     severity: WARNING
-
-  # ---------------------------------------------------------------------------
-  # Path Traversal
-  # Detects file operations where the path may include user-controlled segments
-  # that escape the intended directory via ../ sequences.
-  # ---------------------------------------------------------------------------
 
   - id: path-traversal-python-open
     patterns:
@@ -179,9 +227,24 @@ rules:
     languages: [javascript, typescript]
     severity: WARNING
 
+  - id: path-traversal-js-writefile
+    pattern-either:
+      - patterns:
+          - pattern: fs.writeFile($PATH, ...)
+          - pattern-not: fs.writeFile("...", ...)
+      - patterns:
+          - pattern: fs.writeFileSync($PATH, ...)
+          - pattern-not: fs.writeFileSync("...", ...)
+    message: >
+      Path traversal risk: fs.writeFile() called with a non-literal path.
+      Resolve and validate the path against an allowed base directory before writing.
+    languages: [javascript, typescript]
+    severity: WARNING
+
   # ---------------------------------------------------------------------------
-  # Cross-Site Scripting (XSS)
-  # Detects places where unescaped data is written into the DOM or HTTP response.
+  # Cross-Site Scripting (XSS) & Server-Side Template Injection (SSTI)
+  # Detects places where unescaped data is written into the DOM, templates,
+  # or HTTP responses.
   # ---------------------------------------------------------------------------
 
   - id: xss-js-inner-html
@@ -191,6 +254,26 @@ rules:
     message: >
       XSS risk: innerHTML assigned from a non-literal value. Use textContent
       for plain text, or sanitise with DOMPurify before setting innerHTML.
+    languages: [javascript, typescript]
+    severity: ERROR
+
+  - id: xss-js-outer-html
+    patterns:
+      - pattern: $EL.outerHTML = $DATA
+      - pattern-not: $EL.outerHTML = "..."
+    message: >
+      XSS risk: outerHTML assigned from a non-literal value. Use textContent
+      or safe DOM APIs, or sanitise with DOMPurify before assigning HTML.
+    languages: [javascript, typescript]
+    severity: ERROR
+
+  - id: xss-js-insert-adjacent-html
+    patterns:
+      - pattern: $EL.insertAdjacentHTML($POS, $DATA)
+      - pattern-not: $EL.insertAdjacentHTML($POS, "...")
+    message: >
+      XSS risk: insertAdjacentHTML() called with a non-literal HTML string.
+      Use insertAdjacentText() for plain text, or sanitise with DOMPurify.
     languages: [javascript, typescript]
     severity: ERROR
 
@@ -204,6 +287,14 @@ rules:
     languages: [javascript, typescript]
     severity: ERROR
 
+  - id: xss-react-dangerously-set-inner-html
+    pattern-regex: 'dangerouslySetInnerHTML\s*=\s*\{\s*\{\s*__html\s*:\s*(?![\"''])'
+    message: >
+      XSS risk: React dangerouslySetInnerHTML assigned a dynamic expression.
+      Render plain JSX text or sanitise HTML with DOMPurify before rendering.
+    languages: [javascript, typescript]
+    severity: WARNING
+
   - id: xss-python-flask-markup
     pattern: flask.Markup($DATA)
     message: >
@@ -212,8 +303,149 @@ rules:
     languages: [python]
     severity: WARNING
 
+  - id: xss-python-django-mark-safe
+    patterns:
+      - pattern: mark_safe($DATA)
+      - pattern-not: mark_safe("...")
+    message: >
+      XSS risk: Django mark_safe() bypasses template HTML auto-escaping.
+      Use django.utils.html.format_html() instead of mark_safe() on dynamic data.
+    languages: [python]
+    severity: WARNING
+
+  - id: ssti-python-render-template-string
+    pattern-either:
+      - patterns:
+          - pattern: render_template_string($TEMPLATE, ...)
+          - pattern-not: render_template_string("...", ...)
+      - patterns:
+          - pattern: flask.render_template_string($TEMPLATE, ...)
+          - pattern-not: flask.render_template_string("...", ...)
+    message: >
+      Server-Side Template Injection (SSTI) risk: render_template_string() called
+      with a non-literal template. Use render_template() with a static file template.
+    languages: [python]
+    severity: ERROR
+
+  - id: ssti-python-jinja2-autoescape-false
+    pattern-either:
+      - pattern: jinja2.Environment(..., autoescape=False, ...)
+      - pattern: Environment(..., autoescape=False, ...)
+    message: >
+      XSS / template safety risk: Jinja2 Environment configured with autoescape=False.
+      Enable autoescape=select_autoescape() to prevent unescaped HTML injection.
+    languages: [python]
+    severity: WARNING
+
   # ---------------------------------------------------------------------------
-  # Dangerous eval / exec
+  # Prompt Injection & LLM Security (OWASP LLM01 / LLM02 / LLM06)
+  # Detects indirect prompt injection payloads in repo artifacts, stealth
+  # bidirectional Unicode, and unsafe system prompt string interpolation.
+  # ---------------------------------------------------------------------------
+
+  - id: prompt-injection-instruction-override
+    pattern-regex: '(?i)\b(?:ignore|disregard|forget)\s+(?:all\s+)?(?:previous|prior|above|preceding|system|developer)\s+(?:instructions|rules|prompts|directions|guidelines|constraints)\b'
+    paths:
+      exclude:
+        - "**/github-security-scanner-hook/**"
+        - "**/rag-pipeline/**"
+        - "**/tests/**"
+        - "**/test/**"
+        - "**/.venv/**"
+        - "**/node_modules/**"
+        - "**/.git/**"
+    message: >
+      Prompt injection risk: instruction-override phrase detected. Remove adversarial
+      instructions or isolate untrusted data inside passive <sources> delimiters.
+    languages: [generic]
+    severity: ERROR
+
+  - id: prompt-injection-system-override
+    pattern-regex: '(?i)\b(?:system\s+override|you\s+are\s+now\s+in\s+developer\s+mode|enable\s+dan\s+mode|bypass\s+(?:all\s+)?safety\s+(?:filters|guardrails|restrictions)|new\s+system\s+prompt\s*:)'
+    paths:
+      exclude:
+        - "**/github-security-scanner-hook/**"
+        - "**/rag-pipeline/**"
+        - "**/tests/**"
+        - "**/test/**"
+        - "**/.venv/**"
+        - "**/node_modules/**"
+        - "**/.git/**"
+    message: >
+      Prompt injection risk: system override or jailbreak directive detected.
+      Verify content is benign and never place untrusted text inside system prompts.
+    languages: [generic]
+    severity: ERROR
+
+  - id: prompt-injection-secret-exfiltration
+    pattern-regex: '(?i)\b(?:reveal|dump|exfiltrate)\s+(?:the\s+|your\s+|all\s+)?(?:system\s+prompt|hidden\s+instructions|api\s+keys?|secrets?|credentials|environment\s+variables)\b'
+    paths:
+      exclude:
+        - "**/github-security-scanner-hook/**"
+        - "**/rag-pipeline/**"
+        - "**/tests/**"
+        - "**/test/**"
+        - "**/.venv/**"
+        - "**/node_modules/**"
+        - "**/.git/**"
+    message: >
+      Prompt injection / exfiltration risk: prompt directive attempting to leak
+      system instructions, API keys, or environment variables detected.
+    languages: [generic]
+    severity: ERROR
+
+  - id: prompt-injection-hidden-html-comment
+    pattern-regex: '(?is)<!--[^>]*?\b(?:ignore\s+(?:all\s+)?(?:previous|prior)|system\s+override|disregard\s+(?:all\s+)?(?:previous|prior)|jailbreak|exfiltrate|reveal\s+(?:the\s+)?(?:api\s+key|system\s+prompt))\b[^>]*?-->'
+    paths:
+      exclude:
+        - "**/github-security-scanner-hook/**"
+        - "**/rag-pipeline/**"
+        - "**/tests/**"
+        - "**/test/**"
+        - "**/.venv/**"
+        - "**/node_modules/**"
+        - "**/.git/**"
+    message: >
+      Indirect prompt injection risk: hidden adversarial instruction found inside
+      an HTML comment. Strip untrusted comments before LLM ingestion or rendering.
+    languages: [generic]
+    severity: ERROR
+
+  - id: prompt-injection-stealth-unicode
+    pattern-regex: '[\u202A-\u202E\u2066-\u2069]'
+    paths:
+      exclude:
+        - "**/github-security-scanner-hook/**"
+        - "**/rag-pipeline/**"
+        - "**/tests/**"
+        - "**/test/**"
+        - "**/.venv/**"
+        - "**/node_modules/**"
+        - "**/.git/**"
+    message: >
+      Stealth Unicode / Trojan Source risk: bidirectional control characters detected.
+      These invisible characters can smuggle hidden prompt injections or reorder source code visually.
+    languages: [generic]
+    severity: ERROR
+
+  - id: prompt-injection-python-system-fstring
+    pattern: '{"role": "system", "content": f"..."}'
+    message: >
+      Prompt injection risk: dynamic data interpolated directly into a system prompt
+      via f-string. Keep system prompts static and pass untrusted data in user/tool turns with XML delimiters.
+    languages: [python]
+    severity: WARNING
+
+  - id: prompt-injection-js-system-template
+    pattern-regex: 'role\s*:\s*[''"]system[''"]\s*,\s*content\s*:\s*`[^`]*\$\{'
+    message: >
+      Prompt injection risk: dynamic data interpolated directly into a system prompt
+      via template literal. Keep system prompts static and isolate untrusted input in user/tool messages.
+    languages: [javascript, typescript]
+    severity: WARNING
+
+  # ---------------------------------------------------------------------------
+  # Code Injection & Unsafe Deserialization
   # ---------------------------------------------------------------------------
 
   - id: eval-python
@@ -246,8 +478,45 @@ rules:
     languages: [javascript, typescript]
     severity: ERROR
 
+  - id: code-injection-js-new-function
+    pattern-either:
+      - patterns:
+          - pattern: new Function($BODY)
+          - pattern-not: new Function("...")
+      - patterns:
+          - pattern: new Function($ARG, $BODY)
+          - pattern-not: new Function($ARG, "...")
+    message: >
+      Code injection risk: dynamic new Function() constructor called with non-literal
+      code. Avoid dynamic code evaluation; use structured logic or data mappings instead.
+    languages: [javascript, typescript]
+    severity: ERROR
+
+  - id: unsafe-deserialization-python-pickle
+    pattern-either:
+      - pattern: pickle.loads($DATA)
+      - pattern: pickle.load($DATA)
+    message: >
+      Unsafe deserialization: pickle.load()/loads() can execute arbitrary code when
+      given untrusted bytes. Use JSON or validated schemas (e.g., Pydantic) instead.
+    languages: [python]
+    severity: ERROR
+
+  - id: unsafe-deserialization-python-yaml
+    pattern-either:
+      - pattern: yaml.unsafe_load($DATA)
+      - patterns:
+          - pattern: yaml.load($DATA, ...)
+          - pattern-not: yaml.load($DATA, Loader=yaml.SafeLoader)
+          - pattern-not: yaml.load($DATA, Loader=SafeLoader)
+    message: >
+      Unsafe YAML deserialization: yaml.load()/unsafe_load() can instantiate arbitrary
+      Python objects. Use yaml.safe_load() instead.
+    languages: [python]
+    severity: ERROR
+
   # ---------------------------------------------------------------------------
-  # Open Redirect
+  # SSRF & Open Redirects
   # ---------------------------------------------------------------------------
 
   - id: open-redirect-python-flask
@@ -272,9 +541,93 @@ rules:
     languages: [javascript, typescript]
     severity: WARNING
 
+  - id: ssrf-python-requests
+    pattern-either:
+      - patterns:
+          - pattern: requests.get($URL, ...)
+          - pattern-not: requests.get("...", ...)
+      - patterns:
+          - pattern: requests.post($URL, ...)
+          - pattern-not: requests.post("...", ...)
+      - patterns:
+          - pattern: urllib.request.urlopen($URL, ...)
+          - pattern-not: urllib.request.urlopen("...", ...)
+    message: >
+      SSRF risk: outbound HTTP request made to a non-literal URL. Validate the URL
+      scheme (https) and host against an explicit allowlist, blocking private/link-local IPs.
+    languages: [python]
+    severity: WARNING
+
   # ---------------------------------------------------------------------------
-  # Information Exposure & Personal Environment Leakage
+  # Weak Cryptography & TLS Verification Bypass
   # ---------------------------------------------------------------------------
+
+  - id: weak-crypto-python-md5-sha1
+    pattern-either:
+      - pattern: hashlib.md5(...)
+      - pattern: hashlib.sha1(...)
+    message: >
+      Weak cryptography: MD5 and SHA-1 are vulnerable to collision attacks.
+      Use hashlib.sha256() for digests or argon2/bcrypt/scrypt for password hashing.
+    languages: [python]
+    severity: WARNING
+
+  - id: weak-crypto-js-md5-sha1
+    pattern-either:
+      - pattern: crypto.createHash("md5")
+      - pattern: crypto.createHash("sha1")
+    message: >
+      Weak cryptography: MD5 and SHA-1 are vulnerable to collision attacks.
+      Use crypto.createHash("sha256") for integrity or scrypt/argon2 for passwords.
+    languages: [javascript, typescript]
+    severity: WARNING
+
+  - id: tls-verification-disabled-python
+    pattern-either:
+      - pattern: requests.get(..., verify=False, ...)
+      - pattern: requests.post(..., verify=False, ...)
+      - pattern: httpx.Client(..., verify=False, ...)
+    message: >
+      TLS verification disabled: verify=False exposes connections to MITM attacks.
+      Keep TLS certificate verification enabled and configure a proper CA bundle if needed.
+    languages: [python]
+    severity: ERROR
+
+  - id: tls-verification-disabled-js
+    pattern-regex: 'rejectUnauthorized\s*:\s*false|NODE_TLS_REJECT_UNAUTHORIZED\s*=\s*[''"]0[''"]'
+    message: >
+      TLS verification disabled: disabling certificate validation exposes connections
+      to MITM attacks. Remove rejectUnauthorized: false and NODE_TLS_REJECT_UNAUTHORIZED=0.
+    languages: [javascript, typescript]
+    severity: ERROR
+
+  # ---------------------------------------------------------------------------
+  # Subprocess Secret Leaks & Personal Environment Leakage
+  # ---------------------------------------------------------------------------
+
+  - id: secret-leak-env-inheritance-js
+    pattern-either:
+      - pattern: 'spawn($CMD, $ARGS, {..., env: process.env, ...})'
+      - pattern: 'spawn($CMD, {..., env: process.env, ...})'
+      - pattern: 'exec($CMD, {..., env: process.env, ...})'
+      - pattern: 'child_process.spawn($CMD, $ARGS, {..., env: process.env, ...})'
+      - pattern: 'child_process.spawn($CMD, {..., env: process.env, ...})'
+    message: >
+      Sensitive credential leak risk: process.env passed directly to child process.
+      Host environment may contain API keys or tokens (AWS_*, GITHUB_*, *TOKEN*).
+      Scrub sensitive environment variables before passing to subprocesses.
+    languages: [javascript, typescript]
+    severity: WARNING
+
+  - id: secret-leak-env-inheritance-python
+    pattern-either:
+      - pattern: subprocess.run(..., env=os.environ, ...)
+      - pattern: subprocess.Popen(..., env=os.environ, ...)
+    message: >
+      Sensitive credential leak risk: os.environ passed directly to subprocess.
+      Scrub API keys and tokens before passing environment variables to child processes.
+    languages: [python]
+    severity: WARNING
 
   - id: hardcoded-local-user-path
     pattern-regex: '(?i)(?:[a-zA-Z]:[\\/]|(?<=[ "''\\/`]))(?:Users|home)[\\/][a-zA-Z0-9_.-]+[\\/]'

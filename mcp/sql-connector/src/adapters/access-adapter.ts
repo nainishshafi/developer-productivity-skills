@@ -10,6 +10,7 @@ import {
   TableMetadata,
 } from '../types.js';
 import { auditSqlQuery } from '../guardrails/sql-guardrail.js';
+import { validateDatabaseFilePath } from '../utils.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -50,7 +51,7 @@ export class AccessAdapter implements DatabaseAdapter {
 
     const startTime = performance.now();
     const maxRows = options.maxRows || 500;
-    const dbPath = this.config.filePath || '';
+    const dbPath = validateDatabaseFilePath(this.config.filePath || '', ['.accdb', '.mdb']);
 
     // On Windows, use ADODB PowerShell automation bridge if node-adodb or ODBC is not installed
     if (process.platform === 'win32') {

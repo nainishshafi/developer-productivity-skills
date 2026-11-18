@@ -34,15 +34,39 @@ export function closeDatabase(): void {
   }
 }
 
+function resolveRealOrParent(targetPath: string): string {
+  const resolved = path.resolve(targetPath);
+  try {
+    return fs.realpathSync.native(resolved);
+  } catch {
+    const parent = path.dirname(resolved);
+    if (parent === resolved) {
+      return resolved;
+    }
+    return path.join(resolveRealOrParent(parent), path.basename(resolved));
+  }
+}
+
 /**
- * Validates that target path resides safely within the allowed parent directory.
- * Case-insensitive for Windows compatibility.
+ * Validates that target path resides safely within the allowed parent directory
+ * after resolving symlinks and NTFS junctions.
  */
 function isPathContained(parent: string, target: string): boolean {
-  const normParent = path.resolve(parent).toLowerCase();
-  const normTarget = path.resolve(target).toLowerCase();
-  const rel = path.relative(normParent, normTarget);
+  const realParent = resolveRealOrParent(parent);
+  const realTarget = resolveRealOrParent(target);
+  const normalize = process.platform === 'win32' ? (p: string) => p.toLowerCase() : (p: string) => p;
+  const rel = path.relative(normalize(realParent), normalize(realTarget));
   return !rel.startsWith('..') && !path.isAbsolute(rel);
+}
+
+function safeJsonParseArray<T>(raw: string | null | undefined): T[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 }
 
 export class MemoryDatabase {
@@ -60,7 +84,13 @@ export class MemoryDatabase {
       }
       this.dbPath = resolved;
     } else if (process.env.PROJECT_MEMORY_DB_PATH) {
-      this.dbPath = path.resolve(process.env.PROJECT_MEMORY_DB_PATH);
+      const resolved = path.resolve(process.env.PROJECT_MEMORY_DB_PATH);
+      const cwd = process.cwd();
+      const tmp = os.tmpdir();
+      if (!isPathContained(cwd, resolved) && !isPathContained(tmp, resolved)) {
+        throw new Error(`Security Exception: PROJECT_MEMORY_DB_PATH must be located within workspace (${cwd}) or temp directory.`);
+      }
+      this.dbPath = resolved;
     } else {
       // Default to .project-memory/memory.db in the workspace root
       const dir = path.resolve(process.cwd(), '.project-memory');
@@ -120,7 +150,7 @@ export class MemoryDatabase {
       title: r.title,
       summary: r.summary,
       learnings: r.learnings,
-      tags: JSON.parse(r.tags || '[]'),
+      tags: safeJsonParseArray<string>(r.tags),
       createdAt: r.created_at,
       updatedAt: r.updated_at,
       skillStatus: (r.skill_status || 'pending') as SkillPromotionStatus,
@@ -342,8 +372,8 @@ export class MemoryDatabase {
       title: r.title,
       summary: r.summary,
       learnings: r.learnings,
-      tags: JSON.parse(r.tags || '[]'),
-      embedding: JSON.parse(r.embedding || '[]'),
+      tags: safeJsonParseArray<string>(r.tags),
+      embedding: safeJsonParseArray<number>(r.embedding),
       createdAt: r.created_at,
       updatedAt: r.updated_at,
       skillStatus: (r.skill_status || 'pending') as SkillPromotionStatus,

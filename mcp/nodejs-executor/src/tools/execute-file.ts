@@ -4,6 +4,7 @@ import * as path from 'node:path';
 import { runProcess } from '../process/runner.js';
 import { getPermissionFlags, supportsNativeTypeScript } from '../security/permissions.js';
 import { sanitizeEnvironment } from '../security/sanitizer.js';
+import { isAllowedWorkspaceOrTempPath, preExecutionSecurityCheck } from '../security/validator.js';
 import type { ExecuteFileOptions, ExecutionResult } from '../types.js';
 
 const DEFAULT_TIMEOUT_MS = 30000;
@@ -15,6 +16,20 @@ export async function executeFile(options: ExecuteFileOptions): Promise<Executio
   const cwd = options.workingDirectory ? path.resolve(options.workingDirectory) : process.cwd();
   const filePath = path.resolve(cwd, options.filePath);
 
+  if (!isAllowedWorkspaceOrTempPath(cwd) || !isAllowedWorkspaceOrTempPath(filePath)) {
+    return {
+      success: false,
+      exitCode: 1,
+      stdout: '',
+      stderr: `Security rejection: filePath "${filePath}" and workingDirectory "${cwd}" must reside within workspace or temp directory.`,
+      durationMs: 0,
+      timedOut: false,
+      error: 'Path outside allowed workspace/temp boundary',
+      sandboxMode,
+    };
+  }
+
+  let fileContent = '';
   try {
     const stat = await fs.stat(filePath);
     if (!stat.isFile()) {
@@ -29,6 +44,7 @@ export async function executeFile(options: ExecuteFileOptions): Promise<Executio
         sandboxMode,
       };
     }
+    fileContent = await fs.readFile(filePath, 'utf8');
   } catch {
     return {
       success: false,
@@ -42,11 +58,27 @@ export async function executeFile(options: ExecuteFileOptions): Promise<Executio
     };
   }
 
+  const safetyCheck = preExecutionSecurityCheck(fileContent, sandboxMode);
+  if (!safetyCheck.allowed) {
+    return {
+      success: false,
+      exitCode: 1,
+      stdout: '',
+      stderr: `Security policy violation: ${safetyCheck.reason}`,
+      durationMs: 0,
+      timedOut: false,
+      error: safetyCheck.reason,
+      sandboxMode,
+    };
+  }
+
   const isTs = filePath.endsWith('.ts') || filePath.endsWith('.mts') || filePath.endsWith('.cts');
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'node-mcp-file-'));
 
   try {
-    const permFlags = getPermissionFlags(tempDir, cwd, sandboxMode, options.allowFsWritePaths);
+    const permFlags = getPermissionFlags(tempDir, cwd, sandboxMode, options.allowFsWritePaths, [
+      path.dirname(filePath),
+    ]);
     const args: string[] = [...permFlags];
 
     if (isTs) {
@@ -85,4 +117,3 @@ export async function executeFile(options: ExecuteFileOptions): Promise<Executio
     } catch {}
   }
 }
-

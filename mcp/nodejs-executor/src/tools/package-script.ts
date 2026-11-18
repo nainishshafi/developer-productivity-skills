@@ -1,16 +1,30 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { runProcess } from '../process/runner.js';
+import { sanitizeEnvironment } from '../security/sanitizer.js';
+import { isAllowedWorkspaceOrTempPath } from '../security/validator.js';
 import type { RunPackageScriptOptions, ExecutionResult } from '../types.js';
 
 const SCRIPT_NAME_REGEX = /^[a-zA-Z0-9_:.-]+$/;
-const SHELL_METACHARS = /[&|;><`$\n\r]/;
+const SHELL_METACHARS = /[&|;><`$\n\r%^()!"'\s]/;
 const MAX_TIMEOUT_MS = 300000;
 
 export async function runPackageScript(options: RunPackageScriptOptions): Promise<ExecutionResult> {
   const pm = options.packageManager ?? 'npm';
   const timeoutMs = Math.min(Math.max(options.timeout ?? 60000, 100), MAX_TIMEOUT_MS);
   const projectPath = options.projectPath ? path.resolve(options.projectPath) : process.cwd();
+
+  if (!isAllowedWorkspaceOrTempPath(projectPath)) {
+    return {
+      success: false,
+      exitCode: 1,
+      stdout: '',
+      stderr: `Security rejection: projectPath "${projectPath}" must reside within workspace (${process.cwd()}) or temp directory.`,
+      durationMs: 0,
+      timedOut: false,
+      error: 'projectPath outside allowed boundary',
+    };
+  }
 
   // Validate script name
   if (!SCRIPT_NAME_REGEX.test(options.script)) {
@@ -25,7 +39,7 @@ export async function runPackageScript(options: RunPackageScriptOptions): Promis
     };
   }
 
-  // Reject shell metacharacters in extra arguments
+  // Reject shell metacharacters and whitespace in extra arguments (especially for Windows cmd.exe)
   if (options.args) {
     for (const arg of options.args) {
       if (SHELL_METACHARS.test(arg)) {
@@ -81,9 +95,8 @@ export async function runPackageScript(options: RunPackageScriptOptions): Promis
 
   return await runProcess(command, args, {
     cwd: projectPath,
-    env: process.env,
+    env: sanitizeEnvironment(undefined, 'strict'),
     timeoutMs,
     shell: isWindows,
   });
 }
-

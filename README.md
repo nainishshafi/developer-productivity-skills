@@ -260,8 +260,8 @@ Closed-loop skill evolution and optimization utility that periodically harvests 
 - **Trigger phrases:** `"skill doctor"`, `"run skill doctor"`, `"update skills from memory"`, `"evolve skills from learnings"`, `"promote learnings to skills"`, `"audit skill health"`, `"optimize skill"`.
 
 ### `github-security-scanner-hook`
-Scans staged files for secrets and code vulnerabilities prior to git commits using `detect-secrets` and 24 Semgrep OWASP rules (command injection, path traversal, hardcoded tokens, hardcoded personal paths/PII, XSS, dangerous subprocesses). Enforces executing concrete scanner rules (`scan-staged.py`) against diffs rather than manual visual sign-off.
-- **Trigger phrases:** `"scan for security vulnerabilities"`, `"check for secrets in code"`, `"set up a pre-commit security hook"`, `"scan staged files for secrets"`.
+Scans staged files for secrets, prompt injection, and code vulnerabilities prior to git commits using `detect-secrets`, 53 Semgrep OWASP/LLM rules, and zero-dependency built-in fallback scanners (XSS & SSTI, prompt injection & stealth Unicode, unsafe deserialization, SQL/NoSQL & command injection, path traversal, SSRF & open redirects, weak cryptography & TLS bypass, hardcoded tokens, dangerous subprocesses, and hardcoded personal paths/PII). Enforces executing concrete scanner rules (`scan-staged.py`) against diffs rather than manual visual sign-off.
+- **Trigger phrases:** `"scan for security vulnerabilities"`, `"check for secrets in code"`, `"check for XSS vulnerabilities"`, `"check for prompt injection"`, `"set up a pre-commit security hook"`, `"scan staged files for secrets"`.
 
 ### `python-linter`
 Runs Ruff (linting and formatting) and Mypy (type checking) with automated fixes on Python projects, strictly resolving `.\.venv\Scripts\python.exe` (or `uv`) to avoid Windows Store `python` stub failures.

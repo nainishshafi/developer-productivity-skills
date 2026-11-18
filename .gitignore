@@ -20,3 +20,8 @@ mcp/**/*.db
 mcp/**/*.db-journal
 .project-memory/
 
+# Python bytecode
+**/__pycache__/
+*.py[cod]
+
+

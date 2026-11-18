@@ -62,7 +62,8 @@ export function createServer(): McpServer {
           'Concrete learnings or mistakes encountered/avoided, root causes, and prevention rules (mandatory for all, especially journal)'
         ),
       tags: z
-        .array(z.string())
+        .array(z.string().max(50))
+        .max(20)
         .optional()
         .describe('Optional search tags (e.g. ["sqlite", "auth", "mcp"])'),
     },
@@ -99,7 +100,7 @@ export function createServer(): McpServer {
     'search_memory',
     'Perform hybrid search (40% semantic cosine + 60% lexical match) across memories. Always returns lean summaries only; vectors are never returned.',
     {
-      query: z.string().describe('Search query string'),
+      query: z.string().min(1).max(500).describe('Search query string'),
       category: z
         .enum(['ledger', 'sidecar', 'journal'])
         .optional()
@@ -128,7 +129,7 @@ export function createServer(): McpServer {
     'delete_memory',
     'Delete a specific memory item by ID.',
     {
-      id: z.string().describe('The ID of the memory item to delete'),
+      id: z.string().min(1).max(100).describe('The ID of the memory item to delete'),
     },
     (params) => handleToolExecution(() => deleteMemory(params))
   );
@@ -168,12 +169,14 @@ export function createServer(): McpServer {
     'mark_learning_promoted',
     'Mark one or more memory IDs as "promoted" (codified into a skill) or "skipped" after skill-doctor review so they are not re-processed.',
     {
-      ids: z.array(z.string()).min(1).describe('Array of memory IDs processed by skill-doctor'),
+      ids: z.array(z.string().max(100)).min(1).max(100).describe('Array of memory IDs processed by skill-doctor'),
       status: z
         .enum(['promoted', 'skipped'])
         .describe('Outcome status: "promoted" (updated/created a skill) or "skipped" (already covered or transient)'),
       targetSkill: z
         .string()
+        .min(1)
+        .max(100)
         .describe('Target skill name (e.g. "powershell-writer", "new:graphql-developer", or "none")'),
     },
     (params) => handleToolExecution(() => markLearningPromoted(params))

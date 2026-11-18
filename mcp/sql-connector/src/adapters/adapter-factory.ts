@@ -1,3 +1,4 @@
+import * as crypto from 'node:crypto';
 import { DatabaseAdapter } from './adapter-interface.js';
 import { DatabaseConnectionConfig, DatabaseEngine } from '../types.js';
 import { SqliteAdapter } from './sqlite-adapter.js';
@@ -23,12 +24,16 @@ export class AdapterFactory {
    */
   public static getConnectionKey(config: DatabaseConnectionConfig): string {
     if (config.connectionString) {
-      return `${config.engine}://${config.connectionString}`;
+      const hash = crypto.createHash('sha256').update(config.connectionString).digest('hex').slice(0, 16);
+      return `${config.engine}://conn#${hash}`;
     }
     if (config.filePath) {
       return `${config.engine}://${config.filePath}`;
     }
-    return `${config.engine}://${config.user || 'anon'}@${config.host || 'localhost'}:${config.port || 0}/${config.database || 'default'}`;
+    const authHash = config.password
+      ? crypto.createHash('sha256').update(config.password).digest('hex').slice(0, 12)
+      : 'nopass';
+    return `${config.engine}://${config.user || 'anon'}:${authHash}@${config.host || 'localhost'}:${config.port || 0}/${config.database || 'default'}`;
   }
 
   /**

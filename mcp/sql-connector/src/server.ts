@@ -7,6 +7,7 @@ import { explainQuery } from './tools/explain-query.js';
 import { testConnection } from './tools/test-connection.js';
 import { auditQuerySafety } from './tools/audit-query-safety.js';
 import { DatabaseConnectionConfig } from './types.js';
+import { redactSecrets } from './utils.js';
 
 async function handleToolExecution<T>(
   action: () => Promise<T> | T
@@ -19,7 +20,7 @@ async function handleToolExecution<T>(
       ...(hasSuccess ? { isError: !(result as { success: boolean }).success } : {}),
     };
   } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
+    const errorMsg = redactSecrets(err instanceof Error ? err.message : String(err));
     return {
       content: [{ type: 'text', text: JSON.stringify({ success: false, error: errorMsg }, null, 2) }],
       isError: true,

@@ -232,6 +232,32 @@ async function runTests() {
     );
     console.log('✓ Path traversal attempts rejected with Security Exception.');
 
+    // 10. Security: Secret Redaction, Bidi Stripping, & Malformed JSON Resilience
+    console.log('[Test 10] Testing Secret Redaction, Bidi Stripping & JSON Resilience...');
+    const secretSaved = await saveMemory({
+      category: 'ledger',
+      title: 'Auth\u202E Config',
+      summary: 'Use env vars instead of sk-proj-abcdefghijklmnopqrstuvwx or AKIAIOSFODNN7EXAMPLE.', // pragma: allowlist secret
+      learnings: 'Never commit ghp_1234567890abcdefghij1234567890 to git.', // pragma: allowlist secret
+      tags: ['security'],
+    });
+    assert.equal(secretSaved.memory.title, 'Auth Config');
+    assert.ok(!secretSaved.memory.summary.includes('sk-proj-'));
+    assert.ok(!secretSaved.memory.summary.includes('AKIAIOSFODNN7EXAMPLE')); // pragma: allowlist secret
+    assert.ok(!secretSaved.memory.learnings.includes('ghp_1234567890'));
+
+    assert.throws(
+      () =>
+        sanitizeMemoryInput({
+          category: 'journal',
+          title: 'Stack trace only',
+          summary: 'at foo (bar.ts:1:1)\nnode:internal/main:1',
+          learnings: 'Always keep a non-empty summary outside stack traces.',
+        }),
+      /cannot be empty/i
+    );
+    console.log('✓ Secret redaction, Bidi stripping, and empty-after-strip guard verified.');
+
     console.log('\n--- All Project Memory Tests Passed Successfully! ---');
   } finally {
     closeDatabase();

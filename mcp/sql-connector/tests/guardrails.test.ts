@@ -1,7 +1,9 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { auditSqlQuery } from '../dist/guardrails/sql-guardrail.js';
+import { auditExplainQuery, auditSqlQuery, normalizeSql } from '../dist/guardrails/sql-guardrail.js';
 import { auditMongoQuery } from '../dist/guardrails/mongo-guardrail.js';
+import { AdapterFactory } from '../dist/adapters/adapter-factory.js';
+import { redactSecrets, validateDatabaseFilePath } from '../dist/utils.js';
 
 describe('SQL Connector Guardrail Engine', () => {
   describe('Zero-Tolerance Destructive DDL Defense', () => {
@@ -241,6 +243,55 @@ describe('SQL Connector Guardrail Engine', () => {
       const audit = auditSqlQuery(cteSelect, 'read-only');
       assert.equal(audit.allowed, true);
       assert.equal(audit.isReadOnly, true);
+    });
+  });
+
+  describe('Security Regression Hardening Suite', () => {
+    test('should preserve comment-like sequences inside string literals', () => {
+      const sql = "SELECT '-- not a comment' AS a, '/* also literal */' AS b;";
+      const norm = normalizeSql(sql);
+      assert.ok(norm.includes('-- not a comment'));
+      assert.ok(norm.includes('/* also literal */'));
+    });
+
+    test('should block numeric tautologies, fake WHERE in string literals, SELECT INTO, and writable_schema PRAGMA', () => {
+      assert.equal(auditSqlQuery('DELETE FROM users WHERE 2=2;', 'guarded-write').allowed, false);
+      assert.equal(auditSqlQuery("UPDATE users SET name = 'where';", 'guarded-write').allowed, false);
+      assert.equal(auditSqlQuery('SELECT * INTO backup_users FROM users;', 'read-only').allowed, false);
+      assert.equal(auditSqlQuery('PRAGMA writable_schema = ON;', 'guarded-write').allowed, false);
+      assert.equal(auditExplainQuery('SELECT 1; SELECT 2;').allowed, false);
+    });
+
+    test('should block MongoDB $out, $merge, $where, $function, and empty updateOne filter', () => {
+      assert.equal(
+        auditMongoQuery(JSON.stringify({ operation: 'aggregate', collection: 'a', pipeline: [{ $out: 'b' }] }), 'read-only').allowed,
+        false
+      );
+      assert.equal(
+        auditMongoQuery(JSON.stringify({ operation: 'find', collection: 'a', filter: { $where: 'this.x > 1' } }), 'read-only').allowed,
+        false
+      );
+      assert.equal(
+        auditMongoQuery(JSON.stringify({ operation: 'updateOne', collection: 'a', filter: {}, update: { $set: { x: 1 } } }), 'guarded-write').allowed,
+        false
+      );
+    });
+
+    test('should reject UNC paths, OLEDB delimiter injection, and traversal in validateDatabaseFilePath', () => {
+      assert.throws(() => validateDatabaseFilePath('\\\\evil-server\\share\\db.sqlite', ['.sqlite']), /Security rejection/i);
+      assert.throws(() => validateDatabaseFilePath('C:\\temp\\bad;evil.accdb', ['.accdb']), /Security rejection/i);
+      assert.throws(() => validateDatabaseFilePath('C:\\Windows\\System32\\test.db', ['.db']), /Security rejection/i);
+    });
+
+    test('should hash credentials in AdapterFactory.getConnectionKey and redact secrets in errors', () => {
+      const k1 = AdapterFactory.getConnectionKey({ engine: 'postgres', host: 'localhost', user: 'u', password: 'p1', database: 'db' });
+      const k2 = AdapterFactory.getConnectionKey({ engine: 'postgres', host: 'localhost', user: 'u', password: 'p2', database: 'db' });
+      assert.notEqual(k1, k2);
+      assert.ok(!k1.includes('p1'));
+
+      const redacted = redactSecrets('connect failed: postgres://admin:SuperSecret99@db.local:5432/app');
+      assert.ok(!redacted.includes('SuperSecret99'));
+      assert.ok(redacted.includes('[REDACTED]'));
     });
   });
 });
