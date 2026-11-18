@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: Conducts rigorous, senior-level code reviews across languages (Python, TypeScript/JavaScript, React/Next.js, Java, C#, Go, SQL, PowerShell). Audits code changes for logical correctness, edge-case coverage, error handling, security, maintainability, clean code principles, testability, single source of truth (SSOT), distributed caching/queues, database performance, and algorithmic efficiency. Use when asked to "review code", "code review", "review pull request", "audit code changes", "code review checklist", or "review this diff".
-version: 1.4.2
+version: 1.4.3
 ---
 
 # Code Reviewer Skill
@@ -36,6 +36,7 @@ Evaluate every code change against these 7 dimensions:
 ### 1. Correctness & Logic
 - Does the code fulfill the functional requirements and planned contracts?
 - Are off-by-one errors, empty collections, null/undefined references, or type coercion pitfalls handled?
+- Do CLI/API filter flags reject unknown values explicitly rather than silently falling back to a default, and are empty URL slugs guarded before navigation?
 - Are edge cases (e.g., zero quantity, negative values, leap years, timezone offsets) properly considered?
 - Are concurrent operations thread-safe and free from race conditions?
 

@@ -1,7 +1,7 @@
 ---
 name: typescript-developer
 description: Architectural and engineering guidance for modern TypeScript and JavaScript development (Node.js, ES2023+, TS 5+). Covers Dependency Injection (Pure DI composition roots, NestJS IoC scopes, custom providers), Modern Design Patterns (Strategy, Factory, Builder, Decorators, Adapter, Observer, Repository), clean architecture, and event loop hygiene. Use when designing, writing, reviewing, or refactoring TypeScript/JavaScript code, or when the user asks to "write typescript code", "develop typescript service", "typescript dependency injection", "typescript design patterns", "typescript architecture best practices", "design node backend", or "refactor javascript".
-version: 2.2.1
+version: 2.2.2
 ---
 
 # TypeScript Developer Skill

@@ -130,3 +130,11 @@ When inspecting an unfamiliar codebase:
    - Prisma (`prisma`) -> Map Prisma models to domain interfaces at repository boundaries.
    - Drizzle (`drizzle-orm`) -> Use schema inference and typed relational queries.
 
+---
+
+## 5. Extensible Registries & Build Asset Hygiene
+
+- **Plugin Registry Over Shotgun-Surgery Unions**: For extensible integrations (adapters, connectors, job boards, providers), avoid closed string unions paired with duplicated alias/handler maps across `types.ts`, `runner.ts`, and `cli.ts`. Export a self-describing plugin object (`{ id, aliases, fetch }`) from each adapter and register it in one canonical `REGISTRY` array.
+- **Externalize Mutable Lists**: Keep company/tenant/board token lists in external JSON config (`config/*.json`) rather than hardcoding them in `.ts` source files.
+- **Static Assets in `tsc` Builds**: `tsc` only compiles `.ts`/`.tsx` files; non-TS assets (e.g., `.sql`, `.json`, templates) loaded at runtime must be explicitly copied in the `build` script.
+
