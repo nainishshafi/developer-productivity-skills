@@ -238,13 +238,13 @@ Sub-agents are executed in isolated contexts. State and bounded handoff payloads
 2. **Execute**: Invoke sub-agent with role `Architecture & Planning Specialist` and skill `architectural-planning`.
    - Produce system design, interface contracts, and list of files to create/modify.
    - Enforce KISS and YAGNI: reject speculative abstractions, unnecessary microservices, and unneeded caching layers during planning.
-   - Consult `api-security` for auth topologies, `caching-queues-reviewer` for queue/cache resilience, `sql-executor` for indexing and schemas, and `llm-as-judge` for trade-off evaluation.
+   - Consult `api-security` for auth topologies, `caching-queues-reviewer` for queue/cache resilience, `sql-executor` for indexing and schemas, and **`llm-as-judge`** (mandatory 4-archetype arbitration — `Pessimist`, `Contrarian`, `Pragmatist`, `Specialist` — for major changes, auto-detected or flagged via `--major`, before advancing to `develop`).
 3. **Save Sub-Agent Output**:
    - Save interface contracts to `ledger`: `save_memory(category="ledger", title="ADR: ...", summary="...", learnings="...")`.
    - Record planning learnings to `journal`: `save_memory(category="journal", title="Stage 1 (plan) Recap", summary="...", learnings="...")`.
 4. **Record Gate**:
    ```bash
-   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage plan --status PASSED --summary "Plan approved: contracts defined" --artifact "plan.md"
+   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage plan --status PASSED --summary "Plan approved: contracts defined" --artifact "plan.md" --judge-verdict "APPROVED: 4-archetype consensus"
    ```
 
 ### Step 3: Stage 2 — `develop`

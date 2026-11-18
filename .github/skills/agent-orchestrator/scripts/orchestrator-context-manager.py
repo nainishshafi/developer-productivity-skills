@@ -110,6 +110,15 @@ STAGE_SKILLS_MAP = {
 BASE_DIR = Path(".orchestrator")
 RUNS_DIR = BASE_DIR / "runs"
 
+MAJOR_CHANGE_RE = re.compile(
+    r"\b(security|refactor|migrat\w*|architect\w*|redesign|rewrite|auth\w*|schema|database|breaking|across|all|mcp|pipeline)\b",
+    re.IGNORECASE,
+)
+
+
+def is_major_change_task(task: str) -> bool:
+    return bool(MAJOR_CHANGE_RE.search(task))
+
 
 def slugify(text: str) -> str:
     cleaned = re.sub(r"[^\w\s-]", "", text.lower()).strip()
@@ -166,12 +175,15 @@ def cmd_init(args: argparse.Namespace) -> None:
     for stage in STAGES:
         (run_dir / "stages" / stage).mkdir(parents=True, exist_ok=True)
 
+    major_change = bool(getattr(args, "major", False) or is_major_change_task(args.task))
     manifest: Dict[str, Any] = {
         "run_id": run_id,
         "task": args.task,
         "created_at": now.isoformat(),
         "status": "IN_PROGRESS",
         "current_stage": "plan",
+        "is_major_change": major_change,
+        "judge_reviewed": False,
         "stages": {
             stage: {
                 "status": "PENDING",
@@ -190,6 +202,8 @@ def cmd_init(args: argparse.Namespace) -> None:
     print(f"Initialized orchestrator run: {run_id}")
     print(f"Directory: {run_dir}")
     print(f"Initial stage: plan")
+    if major_change:
+        print("Major change detected: Stage 'plan' requires 'llm-as-judge' arbitration (--judge-verdict) before 'develop'.")
 
 
 def get_active_slice(manifest: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -273,6 +287,14 @@ def cmd_handoff(args: argparse.Namespace) -> None:
     manifest = load_manifest(run_dir)
     stage_idx = STAGES.index(stage)
 
+    is_major = bool(manifest.get("is_major_change") or len(manifest.get("bdd_slices", {}).get("items", [])) >= 2)
+    if stage == "develop" and is_major and not manifest.get("judge_reviewed"):
+        print(
+            "Gate BLOCKED: Cannot hand off to 'develop' on a major change before 'plan' passes 'llm-as-judge' arbitration.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     # Collect previous stages context
     previous_context: List[Dict[str, Any]] = []
     for prev in STAGES[:stage_idx]:
@@ -297,6 +319,10 @@ def cmd_handoff(args: argparse.Namespace) -> None:
     print(f"**Goal:** {stage_spec['description']}")
     print("\n## Task Objective")
     print(f"{manifest['task']}")
+    if stage == "plan" and is_major:
+        print("\n## [MANDATORY GATE] Major Change -> `llm-as-judge` Arbitration Required")
+        print("- Run `llm-as-judge` 4-archetype evaluation (`Pessimist`, `Contrarian`, `Pragmatist`, `Specialist`) on the plan before coding.")
+        print("- Record completion with `--judge-verdict \"<verdict>\"` when marking `plan` as `PASSED`.")
 
     active_slice = get_active_slice(manifest)
     if active_slice and stage in SLICE_LOOP_STAGES:
@@ -343,11 +369,25 @@ def cmd_record(args: argparse.Namespace) -> None:
     run_dir = get_run_dir(args.run_id)
     manifest = load_manifest(run_dir)
 
+    is_major = bool(manifest.get("is_major_change") or len(manifest.get("bdd_slices", {}).get("items", [])) >= 2)
+    judge_verdict = getattr(args, "judge_verdict", None)
+    if stage == "plan" and status == "PASSED" and is_major:
+        if not judge_verdict or not judge_verdict.strip():
+            print(
+                "Gate BLOCKED: Major change detected for stage 'plan'. Run 'llm-as-judge' (Pessimist, Contrarian, "
+                "Pragmatist, Specialist) on the plan first, then pass --judge-verdict \"<verdict>\".",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        manifest["judge_reviewed"] = True
+
     now_iso = datetime.datetime.now().isoformat()
     stage_data = manifest["stages"].setdefault(stage, {})
     stage_data["status"] = status
     stage_data["completed_at"] = now_iso
     stage_data["summary"] = args.summary or ""
+    if judge_verdict:
+        stage_data["judge_verdict"] = judge_verdict.strip()
 
     if args.artifact:
         artifacts = stage_data.setdefault("artifacts", [])
@@ -573,6 +613,7 @@ def main() -> None:
     # init
     p_init = subparsers.add_parser("init", help="Initialize a new orchestrator run")
     p_init.add_argument("--task", required=True, help="Task description or objective")
+    p_init.add_argument("--major", action="store_true", help="Explicitly mark task as a major change requiring llm-as-judge in plan")
 
     # status
     p_status = subparsers.add_parser("status", help="Show pipeline status")
@@ -589,6 +630,7 @@ def main() -> None:
     p_record.add_argument("--status", required=True, choices=["PASSED", "FAILED", "BLOCKED", "SKIPPED"])
     p_record.add_argument("--summary", help="Summary of findings or results")
     p_record.add_argument("--artifact", help="Path to primary artifact generated")
+    p_record.add_argument("--judge-verdict", help="Required for major changes in 'plan' after llm-as-judge arbitration")
     p_record.add_argument("--run-id", help="Optional run ID (defaults to latest)")
 
     # report

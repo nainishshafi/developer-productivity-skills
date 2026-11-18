@@ -18,7 +18,7 @@ These skills provide ready-made workflows for modern software engineering across
 - **⏱️ Asymptotic Big-O Complexity Audits**: Algorithmic time and space profiling ($O(1) \dots O(2^n)$), detecting hidden quadratic collection traps (`.includes()` in loops), and database query execution plan audits ($O(N)$ table scans).
 - **🔬 Empirical Research & PoC Benchmarking**: Validates architectural trade-offs through isolated side-by-side testbeds (`scratch/pocs/`) with automated JIT warmup discarding, monotonic timers, and multi-iteration statistical distributions (Median P50, P95, P99, StdDev, ops/sec) to empirically measure real-world performance (e.g., Virtual Threads I/O vs CPU concurrency, Polars Arrow vs NumPy SIMD, DB batching vs cursor streaming).
 - **🔍 Isolated Debugging & Circuit Breakers**: Extracting failures into minimal standalone testbeds (`scratch/repro/`) with a strict 3-iteration circuit breaker to eliminate token-burning retry loops.
-- **🔐 Pre-Commit Security & Query Firewalls**: Secret scanning (`detect-secrets`), OWASP rule evaluation (`semgrep`), universal API authentication audits (JWT RS256, OAuth 2.1 PKCE, mTLS), and zero-tolerance destructive SQL firewalls (`DROP TABLE`, `DELETE *`).
+- **🔐 Pre-Commit Security & Query Firewalls**: Secret scanning (`detect-secrets`), 53 Semgrep OWASP/LLM rules (XSS/SSTI, prompt injection & stealth Unicode, unsafe deserialization, SSRF, weak crypto/TLS) with zero-dependency offline fallbacks, universal API authentication audits (JWT RS256, OAuth 2.1 PKCE, mTLS), and hardened MCP execution/database firewalls (`DROP TABLE`, `DELETE *`, MongoDB `$out`/`$where`, path confinement).
 
 ---
 
@@ -305,17 +305,17 @@ Reusable MCP servers located in `mcp/` providing protocol-compliant tool integra
 
 ### `nodejs-executor` (`mcp/nodejs-executor/`)
 - **Tools:** `execute_code`, `evaluate_expression`, `execute_file`, `run_package_script`, `run_terminal_command`, `get_runtime_info`
-- **Controlled Terminal (`run_terminal_command`, `run_package_script`):** Run direct CLI binaries (e.g., `.py` scripts via `.venv/Scripts/python.exe`, `rg`/`grep`/`git grep`, `git`, `dotnet`, `docker`, `kubectl`) and `npm`/`pnpm`/`yarn` scripts with `shell: false`, raw shells blocked (`cmd`, `powershell`, `pwsh`, `bash`, `sh`), `workingDirectory` containment, and `stdout` written to a timestamped `stdoutLogFile` returned in the result.
-- **Sandboxed JS/TS Execution (`execute_code`, `evaluate_expression`, `execute_file`):** Native Node.js 22+ TypeScript type-stripping, C++ permission model isolation (temp/workspace write confinement), destructive-pattern blocking, and host secret scrubbing.
+- **Controlled Terminal (`run_terminal_command`, `run_package_script`):** Run direct CLI binaries (e.g., `.py` scripts via `.venv/Scripts/python.exe`, `rg`/`grep`/`git grep`, `git`, `dotnet`, `docker`, `kubectl`) and `npm`/`pnpm`/`yarn` scripts with `shell: false`, raw shells/Windows LOLBins and dangerous `git` flags blocked, `cmd.exe` metacharacters rejected, symlink-safe `workingDirectory`/`projectPath` containment, sanitized environments, and `stdout` written to a timestamped `stdoutLogFile`.
+- **Sandboxed JS/TS Execution (`execute_code`, `evaluate_expression`, `execute_file`):** Native Node.js 22+ TypeScript type-stripping, fail-closed C++ permission model isolation (scoped `--allow-fs-read`, `tempDir`/workspace write confinement, `--max-old-space-size=512`), `vm.Script` single-expression validation, destructive-pattern checks, and host secret + `NODE_OPTIONS`/`LD_PRELOAD` scrubbing.
 
 ### `project-memory` (`mcp/project-memory/`)
 - **Tools:** `save_memory`, `load_memory`, `search_memory`, `get_unprocessed_learnings`, `mark_learning_promoted`, `delete_memory`, `clear_sidecar`
-- **Features:** SQLite backend (`node:sqlite`), zero external C++ dependencies, anti-bloat filters, `skill_status` learning-promotion tracking for `skill-doctor`, and hybrid semantic/lexical search ($40\% \text{ semantic} + 60\% \text{ lexical}$).
+- **Features:** SQLite backend (`node:sqlite`), zero external C++ dependencies, symlink-safe DB path containment (including `PROJECT_MEMORY_DB_PATH`), secret/credential redaction & Bidi Unicode stripping, anti-bloat filters, resilient JSON parsing, bounded Zod inputs, `skill_status` learning-promotion tracking for `skill-doctor`, and hybrid semantic/lexical search ($40\% \text{ semantic} + 60\% \text{ lexical}$).
 - **Database Location:** `.project-memory/memory.db`.
 
 ### `sql-connector` (`mcp/sql-connector/`)
 - **Tools:** `execute_query`, `list_tables`, `describe_table`, `explain_query`, `test_connection`, `audit_query_safety`
-- **Features:** Multi-database driver support (SQL Server, Oracle, PostgreSQL, SQLite via built-in `node:sqlite`, MongoDB, MS Access, MySQL), zero-tolerance destructive DDL/DML firewall (`DROP TABLE`, `DELETE *`, tautology blocking), auto row capping, query timeout guardrails, and automated repository-wide YAML frontmatter validator (`npm run validate:skills`).
+- **Features:** Multi-database driver support (SQL Server with strict TLS `trustServerCertificate: false`, Oracle, PostgreSQL, SQLite via built-in `node:sqlite`, MongoDB, MS Access, MySQL), quote-aware SQL lexeme firewall (`DROP TABLE`, `DELETE *`, tautology/literal-`WHERE` blocking, `SELECT ... INTO`, `PRAGMA` allowlist, single-statement `EXPLAIN`, MongoDB `$out`/`$merge`/`$where`/`$function` blocking), symlink-safe SQLite/Access path confinement (blocking UNC & OLEDB delimiter injection), SHA-256 hashed pool cache keys, redacted driver error messages, auto row capping (including MongoDB `aggregate`), query timeout guardrails, and automated repository-wide YAML frontmatter validator (`npm run validate:skills`).
 
 ---
 
