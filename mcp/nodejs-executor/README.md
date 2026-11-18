@@ -9,11 +9,12 @@ Designed for AI assistants including **Claude Code**, **Claude Desktop**, **GitH
 ## Features
 
 - **Multi-Layer Security Sandbox**:
-  - **Filesystem Write/Delete Boundary**: Under `strict` mode (default), file writes and deletions are strictly locked to the OS temp folder (`--allow-fs-write=<tempDir>`). Attempts to delete or modify host files throw `ERR_ACCESS_DENIED` at the Node C++ engine level.
-  - **Child Process Execution Block**: Blocks spawning subprocesses (`child_process.spawn/exec/fork` are denied by the runtime).
-  - **Secret Sanitization**: Automatically scrubs sensitive host environment variables (`*KEY*`, `*TOKEN*`, `*SECRET*`, `*PASSWORD*`, `AWS_*`, `GITHUB_*`, etc.) before passing environment to child processes.
-  - **Pre-execution Static Safety Checks**: Immediately detects and aborts broad root destructive patterns (`rmSync('/')`, `format C:`, etc.).
-  - **Safe Package Execution**: Blocks shell metacharacters (`&`, `|`, `;`, `>`, `$`) in package script arguments to prevent command injection.
+  - **Filesystem Read/Write Boundary**: Under `strict` mode (default), file writes/deletions are locked to the isolated `tempDir` (`--allow-fs-write=<tempDir>`), `--allow-fs-read` is scoped to `tempDir`, `cwd`, and Node's binary directory (never `*`), `allowFsWritePaths` is confined to `tempDir`/workspace boundaries, and Node `< 20` fails closed.
+  - **Symlink-Safe Path Containment**: `workingDirectory`, `filePath`, and `projectPath` are validated against workspace/temp boundaries using `fs.realpathSync.native` to block symlink/NTFS junction escapes.
+  - **Child Process & Memory Limits**: Blocks spawning subprocesses (`strict`/`workspace-write`) and bounds V8 heap via `--max-old-space-size=512`.
+  - **Secret & Loader Sanitization**: Scrubs sensitive host environment variables (`*KEY*`, `*TOKEN*`, `*SECRET*`, `*PASSWORD*`, `*DSN*`, `AWS_*`, `GITHUB_*`, `SMTP_*`, `KUBECONFIG`, etc.) and blocks dangerous caller overrides (`NODE_OPTIONS`, `LD_PRELOAD`, `PATH`, `GIT_SSH_COMMAND`).
+  - **Pre-Execution Safety & Single-Expression Validation**: Detects destructive root patterns across `execute_code` and `execute_file`, and validates `evaluate_expression` at parse time via `vm.Script` to prevent wrapper breakouts.
+  - **Safe Package & Terminal Execution**: Rejects `cmd.exe`/shell metacharacters (`&`, `|`, `;`, `>`, `$`, `%`, `^`, `(`, `)`, `!`, quotes, whitespace) in `run_package_script` (with sanitized `env`), and blocks raw shells, Windows LOLBins (`wscript`, `cscript`, `mshta`, `rundll32`, `certutil`, etc.), and dangerous `git` flags (`-c`, `--exec-path`, `--upload-pack`) in `run_terminal_command`.
 - **Arbitrary Code Execution (`execute_code`)**: Run JavaScript (ESM) and TypeScript code snippets with top-level await, module imports, and access to Node.js standard libraries.
 - **TypeScript Support**: Native TypeScript execution on Node.js 22+ (via `--experimental-strip-types`) with zero transpilation overhead.
 - **Expression Evaluation (`evaluate_expression`)**: Quickly evaluate expressions with detailed type inspection and deep object formatting via `node:util.inspect`.
@@ -88,7 +89,7 @@ Run an npm, pnpm, or yarn script defined in a `package.json`.
 - `timeout` (`number`, optional, default: `60000`): Timeout in milliseconds.
 
 ### 5. `run_terminal_command`
-Execute an arbitrary non-shell CLI binary in a **controlled terminal environment** (`shell: false`), enforcing blocked-binary checks (`cmd`, `powershell`, `pwsh`, `bash`, `sh`, `diskpart`, `reg`), shell metacharacter rejection, destructive-argument blocking, `workingDirectory` containment (workspace or temp directory), host secret scrubbing, and timeout clamping (`100`–`300000` ms).
+Execute an arbitrary non-shell CLI binary in a **controlled terminal environment** (`shell: false`), enforcing blocked-binary checks (raw shells, `.exe` variants, `diskpart`, `reg`, Windows LOLBins), dangerous `git` flag blocking, shell metacharacter rejection, destructive-argument blocking, symlink-safe `workingDirectory` containment (workspace or temp directory), host secret + `NODE_OPTIONS` scrubbing, and timeout clamping (`100`–`300000` ms).
 
 **Parameters:**
 - `command` *(required)*: Executable name or path (no spaces or shell metacharacters; raw shells are blocked)

@@ -14,10 +14,11 @@ A Model Context Protocol (MCP) server providing persistent project memory backed
 - **40% Semantic Hybrid Search**:
   $$\text{Score} = (0.40 \times \text{Semantic Cosine}) + (0.60 \times \text{Lexical Overlap})$$
   Evaluated across 256-dimensional subword and semantic embeddings.
-- **Strict Anti-Bloat Enforcement**:
+- **Strict Anti-Bloat & Security Hygiene**:
   - Raw vector embeddings are **never returned** to the client.
-  - Summaries are capped at 1,500 characters.
-  - Automatically strips stack traces, base64 data, and giant JSON dumps.
+  - Summaries are capped at 1,500 characters; stack traces (re-checked for emptiness after stripping), base64 blobs, and giant JSON dumps are stripped.
+  - Redacts secrets/credentials (AWS keys, GitHub tokens, `sk-` API keys, JWTs, PEM keys, URL Basic Auth) and strips ASCII control / Trojan Source Bidi Unicode characters.
+  - Symlink-safe DB path containment (`fs.realpathSync.native` on `customPath` and `PROJECT_MEMORY_DB_PATH`), resilient `JSON.parse` handling, and bounded Zod input lengths (`query`, `ids`, `tags`, `id`).
   - Mandates clear, high-signal learnings on every save.
 - **Transient Sidecar Flushing**: `clear_sidecar` enables clearing active task state when transitioning between features without wiping permanent ledger or journal records.
 

@@ -14,11 +14,12 @@ The SQL Connector integrates an AST and lexical SQL firewall that audits every i
 |:---|:---|:---|
 | **Destructive DDL** | `DROP TABLE`, `DROP DATABASE`, `DROP SCHEMA`, `DROP VIEW`, `DROP INDEX`, `DROP PROCEDURE`, `DROP FUNCTION`, `TRUNCATE TABLE`, `ALTER TABLE ... DROP ...` | **CRITICAL_BLOCKED**: Immediate rejection with security error; query never reaches DB. |
 | **Unbounded Destructive DML** | `DELETE FROM table;`, `DELETE table;`, `DELETE * FROM table`, `UPDATE table SET ...` without `WHERE` | **CRITICAL_BLOCKED**: Unbounded data wipe strictly forbidden. |
-| **Tautological Bypasses** | `WHERE 1=1`, `WHERE 0=0`, `WHERE 'a'='a'`, `WHERE true`, `WHERE 1`, `WHERE null is null`, `WHERE 1<=1` | **CRITICAL_BLOCKED**: Catches evasive clauses attempting to wipe all records. |
-| **Multi-Statement Injections** | `SELECT * FROM users; DROP TABLE accounts;` | **CRITICAL_BLOCKED**: Individual statements split and audited; rejected if any statement violates policy. |
-| **Obfuscated Comments** | `DROP/**/TABLE`, `-- comment \n DROP TABLE` | **CRITICAL_BLOCKED**: Comments stripped and normalized prior to evaluation. |
-| **Administrative Commands** | `xp_cmdshell`, `sp_configure`, `SHUTDOWN`, `KILL` | **CRITICAL_BLOCKED**: System commands and arbitrary shell execution blocked. |
-| **MongoDB Destructive MQL** | `db.users.drop()`, `dropDatabase()`, `deleteMany({})`, `remove({})` | **CRITICAL_BLOCKED**: Shell and JSON destructive operations blocked. |
+| **Tautological Bypasses & Literal Tricks** | `WHERE 1=1`, `WHERE 2=2`, `WHERE (1=1)`, `WHERE 'a'='a'`, `WHERE true`, `OR 1=1`, or fake `'where'` string literals | **CRITICAL_BLOCKED**: String literals are masked before `WHERE`/DDL evaluation; catches evasive tautologies. |
+| **Multi-Statement & `EXPLAIN` Injections** | `SELECT * FROM users; DROP TABLE accounts;` or multi-statement `EXPLAIN` payloads | **CRITICAL_BLOCKED**: Quote-aware statement splitting; `EXPLAIN` rejects multi-statement queries across all SQL adapters. |
+| **Obfuscated Comments & Dialects** | `DROP/**/TABLE`, `SELECT ... INTO`, `PRAGMA writable_schema`, `ATTACH DATABASE`, `COPY ... PROGRAM`, `INTO OUTFILE` | **CRITICAL_BLOCKED**: Quote-aware comment stripping preserves literals while blocking dangerous dialect extensions. |
+| **Administrative Commands** | `xp_cmdshell`, `sp_configure`, `sp_executesql`, `CREATE USER/FUNCTION/TRIGGER`, `GRANT`/`REVOKE`, `SHUTDOWN`, `KILL` | **CRITICAL_BLOCKED**: System commands, privilege changes, and arbitrary shell execution blocked. |
+| **MongoDB Destructive MQL** | `drop()`, `dropDatabase()`, `deleteMany({})`, empty-filter `updateOne`, `$out`, `$merge`, `$where`, `$function`, `$accumulator` | **CRITICAL_BLOCKED**: Destructive ops, pipeline writes, and server-side JS execution blocked; `aggregate` enforces `maxRows`. |
+| **Path Traversal & Credential Hygiene** | Arbitrary SQLite/MS Access paths, UNC `\\server\share` paths, OLEDB `;`/`"` injection, unredacted driver errors | **CRITICAL_BLOCKED**: Symlink-safe workspace/temp path confinement, strict SQL Server TLS (`trustServerCertificate: false`), SHA-256 hashed pool cache keys, and redacted driver errors. |
 | **Read-Only Mode Violations** | Any `INSERT`, `UPDATE`, `DELETE`, `MERGE` in default `read-only` mode | **REJECTED**: Defaults to read-only; mutations require explicit `guarded-write` mode. |
 
 ---
