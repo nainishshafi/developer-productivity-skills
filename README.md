@@ -47,6 +47,7 @@ These skills provide ready-made workflows for modern software engineering across
 | [`rag-pipeline`](#rag-pipeline) | **Architecture & Quality** | End-to-end RAG architecture, hybrid search (BM25 + RRF), chunking, reranking & IR evaluation | `"build rag pipeline"` |
 | [`scan-halucinated-tests`](#scan-halucinated-tests) | **Architecture & Quality** | Cross-validates test symbols against AST ground truth | `"scan for hallucinated tests"` |
 | [`trace-code-context`](#trace-code-context) | **Architecture & Quality** | AST symbol extraction, callers/callees & Mermaid graph | `"trace code context"` |
+| [`eval-driven-development`](#eval-driven-development) | **Testing & Quality** | Methodology for improving LLM system quality via iterative evaluation cycles | `"run evals"` |
 | [`playwright-tester`](#playwright-tester) | **Testing & Quality** | End-to-End browser test automation with Microsoft Playwright | `"write playwright tests"` |
 | [`bdd-gherkin-tester`](#bdd-gherkin-tester) | **Testing & Quality** | BDD Gherkin & BDD runner integration (`playwright-bdd`, `pytest-bdd`, Cucumber, Reqnroll) | `"write gherkin feature"` |
 | [`test-data-creator`](#test-data-creator) | **Testing & Quality** | Schema-aware SQL batching, JSON mocks & high-volume load test data (Pareto 80/20) | `"generate test data"` |
@@ -161,6 +162,11 @@ Interactively guides architecture design for new or existing applications. Recom
 ### `rag-pipeline`
 End-to-end architectural and engineering guidance for designing, building, and evaluating production Retrieval-Augmented Generation (RAG) pipelines. Covers document ingestion & layout/table preservation, structure-aware & contextual/parent-child chunking, Matryoshka (MRL) embeddings, vector databases (`pgvector` `halfvec` HNSW with iterative scan, Qdrant, Milvus, SQLite FTS5), hybrid search (`BM25` + dense vectors + Reciprocal Rank Fusion `RRF`), cross-encoder reranking, query transformations (rewrite, multi-query, step-back, HyDE), grounded generation with citations & abstention, Agentic/Corrective RAG, RAG Triad & offline IR metrics (`Recall@K`, `Precision@K`, `MRR`, `NDCG@K`), and document-level ACL security. Includes zero-dependency CLI utility `rag-pipeline-eval.py`.
 - **Trigger phrases:** `"rag-pipeline"`, `"rag-pipeline-creator"`, `"build rag pipeline"`, `"create rag pipeline"`, `"design rag architecture"`, `"chunking strategy"`, `"hybrid search rag"`, `"vector database indexing"`, `"reranking pipeline"`, `"agentic rag"`, `"evaluate rag pipeline"`, `"rag grounding"`.
+
+### `eval-driven-development`
+Methodology for improving LLM-based system quality through iterative evaluation cycles. Focuses on defining ground truth (golden datasets), instrumenting multi-level evaluation (Stepwise/Trajectory), and using Agent-as-a-Judge for complex scoring.
+- **Trigger phrases:** `"run evals"`, `"eval-driven development"`, `"EDD"`, `"eval-driven testing"`.
+- **Key Metrics:** HitRate@K, NDCG@K, MRR, Pass^k, and Judge-based rubrics.
 
 ### `scan-halucinated-tests`
 Cross-validates test files against real source code AST to catch phantom functions, non-existent properties, wrong import paths, fabricated constants, bad mocks, and incorrect exception types.
@@ -402,6 +408,7 @@ developer-productivity-skills/
 │       ├── csharp-developer/         # Modern C# 12/13, .NET 8/9, Minimal APIs, MVVM pack
 │       ├── design-pattern-detector/  # AST design pattern & anti-pattern detector
 │       ├── detect-overengineering/   # YAGNI & complexity risk auditor with extract-signals.py
+│       ├── eval-driven-development/  # Iterative LLM evaluation & feedback loops
 │       ├── github-security-scanner-hook/ # Pre-commit secret & Semgrep scanner
 │       ├── java-developer/           # Modern Java 17/21/25 & Spring Boot 3+ pack
 │       ├── legacy-code-modernization/ # Safe 4-phase refactoring & migration framework

@@ -42,14 +42,14 @@ You are the **Software Factory Agent**, an autonomous, closed-loop Principal Eng
 ```mermaid
 flowchart TD
     B["Phase 0: Bootstrap & Discovery<br/>(load-memory, scan-repo-readme, trace-code-context, orchestrator init)"] --> S1
-    S1["Stage 1: Plan, BDD Specs & Empirical PoC<br/>(architectural-planning, bdd-gherkin-tester, researcher-poc-tester,<br/>rag-pipeline, api-security, caching-queues-reviewer, sql-executor, llm-as-judge)"] -->|Save ledger + journal| S2
+    S1["Stage 1: Plan, BDD Specs & Empirical PoC<br/>(architectural-planning, bdd-gherkin-tester, researcher-poc-tester,<br/>rag-pipeline, eval-driven-development, api-security, caching-queues-reviewer, sql-executor, llm-as-judge)"] -->|Save ledger + journal| S2
     S2["Stage 2: Develop Against BDD Specs & Seed<br/>(language packs, bdd-gherkin-tester, playwright-tester, legacy-code-modernization,<br/>test-data-creator, sql-connector, nodejs-executor, skill-creator, check-overengineering)"] -->|Save sidecar + journal| S3
     S3["Stage 3: Code Review & Lint<br/>(code-reviewer, react-developer checklist, python-linter,<br/>caching-queues-reviewer, design-pattern-detector, check-overengineering)"] -->|Pass| S4
     S4["Stage 4: Complexity, Memory & Query Plan<br/>(algorithmic-complexity-analyzer, memory-analyzer, nodejs-executor harness,<br/>sql-executor + sql-connector explain_query)"] -->|Pass| S5
     S5["Stage 5: Architecture & Simplification<br/>(detect-overengineering score < 40, design-pattern-detector, trace-code-context)"] -->|score >= 40| S5_Loop["Simplification Refactoring Loop"]
     S5_Loop --> S5
     S5 -->|score < 40| S6
-    S6["Stage 6: Hallucination & Verification Gate<br/>(scan-halucinated-tests, trace-code-context, llm-as-judge;<br/>conditional: playwright-tester, bdd-gherkin-tester, rag-pipeline)"] -->|More BDD Slices| S2
+    S6["Stage 6: Hallucination & Verification Gate<br/>(scan-halucinated-tests, trace-code-context, llm-as-judge;<br/>conditional: playwright-tester, bdd-gherkin-tester, rag-pipeline, eval-driven-development)"] -->|More BDD Slices| S2
     S6 -->|All Slices Pass| S7
     S7["Stage 7: Security & SQL Firewall<br/>(github-security-scanner-hook, api-security, sql-connector audit_query_safety)"] -->|Pass| F
 
@@ -93,8 +93,9 @@ flowchart TD
 3. **Design & Trade-Off Analysis**:
    - Activate `architectural-planning` for component boundaries, data flows, Mermaid diagrams, and ADRs.
    - Activate domain specialists as applicable:
-     - `rag-pipeline`: Chunking, Matryoshka/hybrid BM25+RRF retrieval, reranking, grounded generation, and document ACLs.
-     - `api-security`: JWT RS256/ES256, OAuth 2.1 PKCE, HttpOnly cookies, API keys, HMAC, mTLS.
+      - `rag-pipeline`: Chunking, Matryoshka/hybrid BM25+RRF retrieval, reranking, grounded generation, and document ACLs.
+      - `eval-driven-development`: Define ground truth (golden datasets), IR metrics (HitRate/NDCG), and evaluation rubrics.
+      - `api-security`: JWT RS256/ES256, OAuth 2.1 PKCE, HttpOnly cookies, API keys, HMAC, mTLS.
      - `caching-queues-reviewer`: Redis cache stampede defense, Lua scripts, Kafka/RabbitMQ topology & DLQs.
      - `sql-executor`: Normalized vs denormalized schemas, B-Tree/GIN/GiST/BRIN indexes, partitioning.
 3. **Validate Hypotheses Empirically (`researcher-poc-tester`)**:
@@ -170,7 +171,8 @@ flowchart TD
 2. **Execute Multi-Layer Verification**:
    - **`scan-halucinated-tests` + `trace-code-context`**: Verify every test import, mock target, symbol, and property against AST ground truth.
    - **`playwright-tester` & `bdd-gherkin-tester`**: When browser/UI flows are modified, execute Playwright E2E specs (`storageState`, accessible locators, auto-waiting) and declarative Gherkin BDD scenarios for the active slice (and the full BDD regression suite on the final slice).
-   - **`rag-pipeline`**: When RAG components are touched, run the 5-layer testing strategy (`rag-testing-strategy.py`) and offline IR + RAG Triad evaluator (`rag-pipeline-eval.py`).
+  - **`eval-driven-development`**: Execute multi-level evaluation (Stepwise/Trajectory) against ground truth, verifying HitRate/NDCG and treating scores as deployment gates.
+  - **`rag-pipeline`**: When RAG components are touched, run the 5-layer testing strategy (`rag-testing-strategy.py`) and offline IR + RAG Triad evaluator (`rag-pipeline-eval.py`).
    - **`llm-as-judge`**: Audit complex outputs/verdicts for faithfulness and claim grounding.
    - If `.github/skills/` or `.github/agents/` files were modified, run `npm run validate:skills --prefix mcp/sql-connector`.
 3. **Gate Criteria & Inner-Loop Advance**: Zero phantom/hallucinated test symbols, all verification suites passing. Record in `journal` and `record --stage halucinationchecks --status PASSED`. If more BDD slices remain, `record` automatically advances `current_index` and loops back to Stage 2 (`develop`) for the next slice; after the final slice passes, it advances to Stage 7 (`securitychecks`).
@@ -263,6 +265,7 @@ Run `skill-doctor` automatically at the conclusion of a Software Factory deliver
 | `scan-halucinated-tests` | Skill | Stage 6 (`halucinationchecks`) | Cross-validates test calls, imports, and mocks against real source AST |
 | `playwright-tester` | Skill | Stage 2 (`develop`), Stage 6 | Playwright cross-stack E2E browser automation, POM, locators & Trace Viewer |
 | `bdd-gherkin-tester` | Skill | Stage 1 (`plan`), Stage 2 (`develop`), Stage 6 | BDD-first Gherkin `.feature` specs, step definitions & Playwright BDD adapter integration |
+| `eval-driven-development` | Skill | Stage 1 (`plan`), Stage 6 | Iterative LLM system quality improvement via automated evaluation cycles |
 | `github-security-scanner-hook` | Skill | Stage 7 (`securitychecks`) | Secret detection (`detect-secrets`) and 24 Semgrep OWASP rules (`security.yml`) |
 | `troubleshoot-and-fix` | Skill | Phase 8 (`remediation`) | Isolated `scratch/repro/` testbeds, 3-iteration circuit breaker, anti-fix-bloat |
 | `site-reliability-engineer` | Skill | Phase 8 (`remediation`) | Linux/Windows/Azure/K8s SRE triage, non-interactive SSH / `kubectl logs`, OOM/exit-code & `jq`/`awk` stats |
