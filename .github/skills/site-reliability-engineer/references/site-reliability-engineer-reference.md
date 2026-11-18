@@ -1,4 +1,4 @@
-# Remote Pod Log Analyzer Reference Guide
+﻿# Remote Pod Log Analyzer Reference Guide
 
 Master operational reference for remote log analysis across Kubernetes clusters, Linux servers, and container runtimes.
 
@@ -111,7 +111,7 @@ The skill provides three production-grade extraction scripts in `scripts/`:
 ### A. Kubernetes Pod Log Extractor (`extract-pod-logs.sh`)
 ```bash
 # Extract logs from pod with previous crash detection and secret scrubbing
-./.github/skills/remote-pod-log-analyzer/scripts/extract-pod-logs.sh \
+./.github/skills/site-reliability-engineer/scripts/extract-pod-logs.sh \
   -n prod -p payment-service-59bc96489-v4k8l --previous --since 30m -o ./extracted-logs
 ```
 Outputs:
@@ -123,14 +123,14 @@ Outputs:
 ### B. Remote Linux Host Extractor (`extract-remote-linux-logs.sh`)
 ```bash
 # Query remote systemd service and inspect kernel OOM events over SSH
-./.github/skills/remote-pod-log-analyzer/scripts/extract-remote-linux-logs.sh \
+./.github/skills/site-reliability-engineer/scripts/extract-remote-linux-logs.sh \
   -h 10.0.4.15 -u ubuntu -J ops@bastion.corp.net -s kubelet --since "1h" -o ./extracted-logs
 ```
 
 ### C. Cross-Platform PowerShell Extractor (`extract-remote-logs.ps1`)
 ```powershell
 # Native PowerShell extraction for Windows / cross-platform environments
-pwsh ./.github/skills/remote-pod-log-analyzer/scripts/extract-remote-logs.ps1 `
+pwsh ./.github/skills/site-reliability-engineer/scripts/extract-remote-logs.ps1 `
   -TargetType Pod -Namespace prod -LabelSelector 'app=order-api' -ExtractPrevious -Since "1h"
 ```
 
@@ -138,11 +138,11 @@ pwsh ./.github/skills/remote-pod-log-analyzer/scripts/extract-remote-logs.ps1 `
 
 ## 6. References & Cross-Skill Links
 
-- [SSH Execution & Bastions](file:///.github/skills/remote-pod-log-analyzer/ssh-and-connectivity/ssh-execution-and-bastions.md)
-- [Pod Log Extraction](file:///.github/skills/remote-pod-log-analyzer/kubernetes-and-containers/pod-log-extraction.md)
-- [Grep & Compressed Logs](file:///.github/skills/remote-pod-log-analyzer/log-processing-toolkit/grep-ripgrep-and-compressed.md)
-- [Awk Stream Parsing](file:///.github/skills/remote-pod-log-analyzer/log-processing-toolkit/awk-and-stream-parsing.md)
-- [JSON & JQ Parsing](file:///.github/skills/remote-pod-log-analyzer/log-processing-toolkit/json-and-jq-parsing.md)
-- [Systemd & Kernel Dmesg](file:///.github/skills/remote-pod-log-analyzer/log-processing-toolkit/systemd-and-journalctl.md)
-- [Incident Triage Runbook](file:///.github/skills/remote-pod-log-analyzer/analytical-recipes/incident-triage-and-root-cause.md)
-- [Troubleshoot and Fix](file:///.github/skills/troubleshoot-and-fix/SKILL.md) — Isolated testbed reproduction and remediation.
+- [SSH Execution & Bastions](file:///.github/skills/site-reliability-engineer/ssh-and-connectivity/ssh-execution-and-bastions.md)
+- [Pod Log Extraction](file:///.github/skills/site-reliability-engineer/kubernetes-and-containers/pod-log-extraction.md)
+- [Grep & Compressed Logs](file:///.github/skills/site-reliability-engineer/log-processing-toolkit/grep-ripgrep-and-compressed.md)
+- [Awk Stream Parsing](file:///.github/skills/site-reliability-engineer/log-processing-toolkit/awk-and-stream-parsing.md)
+- [JSON & JQ Parsing](file:///.github/skills/site-reliability-engineer/log-processing-toolkit/json-and-jq-parsing.md)
+- [Systemd & Kernel Dmesg](file:///.github/skills/site-reliability-engineer/log-processing-toolkit/systemd-and-journalctl.md)
+- [Incident Triage Runbook](file:///.github/skills/site-reliability-engineer/analytical-recipes/incident-triage-and-root-cause.md)
+- [Troubleshoot and Fix](file:///.github/skills/troubleshoot-and-fix/SKILL.md) â€” Isolated testbed reproduction and remediation.

@@ -59,7 +59,7 @@ STAGE_SKILLS_MAP = {
     },
     "develop": {
         "primary_skill": "python-developer / typescript-developer / react-developer / java-developer / csharp-developer / python-api-writer / powershell-writer",
-        "supporting_skills": ["bdd-gherkin-tester", "playwright-tester", "rag-pipeline", "detect-overengineering", "load-memory", "save-memory", "troubleshoot-and-fix", "remote-pod-log-analyzer", "legacy-code-modernization", "test-data-creator", "sql-connector", "nodejs-executor", "skill-creator", "skill-doctor", "sync-github-forks"],
+        "supporting_skills": ["bdd-gherkin-tester", "playwright-tester", "rag-pipeline", "detect-overengineering", "load-memory", "save-memory", "troubleshoot-and-fix", "site-reliability-engineer", "legacy-code-modernization", "test-data-creator", "sql-connector", "nodejs-executor", "skill-creator", "skill-doctor", "sync-github-forks"],
         "subagent_role": "Core Implementation & Test Engineer",
         "description": "Production code authoring, synthetic testbed seeding, automated unit/integration tests, legacy code modernization, and embedded over-engineering checks in the loop.",
         "memory_load": "load_memory(category='ledger') for plan contracts; load_memory(category='sidecar') for active WIP; search_memory for domain traps.",

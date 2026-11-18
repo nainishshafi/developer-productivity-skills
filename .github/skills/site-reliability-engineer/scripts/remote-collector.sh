@@ -12,9 +12,7 @@ SYSTEMD_UNIT="${3:-}"
 WORKDIR="/tmp"
 TIMESTAMP=$(date -u +"%Y%m%d_%H%M%SZ")
 BUNDLE_NAME="log-bundle-${TIMESTAMP}"
-TARGET_DIR="${WORKDIR}/${BUNDLE_NAME}"
-
-mkdir -p "$TARGET_DIR"
+TARGET_DIR=$(mktemp -d "${WORKDIR}/log-bundle.XXXXXX")
 
 echo "=== Remote Diagnostic Collection Started in $TARGET_DIR ==="
 echo "Timestamp (UTC) : $TIMESTAMP"
@@ -23,8 +21,9 @@ echo "Time Window     : Since $SINCE"
 # 1. Systemd journal extraction if systemd is available
 if command -v journalctl >/dev/null 2>&1; then
     if [[ -n "$SYSTEMD_UNIT" ]]; then
+        SAFE_UNIT="${SYSTEMD_UNIT//[^a-zA-Z0-9_.-]/_}"
         echo "[*] Collecting systemd unit: $SYSTEMD_UNIT..."
-        journalctl -u "$SYSTEMD_UNIT" --since "$SINCE" -p err..emerg --no-pager > "${TARGET_DIR}/journal_${SYSTEMD_UNIT}.log" 2>&1 || true
+        journalctl -u "$SYSTEMD_UNIT" --since "$SINCE" -p err..emerg --no-pager > "${TARGET_DIR}/journal_${SAFE_UNIT}.log" 2>&1 || true
     else
         echo "[*] Collecting systemd priority errors across all units..."
         journalctl --since "$SINCE" -p err..emerg --no-pager > "${TARGET_DIR}/journal_system_errors.log" 2>&1 || true
@@ -63,10 +62,18 @@ if [ -d "/var/log/pods" ]; then
     done
 fi
 
-# 5. Scrub sensitive tokens (Bearer tokens, passwords) across all extracted logs
+# 5. Scrub sensitive tokens (Bearer, API keys, AWS/GitHub tokens, URL creds, passwords) across extracted logs
 echo "[*] Scrubbing sensitive tokens and secrets from extracted files..."
 find "$TARGET_DIR" -type f -name "*.log" | while read -r f; do
-    sed -i -E 's/Bearer [a-zA-Z0-9._-]+/Bearer [REDACTED]/g; s/(password|secret|token)=[^ &]+/\1=[REDACTED]/g; s/[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}/[CARD_REDACTED]/g' "$f"
+    sed -E \
+        -e 's/Bearer [a-zA-Z0-9._-]+/Bearer [REDACTED]/g' \
+        -e 's/(password|passwd|secret|token|api_key)=[^ &]+/\1=[REDACTED]/Ig' \
+        -e 's/(AKIA|ASIA)[0-9A-Z]{16}/[REDACTED_AWS_KEY]/g' \
+        -e 's/(gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{22,})/[REDACTED_GH_TOKEN]/g' \
+        -e 's/sk-[A-Za-z0-9_-]{20,}/[REDACTED_API_KEY]/g' \
+        -e 's#(https?://)[^:/@"'\''[:space:]]+:[^/@"'\''[:space:]]+@#\1[REDACTED_CREDS]@#g' \
+        -e 's/[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}/[CARD_REDACTED]/g' \
+        "$f" > "${f}.tmp" && mv "${f}.tmp" "$f" || rm -f "${f}.tmp"
 done
 
 # 6. Generate summary report
@@ -93,7 +100,7 @@ SUMMARY_FILE="${TARGET_DIR}/summary.txt"
 # 7. Package everything into tar.gz
 ARCHIVE="${WORKDIR}/${BUNDLE_NAME}.tar.gz"
 echo "[*] Packaging bundle into $ARCHIVE..."
-tar -czf "$ARCHIVE" -C "$WORKDIR" "$BUNDLE_NAME"
+tar -czf "$ARCHIVE" -C "$TARGET_DIR" .
 
 # Clean up raw uncompressed target dir
 rm -rf "$TARGET_DIR"

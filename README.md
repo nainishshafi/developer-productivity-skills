@@ -50,7 +50,7 @@ These skills provide ready-made workflows for modern software engineering across
 | [`playwright-tester`](#playwright-tester) | **Testing & Quality** | End-to-End browser test automation with Microsoft Playwright | `"write playwright tests"` |
 | [`bdd-gherkin-tester`](#bdd-gherkin-tester) | **Testing & Quality** | BDD Gherkin & BDD runner integration (`playwright-bdd`, `pytest-bdd`, Cucumber, Reqnroll) | `"write gherkin feature"` |
 | [`test-data-creator`](#test-data-creator) | **Testing & Quality** | Schema-aware SQL batching, JSON mocks & high-volume load test data (Pareto 80/20) | `"generate test data"` |
-| [`remote-pod-log-analyzer`](#remote-pod-log-analyzer) | **Diagnostics** | Remote Linux & Kubernetes pod log analysis via SSH, kubectl, grep, awk, jq | `"analyze remote logs"` |
+| [`site-reliability-engineer`](#site-reliability-engineer) | **Diagnostics & SRE** | Linux, Windows, Azure & K8s SRE triage, SLOs, SSH & log analysis (`kubectl`, `awk`, `jq`) | `"troubleshoot production incident"` |
 | [`troubleshoot-and-fix`](#troubleshoot-and-fix) | **Diagnostics** | Isolated reproduction testbeds, 3-attempt circuit breaker & anti-fix-bloat | `"troubleshoot and fix"` |
 | [`researcher-poc-tester`](#researcher-poc-tester) | **Research & Benchmarking** | Isolated side-by-side PoCs, JIT warmup & percentile stats (VThreads, Polars, DB throughput) | `"test this concept"` |
 | [`legacy-code-modernization`](#legacy-code-modernization) | **Modernization** | 4-phase safe modernization (Extract $\to$ Pin $\to$ TDD $\to$ Strangler) | `"modernize legacy code"` |
@@ -219,10 +219,10 @@ Built-in evaluation capability for evaluating and comparing LLM responses direct
 
 ## 🛠️ 4. Diagnostics, Debugging & Modernization
 
-### `remote-pod-log-analyzer`
-Operational framework for searching, streaming, and statistically analyzing remote Linux and Kubernetes pod logs over SSH and kubectl without downloading giant log files locally.
-- **Core Topics:** Non-interactive SSH execution (`-o BatchMode=yes`, `-o ConnectTimeout=5`), Bastion / Jump host hopping (`-J`), remote heredoc execution, Kubernetes pod log extraction (`kubectl logs -l app=foo`, multi-container `-c`, `--previous` for crashed pods, time-windowed `--since`), container crash exit code diagnosis (`137 OOMKilled`, `143 Terminated`, `127 Command Not Found`), node-level log inspection (`/var/log/pods/`, `crictl logs`), high-performance searching across raw and rotated gzipped archives (`grep`, `zgrep`, `ripgrep -z`), stream statistical parsing with `awk` (HTTP status distributions, P50/P95/P99 latency calculations, multiline stack trace grouping), structured JSON log analysis with `jq` (`select(.level == "error")`, distributed trace ID isolation), systemd journal filtering (`journalctl -u unit -p err`), kernel ring buffer inspection (`dmesg -T` for OOM-killer events), and production incident triage runbooks.
-- **Trigger phrases:** `"analyze remote logs"`, `"remote linux log analysis"`, `"remote pod log analysis"`, `"remote-linux-pod-log-analysis"`, `"kubectl logs triage"`, `"ssh log grep"`, `"debug pod crash"`, `"journalctl error analysis"`, `"parse nginx access logs"`, `"zgrep logs"`.
+### `site-reliability-engineer`
+Modular Site Reliability Engineering (SRE) and remote log-analysis framework covering **Linux**, **Windows Server**, **Microsoft Azure**, **Kubernetes**, **SSH/bastions**, and **log parsing**.
+- **Core Topics:** SLIs/SLOs, error budgets, multi-window burn-rate alerting, SEV1–SEV4 ICS, blameless postmortems, Linux USE diagnostics (`systemd`/`journalctl`, OOM, `lsof +L1`, `ss`/`conntrack`), Windows Server (`Get-WinEvent`, PerfMon, `procdump`, IIS/HTTPERR, WinRM), Azure Monitor KQL & resilience (SNAT exhaustion, AKS, SQL/Cosmos throttling, `az ssh`), Kubernetes (`OOMKilled` Exit 137, `CrashLoopBackOff`, PDB/HPA, PromQL, OpenTelemetry), non-interactive SSH/bastion hopping (`-J`), and streaming log parsing (`grep`, `zgrep`, `ripgrep -z`, `awk` P95/P99 & multiline stack traces, `jq`, IIS/EVTX) with bundled extraction scripts (`extract-pod-logs.sh`, `extract-remote-linux-logs.sh`, `extract-remote-logs.ps1`, `remote-collector.sh`).
+- **Trigger phrases:** `"troubleshoot production incident"`, `"sre triage"`, `"debug linux server"`, `"debug windows server"`, `"troubleshoot azure"`, `"define slo and error budget"`, `"analyze k8s outage"`, `"analyze remote logs"`, `"kubectl logs triage"`, `"ssh log grep"`, `"debug pod crash"`, `"journalctl error analysis"`, `"parse nginx access logs"`.
 
 ### `troubleshoot-and-fix`
 Universal diagnostic and repair framework for runtime crashes, exceptions, and logic errors. Enforces a strict 3-iteration circuit breaker to prevent infinite token-burning trial-and-error loops, escalating a structured out-of-options diagnostic summary when hypotheses fail. Extracts problematic logic and test fixtures into an isolated sandbox harness (`scripts/isolate-runner.js`, `scripts/isolate-runner.py`) to systematically reproduce and verify fixes before porting them back to source code, enforcing in-the-loop over-engineering checks to prevent fix bloat.
@@ -326,7 +326,7 @@ End-to-end autonomous Software Factory Conductor binding all **repository skills
 - **Closed-Loop Pipeline:** `Bootstrap` $\to$ `Plan, BDD Specs & Empirical PoC` $\to$ *(per-slice inner loop: `Develop & Testbed Seed` $\to$ `Code Review & Lint` $\to$ `Complexity & Query Plans` $\to$ `Architecture Simplification` $\to$ `Hallucination & BDD Verification Gate`)* $\to$ `Security & SQL Firewall` $\to$ `Self-Healing Remediation & Finalize` $\to$ `Periodic Skill Doctor`.
 - **Multi-Feature BDD Slicing:** Registers ordered `.feature` files or `@tag` phases in Stage 1 (`orchestrator-context-manager.py slices --add ...`) and iterates Stages 2–6 slice-by-slice before running the final full BDD regression and advancing to Stage 7.
 - **In-The-Loop Quality & Anti-Bloat:** Enforces `check-overengineering` (`score < 40`) across implementation, PR review, architecture gates (triggering an automated simplification loop when `>= 40`), and bug patches.
-- **Persistent State & Diagnostics:** Coordinates `project-memory` (`ledger`, `sidecar`, `journal` + final `clear_sidecar`), `sql-connector` (`:memory:` fixtures, `explain_query`, `audit_query_safety`), `nodejs-executor` (`benchmark-harness.mjs`), and `troubleshoot-and-fix` + `remote-pod-log-analyzer` with a strict 3-iteration circuit breaker.
+- **Persistent State & Diagnostics:** Coordinates `project-memory` (`ledger`, `sidecar`, `journal` + final `clear_sidecar`), `sql-connector` (`:memory:` fixtures, `explain_query`, `audit_query_safety`), `nodejs-executor` (`benchmark-harness.mjs`), and `troubleshoot-and-fix` + `site-reliability-engineer` with a strict 3-iteration circuit breaker.
 - **Periodic Skill Evolution (Phase 9):** Automatically triggers `skill-doctor` after delivery when unprocessed learnings reach `>= 3` or Phase 8 remediation ran, promoting lessons into skills and marking them via `mark_learning_promoted`.
 - **Trigger phrases:** `"run software factory"`, `"software-factory-agent"`, `"build feature end to end"`, `"autonomous sdlc loop"`, `"end-to-end software factory"`.
 
@@ -415,7 +415,7 @@ developer-productivity-skills/
 │       ├── python-linter/            # Automated Ruff & Mypy quality runner
 │       ├── rag-pipeline/             # End-to-end RAG architecture, hybrid search & IR evaluation pack
 │       ├── react-developer/          # React 18/19, RSC, Zustand, Query pack
-│       ├── remote-pod-log-analyzer/  # Remote Linux & Kubernetes pod log analysis pack
+│       ├── site-reliability-engineer/ # Linux, Windows, Azure, K8s SRE, SSH & log analysis pack
 │       ├── researcher-poc-tester/    # Empirical PoC benchmarks, safe research & stats runner
 │       ├── save-memory/              # Structured memory persistence skill
 │       ├── scan-halucinated-tests/   # AST-based test hallucination scanner

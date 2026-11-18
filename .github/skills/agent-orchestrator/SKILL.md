@@ -362,7 +362,7 @@ If any quality gate fails (`FAILED` or `BLOCKED`):
 1. **Save Failure State to `sidecar`**: Save the failing stage diagnostics, file paths, and failure messages into `sidecar` so the remediation agent picks up immediate context.
 2. **Search for Past Fixes**: Call `search_memory("<error or exception name>")` to check if a similar bug was previously encountered and resolved.
 3. **Isolate with `troubleshoot-and-fix`**:
-   - Activate **`troubleshoot-and-fix`**. For remote cluster or container integration failures, activate **`remote-pod-log-analyzer`**.
+   - Activate **`troubleshoot-and-fix`**. For remote cluster, cloud, host, or container integration failures, activate **`site-reliability-engineer`**.
    - Generate an isolated reproduction harness (`scripts/isolate-runner.js` or `scripts/isolate-runner.py`) to systematically reproduce the defect outside monolithic project dependencies.
    - Verify the fix inside the reproduction sandbox.
 4. **In-The-Loop Anti-Fix-Bloat Check**:
@@ -399,5 +399,5 @@ If any quality gate fails (`FAILED` or `BLOCKED`):
 - [SQL Connector MCP Server](file:///.github/skills/sql-connector/SKILL.md) — Multi-database query and schema inspection with zero-tolerance SQL guardrails.
 - [Scan Hallucinated Tests](file:///.github/skills/scan-halucinated-tests/SKILL.md) — Ground-truth AST symbol verification for unit tests and mocks.
 - [Memory Analyzer](file:///.github/skills/memory-analyzer/SKILL.md) — Language-independent OOM, stack overflow, unbounded growth, and memory leak analysis.
-- [Remote Pod Log Analyzer](file:///.github/skills/remote-pod-log-analyzer/SKILL.md) — Remote Linux and Kubernetes pod log analysis via SSH, kubectl, and streaming toolkit.
+- [Site Reliability Engineer](file:///.github/skills/site-reliability-engineer/SKILL.md) — SRE triage across Linux, Windows, Azure, Kubernetes, SSH, and streaming log analysis (`kubectl`, `journalctl`, `grep`, `awk`, `jq`).
 - [Troubleshoot and Fix](file:///.github/skills/troubleshoot-and-fix/SKILL.md) — Isolated testbed reproduction and 3-iteration circuit breaker remediation.

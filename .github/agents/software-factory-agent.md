@@ -58,7 +58,7 @@ flowchart TD
     S6 -->|Fail| R
     S7 -->|Fail| R
 
-    R["Phase 8: Self-Healing Remediation<br/>(troubleshoot-and-fix + remote-pod-log-analyzer + check-overengineering)"] -->|"Iteration <= 3 & Verified"| S3
+    R["Phase 8: Self-Healing Remediation<br/>(troubleshoot-and-fix + site-reliability-engineer + check-overengineering)"] -->|"Iteration <= 3 & Verified"| S3
     R -->|"> 3 Attempts"| CB["Circuit Breaker Halt:<br/>Revert & Surface Out-of-Options Report"]
 
     F["Finalize & Deliver<br/>(orchestrator report, save journal, clear_sidecar)"] -->|"Periodic Trigger:<br/>pending >= 3 or Phase 8 ran"| SD["Phase 9: Periodic Skill Doctor<br/>(skill-doctor, skill-creator, mark_learning_promoted)"]
@@ -192,7 +192,7 @@ flowchart TD
 1. **On Any Stage Failure (`FAILED` or `BLOCKED`)**:
    - Record active failure state to `sidecar` (`save_memory(category="sidecar", ...)`).
    - Search historical fixes: `search_memory("<exception or error pattern>")`.
-   - Activate `troubleshoot-and-fix` (and `remote-pod-log-analyzer` for remote Linux/Kubernetes container crashes or OOMKilled events).
+   - Activate `troubleshoot-and-fix` (and `site-reliability-engineer` for remote Linux/Windows/Azure/Kubernetes container crashes, logs, or OOMKilled events).
    - Generate minimal standalone reproduction testbed in `scratch/repro/` (`isolate-runner.py` or `isolate-runner.js`), reproduce reliably, validate fix, run `check-overengineering` on the patch (anti-fix-bloat), and port minimal diff back.
    - **Strict 3-Iteration Circuit Breaker**: If unresolved after 3 attempts, halt immediately, revert speculative changes, and present an **Out of Options Summary** (hypotheses tested, exact `isolate-runner` command, 2-3 decision options).
    - Re-run impacted quality gates from Stage 3 onward until all 7 stages report `PASSED`.
@@ -265,7 +265,7 @@ Run `skill-doctor` automatically at the conclusion of a Software Factory deliver
 | `bdd-gherkin-tester` | Skill | Stage 1 (`plan`), Stage 2 (`develop`), Stage 6 | BDD-first Gherkin `.feature` specs, step definitions & Playwright BDD adapter integration |
 | `github-security-scanner-hook` | Skill | Stage 7 (`securitychecks`) | Secret detection (`detect-secrets`) and 24 Semgrep OWASP rules (`security.yml`) |
 | `troubleshoot-and-fix` | Skill | Phase 8 (`remediation`) | Isolated `scratch/repro/` testbeds, 3-iteration circuit breaker, anti-fix-bloat |
-| `remote-pod-log-analyzer` | Skill | Phase 8 (`remediation`) | Non-interactive SSH / `kubectl logs` triage, OOM/exit-code & `jq`/`awk` stats |
+| `site-reliability-engineer` | Skill | Phase 8 (`remediation`) | Linux/Windows/Azure/K8s SRE triage, non-interactive SSH / `kubectl logs`, OOM/exit-code & `jq`/`awk` stats |
 | `scan-repo-readme` | Skill | Phase 0 (`bootstrap`) | Dual-phase keyword & semantic README scanning (`--root-only`) |
 | `save-memory` | Skill | All Stages (`ledger`/`sidecar`/`journal`) | Structured persistence to `project-memory` MCP |
 | `load-memory` | Skill | Phase 0, Stages 1-7, Phase 8 | Hybrid retrieval (`0.40` semantic + `0.60` lexical) & `clear_sidecar` |
