@@ -1,7 +1,7 @@
 ---
 name: git-committer
 description: Creates conventional Git commits and handles pre-commit outcomes. Use when asked to git commit, commit changes, or update the git-committer skill.
-version: 1.2.2
+version: 1.2.3
 ---
 
 # Git Committer
@@ -15,6 +15,11 @@ version: 1.2.2
 5. **Keep Hooks Enabled**: Do not bypass hooks or signing to get past a failure or timeout.
 
 ## Workflow
+
+### 0. Check for a Recycle Bin report
+If the agent's shell tool has reported `<recycle_bin>` entries under this repository's `.git` directory, do not use that tool to stage files, commit, or install hooks in this repository. Do not retry through another agent tool. Use read-only checks (`git --no-optional-locks status --short`, `git diff`, and `git log -1`) and inspect the active hook without installing it. If the intended commit already exists, report it and stop. Otherwise, provide the exact paths to stage and the commit command for the user to run in their own terminal with hooks and signing enabled. Flag a missing or unverified hook before handing off the commit.
+
+If the report first appears during a Git operation, stop further writes and follow the same read-only checks. Do not infer corruption or commit failure from the report alone, and do not delete or restore Git metadata.
 
 ### 1. Check Staged Files
 Review status, staged and unstaged diffs, and recent commit messages. Stage only the intended paths, verify the staged diff, and leave unrelated edits and generated files alone.
