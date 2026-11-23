@@ -29,9 +29,7 @@ When dealing with complex legacy algorithms with dozens of hidden branching path
 
 ### TypeScript / Vitest / Jest (Snapshot Pinning)
 ```typescript
-import { describe, it, expect } from 'vitest';
-import { legacyTaxCalculator } from './legacy-tax-calculator';
-
+// Excerpt: routine imports omitted.
 describe('LegacyTaxCalculator (Characterization)', () => {
   const testInputs = [
     { country: 'US', state: 'CA', amount: 100, isExempt: false },
@@ -54,9 +52,7 @@ describe('LegacyTaxCalculator (Characterization)', () => {
 
 ### Python (Approval / Golden Master with pytest)
 ```python
-import pytest
-from legacy_engine import calculate_discount
-
+# Excerpt: routine imports omitted.
 INPUT_MATRIX = [
     (0, "STANDARD", False),
     (100, "VIP", False),

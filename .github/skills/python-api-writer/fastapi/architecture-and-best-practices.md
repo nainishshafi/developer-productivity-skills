@@ -9,10 +9,7 @@ FastAPI is an asynchronous, high-performance web framework based on Starlette an
 FastAPI deprecated `@app.on_event("startup")` and `@app.on_event("shutdown")`. Always use the **Lifespan Context Manager** pattern with `contextlib.asynccontextmanager`:
 
 ```python
-from contextlib import asynccontextmanager
-from fastapi import FastAPI
-import logging
-
+# Excerpt: routine imports omitted.
 logger = logging.getLogger(__name__)
 
 @asynccontextmanager
@@ -75,12 +72,7 @@ src/
 
 ```python
 # src/modules/orders/router.py
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from src.core.database import get_db_session
-from src.modules.orders.schemas import OrderCreate, OrderResponse
-from src.modules.orders import service
-
+# Excerpt: routine imports omitted.
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
 @router.post(
@@ -105,11 +97,9 @@ Dependency Injection in FastAPI ensures database connections are automatically o
 
 ```python
 # src/core/database.py
-from collections.abc import AsyncGenerator
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-
+# Excerpt: routine imports omitted.
 engine = create_async_engine(
-    "postgresql+asyncpg://user:pass@localhost:5432/orders_db",
+    os.environ["DATABASE_URL"],
     pool_size=20,
     max_overflow=10,
     pool_pre_ping=True
@@ -134,8 +124,7 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
 FastAPI includes a built-in `BackgroundTasks` parameter, but its scope is often misunderstood:
 
 ```python
-from fastapi import BackgroundTasks
-
+# Excerpt: routine imports omitted.
 @router.post("/send-receipt")
 async def send_receipt(order_id: str, bg_tasks: BackgroundTasks):
     # OK for: Lightweight, non-critical in-process tasks (e.g. logging metrics, fire-and-forget emails)
@@ -153,9 +142,7 @@ async def send_receipt(order_id: str, bg_tasks: BackgroundTasks):
 FastAPI makes streaming token-by-token output straightforward:
 
 ```python
-from fastapi.responses import StreamingResponse
-from collections.abc import AsyncGenerator
-
+# Excerpt: routine imports omitted.
 async def token_generator(prompt: str) -> AsyncGenerator[str, None]:
     async for chunk in llm_client.stream(prompt):
         yield f"data: {chunk.content}\n\n"
@@ -180,4 +167,3 @@ async def stream_completion(prompt: str):
 - **Async Event Loop Hygiene**: [event-loop-hygiene.md](../async-and-concurrency/event-loop-hygiene.md)
 - **SQLAlchemy 2.0, Migrations & Pooling**: [orms-and-migrations.md](../persistence/orms-and-migrations.md)
 - **Automated API Testing (`httpx.AsyncClient` & `dependency_overrides`)**: [api-testing-patterns.md](../testing/api-testing-patterns.md)
-

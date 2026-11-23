@@ -25,10 +25,7 @@ When dynamic access is required, use `java.lang.invoke.MethodHandle` and `java.l
 When declared as `static final`, a `MethodHandle` is treated by the HotSpot JIT compiler as a direct bytecode invocation (`invokevirtual` / `invokestatic`), allowing complete method inlining and zero boxing overhead.
 
 ```java
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-
+// Excerpt: routine imports omitted.
 public class FastInvoker {
     // CRITICAL: Must be static final for the JIT to fold the handle into direct machine instructions
     private static final MethodHandle GET_NAME_HANDLE;
@@ -52,9 +49,7 @@ public class FastInvoker {
 ### `VarHandle` for Atomic Field Access (Java 9+)
 `VarHandle` completely supersedes `sun.misc.Unsafe` and `AtomicReferenceFieldUpdater`:
 ```java
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
-
+// Excerpt: routine imports omitted.
 public class AtomicOrderState {
     private volatile int status;
     private static final VarHandle STATUS_HANDLE;
@@ -130,9 +125,7 @@ Spring Boot 3 natively supports GraalVM AOT compilation by generating bytecode h
 #### Registering Runtime Hints (`RuntimeHintsRegistrar`)
 When using reflection or dynamic resources that Spring cannot discover automatically, register explicit hints:
 ```java
-import org.springframework.aot.hint.RuntimeHints;
-import org.springframework.aot.hint.RuntimeHintsRegistrar;
-
+// Excerpt: routine imports omitted.
 public class CustomServiceHints implements RuntimeHintsRegistrar {
     @Override
     public void registerHints(RuntimeHints hints, ClassLoader classLoader) {

@@ -38,9 +38,7 @@ Standard JDBC drivers (PostgreSQL, MySQL, Oracle) default to **fetching the enti
 `RowCallbackHandler` processes rows one at a time as they arrive over the wire, never materializing a full list in memory:
 
 ```java
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Service;
-
+// Excerpt: routine imports omitted.
 @Service
 public class OrderExportService {
     private final JdbcTemplate jdbcTemplate;
@@ -76,9 +74,7 @@ public class OrderExportService {
 ### Streaming with `JdbcClient` (Spring 6 / Boot 3+) & Java 8 `Stream`
 When using `JdbcClient.query().stream()`, always wrap the stream in a `try-with-resources` block to ensure the underlying database connection and cursor close cleanly:
 ```java
-import org.springframework.jdbc.core.simple.JdbcClient;
-import java.util.stream.Stream;
-
+// Excerpt: routine imports omitted.
 public void processStream(JdbcClient jdbcClient) {
     String sql = "SELECT id, sku, price FROM products";
 
@@ -122,29 +118,7 @@ Choose the processing model for each step, not for the entire job:
 This configuration assumes Boot provides a JDBC `JobRepository` and a transaction manager for the same PostgreSQL data source used by the writer. Create the Spring Batch metadata tables and an `orders` table with `id BIGINT PRIMARY KEY` and `payload TEXT NOT NULL`. Launch with an identifying `input` job parameter containing a trusted local file path. The UTF-8 CSV starts with an `id,payload` header followed by rows such as `42,ready`.
 
 ```java
-import java.nio.file.Files;
-import java.nio.file.Path;
-import javax.sql.DataSource;
-
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.StepScope;
-import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.core.step.builder.StepBuilder;
-import org.springframework.batch.item.database.JdbcBatchItemWriter;
-import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
-import org.springframework.batch.item.file.FlatFileItemReader;
-import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
-import org.springframework.batch.repeat.RepeatStatus;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.dao.CannotAcquireLockException;
-import org.springframework.transaction.PlatformTransactionManager;
-
+// Excerpt: routine imports omitted.
 @Configuration(proxyBeanMethods = false)
 public class OrderBatchJobConfig {
     record Order(long id, String payload) {}

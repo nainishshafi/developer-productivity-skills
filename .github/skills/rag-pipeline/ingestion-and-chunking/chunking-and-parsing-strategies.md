@@ -63,10 +63,7 @@ A chunk reading *"Latency increased by 40% after the v2.4 migration"* fails retr
 Re-embedding an entire corpus on every CI deploy wastes compute and causes transient search outages if chunks are deleted before replacements land.
 
 ```python
-import hashlib
-from dataclasses import dataclass
-
-
+# Excerpt: routine imports omitted.
 @dataclass(frozen=True, slots=True)
 class ChunkRecord:
     chunk_id: str

@@ -19,8 +19,7 @@ For large applications, divide state into distinct slices and merge them into a 
 
 ```typescript
 // features/auth/authSlice.ts
-import { StateCreator } from 'zustand';
-
+// Excerpt: routine imports omitted.
 export interface AuthSlice {
   user: { id: string; name: string; role: string } | null;
   token: string | null;
@@ -70,8 +69,6 @@ export const createCartSlice: StateCreator<AuthSlice & CartSlice, [], [], CartSl
 });
 
 // shared/stores/useAppStore.ts
-import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
 
 export type AppStore = AuthSlice & CartSlice;
 
@@ -107,8 +104,7 @@ const items = useAppStore((state) => state.items);
 const user = useAppStore((state) => state.user);
 
 // ✅ BEST PRACTICE 2: useShallow for multiple properties (Zustand 4.5+)
-import { useShallow } from 'zustand/react/shallow';
-
+// Excerpt: routine imports omitted.
 const { items, addItem } = useAppStore(
   useShallow((state) => ({ items: state.items, addItem: state.addItem }))
 );
@@ -122,8 +118,7 @@ Zustand stores can be accessed and mutated directly inside non-React utilities, 
 
 ```typescript
 // lib/apiClient.ts
-import { useAppStore } from '@/shared/stores/useAppStore';
-
+// Excerpt: routine imports omitted.
 apiClient.interceptors.request.use((config) => {
   // Read state outside React
   const token = useAppStore.getState().token;

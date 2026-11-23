@@ -58,8 +58,7 @@ if computed_signature == received_signature:
     process_webhook(payload)
 
 # ✅ SECURE: Constant-time comparison takes identical time regardless of character matches
-import hmac
-
+# Excerpt: routine imports omitted.
 if hmac.compare_digest(computed_signature, received_signature):
     process_webhook(payload)
 ```

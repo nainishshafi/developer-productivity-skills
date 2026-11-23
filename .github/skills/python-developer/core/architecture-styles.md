@@ -20,10 +20,7 @@ Guidance on identifying, choosing, and implementing architectural patterns in mo
 ### A. The Domain & Port (Pure Python, Zero Framework Dependencies)
 ```python
 # domain/models.py
-from dataclasses import dataclass
-from datetime import datetime
-from uuid import UUID
-
+# Excerpt: routine imports omitted.
 @dataclass(slots=True, frozen=True)
 class Account:
     id: UUID
@@ -35,7 +32,6 @@ class Account:
         return self.balance_cents >= amount_cents
 
 # domain/ports.py
-from typing import Protocol
 
 class AccountRepositoryPort(Protocol):
     async def get_by_id(self, account_id: UUID) -> Account | None: ...
@@ -45,10 +41,7 @@ class AccountRepositoryPort(Protocol):
 ### B. The Application Service (Orchestration & Business Logic)
 ```python
 # application/transfer_service.py
-from uuid import UUID
-from domain.ports import AccountRepositoryPort
-from domain.exceptions import InsufficientFundsError, AccountNotFoundError
-
+# Excerpt: routine imports omitted.
 class TransferService:
     def __init__(self, repo: AccountRepositoryPort) -> None:
         self._repo = repo
@@ -72,11 +65,7 @@ class TransferService:
 ### C. The Infrastructure Adapter (SQLAlchemy / SQLModel)
 ```python
 # infrastructure/adapters/sql_account_repository.py
-from uuid import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
-from domain.models import Account
-from domain.ports import AccountRepositoryPort
-
+# Excerpt: routine imports omitted.
 class SqlAccountRepository(AccountRepositoryPort):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session

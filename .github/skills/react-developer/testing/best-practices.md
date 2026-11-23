@@ -43,10 +43,7 @@ Query the DOM the way a user or screen reader finds elements—never by brittle 
 Always prefer `userEvent.setup()` over raw `fireEvent`. `userEvent` simulates full browser event sequences (`pointerDown` $\to$ `focus` $\to$ `click`, keystrokes, tab order, disabled-button guards) rather than dispatching a single synthetic DOM event.
 
 ```tsx
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { LoginForm } from './LoginForm';
-
+// Excerpt: routine imports omitted.
 test('submits credentials and shows accessible validation errors', async () => {
   const user = userEvent.setup();
   const onSubmit = vi.fn();
@@ -64,7 +61,7 @@ test('submits credentials and shows accessible validation errors', async () => {
 
   expect(onSubmit).toHaveBeenCalledWith({
     email: 'alice@example.com',
-    password: 'correct-horse-battery',
+    password: 'correct-horse-battery', // pragma: allowlist secret -- dummy test input
   });
 });
 ```
@@ -79,9 +76,7 @@ test('submits credentials and shows accessible validation errors', async () => {
 Test simple hooks indirectly through the components that use them. Reach for `renderHook` when building shared library hooks that manage complex state transitions, context consumers (`wrapper`), prop changes (`rerender`), or unmount cleanup (`unmount`).
 
 ```tsx
-import { renderHook, act } from '@testing-library/react';
-import { useEffect, useState } from 'react';
-
+// Excerpt: routine imports omitted.
 function useEventListenerCount(target: EventTarget) {
   const [count, setCount] = useState(0);
   useEffect(() => {
@@ -117,9 +112,7 @@ Never stub `global.fetch` or mock Axios internals per test—doing so bypasses U
 
 ```typescript
 // tests/mocks/server.ts
-import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
-
+// Excerpt: routine imports omitted.
 export const handlers = [
   http.get('/api/users/:id', ({ params }) => {
     return HttpResponse.json({ id: params.id, name: 'Alice', role: 'admin' });
@@ -132,9 +125,7 @@ export const server = setupServer(...handlers);
 ```typescript
 // tests/setup.ts
 import '@testing-library/jest-dom/vitest';
-import { afterAll, afterEach, beforeAll } from 'vitest';
-import { server } from './mocks/server';
-
+// Excerpt: routine imports omitted.
 // Fail tests loudly on unexpected/unmocked network calls
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 afterEach(() => server.resetHandlers());
@@ -156,9 +147,7 @@ This is a TypeScript project-wiring problem, not a React Testing Library runtime
 
 ### Per-Test Error & Latency Overrides
 ```tsx
-import { http, HttpResponse, delay } from 'msw';
-import { server } from '../mocks/server';
-
+// Excerpt: routine imports omitted.
 test('displays retry banner when API returns 503', async () => {
   server.use(
     http.get('/api/users/:id', async () => {
@@ -179,10 +168,7 @@ test('displays retry banner when API returns 503', async () => {
 Using `vi.useFakeTimers()` with default `userEvent.setup()` causes tests to hang because `userEvent` schedules internal macrotasks. Always wire `advanceTimers` explicitly:
 
 ```tsx
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
-
+// Excerpt: routine imports omitted.
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
 

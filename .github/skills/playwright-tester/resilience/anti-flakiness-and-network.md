@@ -48,8 +48,7 @@ Logging in through the UI before every single test slows suites down by 10x. Use
 
 ```typescript
 // tests/setup/auth.setup.ts
-import { test as setup, expect } from '@playwright/test';
-
+// Excerpt: routine imports omitted.
 const authFile = 'playwright/.auth/user.json';
 
 setup('authenticate user once', async ({ page }) => {

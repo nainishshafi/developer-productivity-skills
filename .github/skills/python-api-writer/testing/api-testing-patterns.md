@@ -10,13 +10,7 @@ Use `httpx.AsyncClient` using an ASGI transport to test the application in-memor
 
 ```python
 # tests/conftest.py
-import pytest
-from collections.abc import AsyncGenerator
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from src.main import app
-from src.core.database import get_db_session, Base
-
+# Excerpt: routine imports omitted.
 # Use in-memory SQLite or isolated test database
 TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
 test_engine = create_async_engine(TEST_DB_URL)
@@ -50,9 +44,7 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 ### Writing the Test
 ```python
 # tests/test_orders.py
-import pytest
-from httpx import AsyncClient
-
+# Excerpt: routine imports omitted.
 @pytest.mark.asyncio
 async def test_create_order_success(client: AsyncClient):
     payload = {"item_ids": [1, 2], "coupon_code": "SUMMER10"}
@@ -78,11 +70,7 @@ In Django, `pytest-django` provides transactional test database fixtures with au
 
 ```python
 # tests/test_django_orders.py
-import pytest
-from rest_framework.test import APIClient
-from django.contrib.auth import get_user_model
-from orders.models import Product
-
+# Excerpt: routine imports omitted.
 User = get_user_model()
 
 @pytest.fixture

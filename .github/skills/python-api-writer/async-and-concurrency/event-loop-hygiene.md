@@ -30,10 +30,7 @@ flowchart TD
 3. **If inside an `async def` function and must execute blocking code**: Explicitly wrap the call using **`asyncio.to_thread()`**:
 
 ```python
-import asyncio
-import time
-import requests
-
+# Excerpt: routine imports omitted.
 # ❌ CATASTROPHIC: Freezes all requests on the server
 @app.get("/bad")
 async def bad_route():
@@ -56,7 +53,6 @@ async def safe_offload_route():
     return data.json()
 
 # ✅ BEST: Use native non-blocking async client
-import httpx
 
 @app.get("/best-async")
 async def best_async_route():
@@ -72,9 +68,7 @@ async def best_async_route():
 Since Django 4.1+, the Django ORM supports asynchronous database queries. However, Django views running on ASGI must use the explicit async ORM methods:
 
 ```python
-from django.http import JsonResponse
-from .models import Article
-
+# Excerpt: routine imports omitted.
 # Async view on ASGI (Uvicorn / Daphne)
 async def latest_articles(request):
     # Use 'a-' prefixed methods for async ORM access:

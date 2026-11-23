@@ -30,9 +30,7 @@ const fullName = useMemo(() => `${firstName} ${lastName}`, [firstName, lastName]
 Mounting thousands of DOM nodes in the browser consumes massive heap memory, slows down layout calculation, and causes scroll jitter. Use virtualization (`@tanstack/react-virtual` or `react-window`):
 
 ```tsx
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { useRef } from 'react';
-
+// Excerpt: routine imports omitted.
 export function VirtualizedList({ items }: { items: string[] }) {
   const parentRef = useRef<HTMLDivElement>(null);
 

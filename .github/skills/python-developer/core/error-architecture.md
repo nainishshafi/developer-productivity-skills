@@ -38,10 +38,7 @@ class InsufficientBalanceError(DomainError):
 Catch domain exceptions in API middleware or global exception handlers to translate them into clean HTTP status codes, keeping presentation logic separated from domain code:
 
 ```python
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from domain.exceptions import EntityNotFoundError, DomainError
-
+# Excerpt: routine imports omitted.
 app = FastAPI()
 
 @app.exception_handler(EntityNotFoundError)
@@ -66,9 +63,7 @@ async def domain_error_handler(request: Request, exc: DomainError) -> JSONRespon
 Always manage database transactions and external resources with context managers (`with` / `async with`):
 
 ```python
-from contextlib import asynccontextmanager
-from typing import AsyncIterator
-
+# Excerpt: routine imports omitted.
 class UnitOfWork:
     def __init__(self, session_factory) -> None:
         self._session_factory = session_factory

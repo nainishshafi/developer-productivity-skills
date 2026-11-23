@@ -16,15 +16,10 @@ Production Python APIs require strict defense-in-depth across authentication, au
 ## 2. FastAPI JWT Implementation Pattern
 
 ```python
-from datetime import datetime, timedelta, timezone
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-import jwt
-from pydantic import BaseModel
-
+# Excerpt: routine imports omitted.
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-SECRET_KEY = "your-production-secret-loaded-from-env"
+SECRET_KEY = os.environ["JWT_SECRET_KEY"]
 ALGORITHM = "HS256"
 
 class TokenPayload(BaseModel):
@@ -68,8 +63,7 @@ def require_role(required_role: str):
 A common vulnerability is setting `allow_origins=["*"]` combined with `allow_credentials=True`, which either throws browser security errors or opens cross-origin session theft.
 
 ```python
-from fastapi.middleware.cors import CORSMiddleware
-
+# Excerpt: routine imports omitted.
 # ✅ SAFE: Explicit allowed origins loaded from environment
 app.add_middleware(
     CORSMiddleware,
@@ -92,10 +86,7 @@ Protect endpoints against brute-force attacks and volumetric DoS:
 
 ### In FastAPI (via `slowapi`):
 ```python
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-
+# Excerpt: routine imports omitted.
 limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -114,9 +105,7 @@ Never access raw `os.environ.get()` strings throughout codebase modules:
 
 ```python
 # src/core/config.py
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import PostgresDsn, RedisDsn
-
+# Excerpt: routine imports omitted.
 class Settings(BaseSettings):
     ENVIRONMENT: str = "production"
     DEBUG: bool = False
@@ -133,4 +122,3 @@ class Settings(BaseSettings):
 
 settings = Settings()
 ```
-

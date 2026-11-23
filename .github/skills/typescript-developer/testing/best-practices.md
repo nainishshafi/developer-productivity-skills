@@ -18,9 +18,7 @@ Because application services depend on interface ports (Dependency Inversion), u
 
 ```typescript
 // tests/mocks/in-memory-user-repository.ts
-import { UserRepositoryPort } from '../../src/core/ports/user-repository.port';
-import { User } from '../../src/core/domain/user.entity';
-
+// Excerpt: routine imports omitted.
 export class InMemoryUserRepository implements UserRepositoryPort {
   private users = new Map<string, User>();
 
@@ -41,8 +39,7 @@ export class InMemoryUserRepository implements UserRepositoryPort {
 Never use `setTimeout` or `await new Promise(r => setTimeout(r, 1000))` in unit tests. Use fake timers:
 
 ```typescript
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-
+// Excerpt: routine imports omitted.
 describe('TokenExpiryService', () => {
   beforeEach(() => {
     vi.useFakeTimers();

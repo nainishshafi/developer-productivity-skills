@@ -10,15 +10,13 @@ Never deserialize untrusted user input using `pickle`, `shelve`, or `yaml.load()
 
 ```python
 # ❌ CRITICAL SECURITY VULNERABILITY: Arbitrary code execution
-import pickle
+# Excerpt: routine imports omitted.
 user_data = pickle.loads(untrusted_request_bytes)
 
 # ❌ VULNERABLE: Unsafe PyYAML loader
-import yaml
 config = yaml.load(untrusted_yaml_string)
 
 # ✅ SECURE: Always use yaml.safe_load or Pydantic JSON parsing
-import yaml
 config = yaml.safe_load(untrusted_yaml_string)
 ```
 
@@ -45,8 +43,7 @@ await db.execute(query, {"email": user_input})
 When reading or saving files uploaded by users, always sanitize file paths using `pathlib.Path.resolve()` to ensure paths cannot escape the target storage directory:
 
 ```python
-from pathlib import Path
-
+# Excerpt: routine imports omitted.
 BASE_STORAGE = Path("/var/app/uploads").resolve()
 
 def get_safe_file_path(filename: str) -> Path:

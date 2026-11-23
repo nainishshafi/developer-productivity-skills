@@ -32,8 +32,7 @@ export function canPromoteToAdmin(user: User): boolean {
 }
 
 // core/ports/user-repository.port.ts
-import { User } from '../domain/user.entity';
-
+// Excerpt: routine imports omitted.
 export interface UserRepositoryPort {
   findById(id: string): Promise<User | null>;
   save(user: User): Promise<void>;
@@ -43,9 +42,7 @@ export interface UserRepositoryPort {
 ### B. The Application Use Case (Coordinates Business Logic)
 ```typescript
 // application/promote-user.use-case.ts
-import { UserRepositoryPort } from '../core/ports/user-repository.port';
-import { canPromoteToAdmin, User } from '../core/domain/user.entity';
-
+// Excerpt: routine imports omitted.
 export class PromoteUserUseCase {
   constructor(private readonly userRepo: UserRepositoryPort) {}
 
@@ -69,10 +66,7 @@ export class PromoteUserUseCase {
 ### C. The Infrastructure Adapter (Prisma / Drizzle / TypeORM)
 ```typescript
 // infra/adapters/prisma-user-repository.ts
-import { PrismaClient } from '@prisma/client';
-import { UserRepositoryPort } from '../../core/ports/user-repository.port';
-import { User } from '../../core/domain/user.entity';
-
+// Excerpt: routine imports omitted.
 export class PrismaUserRepository implements UserRepositoryPort {
   constructor(private readonly prisma: PrismaClient) {}
 

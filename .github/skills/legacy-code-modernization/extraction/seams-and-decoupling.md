@@ -57,8 +57,7 @@ class NotificationService:
         self.client.mail.send(to=email, content=msg)
 
 # ✅ EXTRACTED SEAM: Introduce a Protocol/Interface Port
-from typing import Protocol
-
+# Excerpt: routine imports omitted.
 class EmailSenderPort(Protocol):
     def send(self, to: str, content: str) -> None: ...
 

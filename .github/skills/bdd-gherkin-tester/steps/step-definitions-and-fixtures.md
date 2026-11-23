@@ -10,10 +10,7 @@ Use `createBdd()` to obtain typed `Given`, `When`, and `Then` functions that rec
 
 ```typescript
 // tests/steps/checkout.steps.ts
-import { expect } from '@playwright/test';
-import { createBdd } from 'playwright-bdd';
-import { test } from '../fixtures/testFixtures';
-
+// Excerpt: routine imports omitted.
 const { Given, When, Then } = createBdd(test);
 
 // 1. Given step with {string} parameter
@@ -62,11 +59,7 @@ Never instantiate Page Objects manually inside step definitions. Inject them as 
 
 ```typescript
 // tests/fixtures/testFixtures.ts
-import { test as base } from 'playwright-bdd';
-import { LoginPage } from '../pages/LoginPage';
-import { CatalogPage } from '../pages/CatalogPage';
-import { CheckoutPage } from '../pages/CheckoutPage';
-
+// Excerpt: routine imports omitted.
 type CustomPages = {
   loginPage: LoginPage;
   catalogPage: CatalogPage;
@@ -92,9 +85,7 @@ export const test = base.extend<CustomPages>({
 
 ```python
 # tests/steps/checkout_steps.py
-from pytest_bdd import given, when, then, parsers
-from playwright.sync_api import Page, expect
-
+# Excerpt: routine imports omitted.
 @given(parsers.parse('the user "{email}" is signed in'))
 def user_signed_in(page: Page, email: str):
     page.goto("/login")
@@ -116,10 +107,7 @@ def verify_total(page: Page, expected_total: str):
 // src/test/java/com/example/bdd/steps/CheckoutSteps.java
 package com.example.bdd.steps;
 
-import com.microsoft.playwright.Page;
-import io.cucumber.java.en.Given;
-import io.cucumber.java.en.When;
-import io.cucumber.java.en.Then;
+// Excerpt: routine imports omitted.
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
 public class CheckoutSteps {
@@ -151,9 +139,7 @@ public class CheckoutSteps {
 
 ```csharp
 // Steps/CheckoutSteps.cs
-using System.Threading.Tasks;
-using Microsoft.Playwright;
-using Reqnroll;
+// Excerpt: routine imports omitted.
 using static Microsoft.Playwright.Assertions;
 
 namespace MyBddTests.Steps

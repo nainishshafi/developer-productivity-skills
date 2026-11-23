@@ -19,8 +19,7 @@ handlers = [lambda i=i: i for i in range(5)]
 print([h() for h in handlers])  # [0, 1, 2, 3, 4]
 
 # ✅ BEST PRACTICE 2: Use functools.partial
-from functools import partial
-
+# Excerpt: routine imports omitted.
 def identify(val: int) -> int:
     return val
 

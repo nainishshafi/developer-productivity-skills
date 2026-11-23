@@ -21,8 +21,7 @@ async def export_data():
     return {"status": "done"}
 
 # ✅ BEST PRACTICE: Offload sync blocking code to thread pool
-import asyncio
-
+# Excerpt: routine imports omitted.
 @app.get("/export")
 async def export_data():
     result = await asyncio.to_thread(heavy_synchronous_computation)
@@ -36,8 +35,7 @@ async def export_data():
 Avoid fire-and-forget `asyncio.create_task()` or unbounded `asyncio.gather()`. Use `asyncio.TaskGroup`, which guarantees that if one task fails, all sibling tasks are cancelled and cleaned up immediately:
 
 ```python
-import asyncio
-
+# Excerpt: routine imports omitted.
 async def fetch_customer_dashboard(customer_id: str):
     async with asyncio.TaskGroup() as tg:
         orders_task = tg.create_task(fetch_orders(customer_id))

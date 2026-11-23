@@ -29,8 +29,7 @@ NumPy stores data in **contiguous blocks of memory** with a fixed C data type (`
 3. **Broadcasting Operations**: Applying mathematical formulas across multidimensional arrays without Python `for` loops:
 
 ```python
-import numpy as np
-
+# Excerpt: routine imports omitted.
 # Vectorized Euclidean distance calculation on 1,000,000 3D points
 points = np.random.randn(1_000_000, 3)
 
@@ -56,8 +55,7 @@ Polars is designed from the ground up on the **Apache Arrow** columnar format an
 3. **No Index Complexity**: Unlike Pandas, Polars has no confusing row index (`MultiIndex`, `.loc` vs `.iloc`); columns are explicit Arrow arrays.
 
 ```python
-import polars as pl
-
+# Excerpt: routine imports omitted.
 # High-Performance Lazy ETL Pipeline
 def process_large_telemetry(file_path: str) -> pl.DataFrame:
     # 1. Scan lazily (does not load file into RAM immediately)
@@ -109,8 +107,7 @@ For general application code and business logic, selecting the correct standard 
 
 ### Queue (FIFO): Always `collections.deque` over `list`
 ```python
-from collections import deque
-
+# Excerpt: routine imports omitted.
 # ❌ ANTI-PATTERN: List as a queue (O(n) per pop!)
 queue = []
 queue.append(item)
@@ -149,8 +146,7 @@ for txn in transactions:
 ### Priority Queues & Top-$K$ with `heapq`
 To find the top 10 largest transactions from a stream of 10,000,000 items, never sort the entire list ($O(n \log n)$). Use a bounded min-heap of size $K$ ($O(n \log k)$):
 ```python
-import heapq
-
+# Excerpt: routine imports omitted.
 class TopKTracker:
     def __init__(self, k: int = 10) -> None:
         self.k = k

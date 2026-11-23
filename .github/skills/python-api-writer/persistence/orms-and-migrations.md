@@ -22,10 +22,7 @@ Modern Python APIs use either **SQLAlchemy 2.0** (standard for FastAPI and async
 In SQLAlchemy 2.0, the legacy 1.x `session.query(Model)` syntax is deprecated in favor of explicit `select()` statements:
 
 ```python
-from sqlalchemy import select, String, ForeignKey
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, selectinload, joinedload
-from sqlalchemy.ext.asyncio import AsyncSession
-
+# Excerpt: routine imports omitted.
 class Base(DeclarativeBase):
     pass
 
@@ -70,10 +67,9 @@ order = result.scalar_one_or_none()
 An incorrectly sized connection pool either exhausts database server connections or starves API worker threads.
 
 ```python
-from sqlalchemy.ext.asyncio import create_async_engine
-
+# Excerpt: routine imports omitted.
 engine = create_async_engine(
-    "postgresql+asyncpg://app_user:secret@db.internal:5432/production_db",
+    os.environ["DATABASE_URL"],
     pool_size=20,           # Steady-state open connections per worker process
     max_overflow=10,        # Burst connections allowed during spikes
     pool_timeout=30,        # Seconds to wait before raising TimeoutError
@@ -86,4 +82,3 @@ engine = create_async_engine(
 > **Total Database Connections Formula**:
 > $$\text{Max DB Connections} = \text{Gunicorn Workers} \times (\text{pool\_size} + \text{max\_overflow}) \times \text{Container Instances}$$
 > Ensure this total is strictly below the database server's `max_connections` (e.g., PostgreSQL default 100). Use **PgBouncer** when scaling beyond 4 API instances.
-

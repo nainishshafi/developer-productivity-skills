@@ -28,11 +28,7 @@ When running Django under ASGI (Uvicorn/Daphne) with `async def` views, synchron
 
 ```python
 # apps/common/middleware.py
-import time
-import uuid
-from asgiref.sync import iscoroutinefunction
-from django.utils.decorators import sync_and_async_middleware
-
+# Excerpt: routine imports omitted.
 @sync_and_async_middleware
 def RequestContextMiddleware(get_response):
     if iscoroutinefunction(get_response):
@@ -66,10 +62,7 @@ Keep service modules decoupled from HTTP by raising pure domain exceptions (`Dom
 ### Django REST Framework (`EXCEPTION_HANDLER`)
 ```python
 # apps/common/exceptions.py
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.views import exception_handler
-
+# Excerpt: routine imports omitted.
 class DomainError(Exception):
     def __init__(self, message: str, code: str = "DOMAIN_ERROR", status_code: int = 400) -> None:
         self.message = message
@@ -117,10 +110,7 @@ REST_FRAMEWORK = {
 ### Django Ninja (`@api.exception_handler`)
 ```python
 # config/api.py
-from ninja import NinjaAPI
-from ninja.security import HttpBearer
-from apps.common.exceptions import DomainError
-
+# Excerpt: routine imports omitted.
 class BearerAuth(HttpBearer):
     def authenticate(self, request, token: str):
         # Validate JWT/token and return user or None

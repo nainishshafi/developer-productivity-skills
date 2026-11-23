@@ -34,10 +34,7 @@ Django follows **MVT (Model–View–Template)** rather than frontend **MVVM (Mo
 ### Django Ninja Example (Modern Idiom)
 ```python
 # api.py
-from ninja import NinjaAPI, Schema
-from django.shortcuts import get_object_or_404
-from .models import Order
-
+# Excerpt: routine imports omitted.
 api = NinjaAPI(title="E-Commerce API", version="1.0.0")
 
 class OrderIn(Schema):
@@ -63,10 +60,7 @@ Avoid the legacy Django anti-pattern of putting all business logic into "Fat Mod
 
 ```python
 # services/order_service.py
-from django.db import transaction
-from django.core.exceptions import ValidationError
-from ..models import Order, OrderItem, Product
-
+# Excerpt: routine imports omitted.
 @transaction.atomic
 def place_order(*, user, item_ids: list[int], coupon_code: str | None = None) -> Order:
     """Encapsulates the complete business transaction with atomic rollback."""
@@ -127,8 +121,7 @@ Encapsulate reusable query filters in custom `models.QuerySet` classes instead o
 
 ```python
 # models.py
-from django.db import models
-
+# Excerpt: routine imports omitted.
 class OrderQuerySet(models.QuerySet):
     def active(self):
         return self.filter(status__in=["pending", "processing", "shipped"])

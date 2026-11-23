@@ -86,9 +86,7 @@ Java 22+ introduces the **Foreign Function & Memory API (JEP 454)**, providing s
 
 ### Using `Arena` and `MemorySegment` (Java 22+)
 ```java
-import java.lang.foreign.*;
-import java.lang.invoke.VarHandle;
-
+// Excerpt: routine imports omitted.
 public class OffHeapRingBuffer implements AutoCloseable {
     private final Arena arena;
     private final MemorySegment segment;
@@ -123,11 +121,7 @@ public class OffHeapRingBuffer implements AutoCloseable {
 ### Memory-Mapped Files with FFM
 Zero-copy persistence directly mapped to operating system virtual memory:
 ```java
-import java.lang.foreign.*;
-import java.nio.channels.FileChannel;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-
+// Excerpt: routine imports omitted.
 public class MemoryMappedJournal {
     public static void mapJournal(Path path, long sizeBytes) throws Exception {
         try (var channel = FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {

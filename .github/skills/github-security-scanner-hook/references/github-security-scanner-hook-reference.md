@@ -93,15 +93,15 @@ semgrep reports `ERROR`, `WARNING`, or `INFO` natively. `scan-staged.py` maps th
 **Examples:**
 ```python
 # BAD — hardcoded API key in source
-API_KEY = "sk-prod-abc123xyz987"
+API_KEY = "sk-prod-abc123xyz987"  # pragma: allowlist secret -- synthetic bad example
 
 # BAD — password in database connection string
-db = connect("postgresql://admin:SuperSecret99@db.prod.example.com/mydb")
+db = connect("postgresql://admin:SuperSecret99@db.prod.example.com/mydb")  # pragma: allowlist secret -- synthetic bad example
 ```
 
 **Remediation — use environment variables or a secrets manager:**
 ```python
-import os
+# Excerpt: routine imports omitted.
 API_KEY = os.environ["API_KEY"]
 db = connect(os.environ["DATABASE_URL"])
 ```
@@ -110,7 +110,7 @@ db = connect(os.environ["DATABASE_URL"])
 
 ### 3.2 Private Keys in Source
 
-**What it looks like:** PEM blocks beginning with `-----BEGIN RSA PRIVATE KEY-----`, SSH private key files (`id_rsa`, `id_ed25519`), or PKCS8 key files.
+**What it looks like:** PEM blocks labeled as RSA private keys, SSH private key files (`id_rsa`, `id_ed25519`), or PKCS8 key files.
 
 **Remediation:**
 1. Remove the key from the file immediately
@@ -186,7 +186,7 @@ element.insertAdjacentHTML("beforeend", DOMPurify.sanitize(commentHtml));
 return flask.render_template_string(f"<h1>Hello {name}</h1>")
 
 # GOOD — static template file with autoescaping or Django format_html
-from django.utils.html import format_html
+# Excerpt: routine imports omitted.
 safe_html = format_html("<span>{}</span>", user_input)
 return flask.render_template("greeting.html", name=name)
 ```
@@ -263,8 +263,7 @@ cfg = yaml.safe_load(raw_yaml)
 **Remediation:**
 ```python
 # GOOD — allowlist host and require HTTPS before outbound fetch or redirect
-from urllib.parse import urlparse
-
+# Excerpt: routine imports omitted.
 parsed = urlparse(target_url)
 if parsed.scheme != "https" or parsed.hostname not in {"api.example.com"}:
     raise ValueError("Blocked untrusted URL target")

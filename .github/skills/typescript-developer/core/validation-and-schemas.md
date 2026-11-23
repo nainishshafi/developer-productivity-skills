@@ -16,8 +16,7 @@ TypeScript types exist strictly during compilation and are completely erased in 
 Never use `.parse()` in web request handlers without catching exceptions. Use `.safeParse()` for ergonomic error handling:
 
 ```typescript
-import { z } from 'zod';
-
+// Excerpt: routine imports omitted.
 export const CreateProductSchema = z.object({
   name: z.string().trim().min(2).max(100),
   priceCents: z.number().int().positive(),
@@ -80,8 +79,7 @@ export const DateRangeSchema = z
 For client-side bundles or Cloudflare Workers where bundle size is critical, Valibot offers a modular, tree-shakeable API that is 90% smaller than Zod:
 
 ```typescript
-import * as v from 'valibot';
-
+// Excerpt: routine imports omitted.
 export const UserSchema = v.object({
   email: v.pipe(v.string(), v.email()),
   age: v.pipe(v.number(), v.minValue(18)),

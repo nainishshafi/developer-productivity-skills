@@ -28,10 +28,7 @@ Never force the LLM to answer from garbage chunks when the retrieval pipeline re
 
 ### Structured Citation Contract (Pydantic v2)
 ```python
-from typing import Literal
-from pydantic import BaseModel, Field
-
-
+# Excerpt: routine imports omitted.
 class Citation(BaseModel):
     source_id: str = Field(min_length=1)
     source_uri: str = Field(min_length=1)
@@ -79,11 +76,7 @@ Keep agentic loops **bounded** (max 2–3 retrieval hops) to avoid unbounded lat
 Pair with [`python-api-writer`](file:///.github/skills/python-api-writer/SKILL.md) and [`caching-queues-reviewer`](file:///.github/skills/caching-queues-reviewer/SKILL.md) for non-blocking async I/O and bounded caches:
 
 ```python
-import json
-from collections.abc import AsyncIterator
-from fastapi import APIRouter, Depends
-from fastapi.responses import StreamingResponse
-
+# Excerpt: routine imports omitted.
 router = APIRouter(prefix="/rag", tags=["RAG"])
 
 

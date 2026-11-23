@@ -116,8 +116,7 @@ function Tooltip({ anchorRef, label }: { anchorRef: RefObject<HTMLElement | null
 
 ### `useTransition`: Keep Typing/Navigation Responsive During Heavy Updates
 ```tsx
-import { useState, useTransition } from 'react';
-
+// Excerpt: routine imports omitted.
 export function FilterableCatalog({ items }: { items: CatalogItem[] }) {
   const [query, setQuery] = useState('');
   const [filtered, setFiltered] = useState(items);
@@ -174,9 +173,7 @@ React 19 unifies async form mutations, pending indicators, and optimistic rollba
 
 ```tsx
 'use client';
-import { useActionState, useOptimistic } from 'react';
-import { useFormStatus } from 'react-dom';
-
+// Excerpt: routine imports omitted.
 function SubmitButton() {
   // Must live in a child component rendered inside <form>
   const { pending } = useFormStatus();
@@ -225,9 +222,7 @@ export function CommentThread({
 Unlike `useContext`, React 19's `use(Context)` can be called conditionally after early returns:
 
 ```tsx
-import { use } from 'react';
-import { ThemeContext } from './ThemeContext';
-
+// Excerpt: routine imports omitted.
 export function BrandBadge({ show }: { show: boolean }) {
   if (!show) return null; // Early return BEFORE reading context!
   const theme = use(ThemeContext);
@@ -265,8 +260,7 @@ export function AutoFocusInput({ ref, ...props }: React.ComponentProps<'input'>)
    - When writing reusable timer/subscription hooks (`useInterval(cb, delay)`), avoid forcing consumers to wrap `cb` in `useCallback` or triggering teardown/re-subscribe loops on every render:
 
 ```tsx
-import { useEffect, useRef } from 'react';
-
+// Excerpt: routine imports omitted.
 export function useInterval(callback: () => void, delayMs: number | null) {
   const latestCallback = useRef(callback);
   latestCallback.current = callback; // Keep ref fresh on render without resetting timer

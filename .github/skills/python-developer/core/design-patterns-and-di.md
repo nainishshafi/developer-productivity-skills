@@ -12,8 +12,7 @@ In Python, Dependency Injection is implemented through structural subtyping (`ty
 Unlike Java or C#, Python's static type system supports **structural subtyping** (static duck typing). Clients define the dependency interface without the implementation needing to inherit from it.
 
 ```python
-from typing import Protocol, runtime_checkable
-
+# Excerpt: routine imports omitted.
 # 1. Consumer defines the exact interface contract it requires
 @runtime_checkable
 class NotificationService(Protocol):
@@ -48,9 +47,7 @@ FastAPI features a built-in, hierarchical dependency injection engine supporting
 
 #### A. Basic Injection with `Depends`
 ```python
-from fastapi import Depends, FastAPI
-from sqlalchemy.ext.asyncio import AsyncSession
-
+# Excerpt: routine imports omitted.
 # Database Session Dependency with automatic context manager teardown
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_factory() as session:
@@ -99,9 +96,7 @@ def test_create_order(client: TestClient):
 For non-FastAPI applications (Celery workers, CLI tools, event consumers), `dependency-injector` provides an enterprise IoC container:
 
 ```python
-from dependency_injector import containers, providers
-from dependency_injector.wiring import Provide, inject
-
+# Excerpt: routine imports omitted.
 class Container(containers.DeclarativeContainer):
     config = providers.Configuration()
 
@@ -131,8 +126,7 @@ def handle_user_signup(
 - In Python, functions are first-class objects. Use `Callable[[Input], Output]` instead of abstract strategy classes:
 
 ```python
-from typing import Callable
-
+# Excerpt: routine imports omitted.
 DiscountStrategy = Callable[[float], float]
 
 def regular_discount(price: float) -> float:
@@ -181,10 +175,7 @@ class MessageEvent:
 **Intent**: Attach cross-cutting concerns (caching, metrics, retry, authentication) cleanly.
 
 ```python
-import functools
-import time
-from typing import Any, Callable
-
+# Excerpt: routine imports omitted.
 def retry(max_attempts: int = 3, delay: float = 1.0):
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)
@@ -229,8 +220,7 @@ class S3StorageAdapter:
 **Intent**: Manage transactional integrity and encapsulate queries cleanly.
 
 ```python
-from contextlib import asynccontextmanager
-
+# Excerpt: routine imports omitted.
 class UnitOfWork:
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self._session_factory = session_factory

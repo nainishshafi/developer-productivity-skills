@@ -10,10 +10,7 @@ Pydantic v2 is powered by a high-performance Rust validation engine (`pydantic-c
 
 ### The Standard Secure Model
 ```python
-from datetime import datetime
-from uuid import UUID
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
-
+# Excerpt: routine imports omitted.
 class UserModel(BaseModel):
     model_config = ConfigDict(
         frozen=True,               # Immutable instances (hashable, prevents accidental mutation)
@@ -36,8 +33,7 @@ class UserModel(BaseModel):
 Use `mode="after"` (default) to validate parsed typed objects; use `mode="before"` only if raw strings/types must be pre-sanitized:
 
 ```python
-from pydantic import BaseModel, field_validator
-
+# Excerpt: routine imports omitted.
 class TransactionModel(BaseModel):
     amount_cents: int
     currency: str
@@ -55,9 +51,7 @@ class TransactionModel(BaseModel):
 Validate invariants spanning multiple fields:
 
 ```python
-from datetime import date
-from pydantic import BaseModel, model_validator
-
+# Excerpt: routine imports omitted.
 class DateRange(BaseModel):
     start_date: date
     end_date: date
@@ -77,8 +71,7 @@ class DateRange(BaseModel):
 Never store plain passwords, API keys, or JWT tokens in standard `str` fields. `SecretStr` masks values when printed or logged:
 
 ```python
-from pydantic import BaseModel, SecretStr
-
+# Excerpt: routine imports omitted.
 class DatabaseConfig(BaseModel):
     host: str
     password: SecretStr
@@ -94,8 +87,7 @@ raw_secret = config.password.get_secret_value()
 Expose dynamically calculated properties in JSON outputs and serialization:
 
 ```python
-from pydantic import BaseModel, computed_field
-
+# Excerpt: routine imports omitted.
 class Rectangle(BaseModel):
     width: float
     height: float
@@ -113,8 +105,7 @@ class Rectangle(BaseModel):
 When validating lists, tuples, or primitives without wrapping them in a dummy model, use `TypeAdapter`:
 
 ```python
-from pydantic import TypeAdapter
-
+# Excerpt: routine imports omitted.
 # Validate a raw list of integers
 int_list_adapter = TypeAdapter(list[int])
 parsed = int_list_adapter.validate_python(["1", 2, "3"])  # [1, 2, 3]
@@ -131,9 +122,7 @@ Manage environment variables, `.env` files, and secrets in a type-safe manner:
 
 ```python
 # app/core/config.py
-from pydantic import PostgresDsn, SecretStr
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
+# Excerpt: routine imports omitted.
 class AppSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",

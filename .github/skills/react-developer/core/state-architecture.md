@@ -58,8 +58,7 @@ When global client state is truly required (e.g. user session, shopping cart, th
 
 ```typescript
 // shared/stores/useCartStore.ts
-import { create } from 'zustand';
-
+// Excerpt: routine imports omitted.
 export interface CartItem {
   id: string;
   name: string;

@@ -20,8 +20,7 @@ Architectural patterns for database access using Drizzle ORM and Prisma in TypeS
 ### Schema Definition & Type Inference
 ```typescript
 // db/schema.ts
-import { pgTable, uuid, varchar, timestamp, integer } from 'drizzle-orm/pg-core';
-
+// Excerpt: routine imports omitted.
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: 255 }).notNull().unique(),
@@ -35,8 +34,7 @@ export type NewUser = typeof users.$inferInsert;
 
 ### Relational Queries & Preventing N+1
 ```typescript
-import { db } from './db';
-
+// Excerpt: routine imports omitted.
 // Fetches user and their posts in a single optimized SQL join/query
 export async function getUserWithPosts(userId: string) {
   return db.query.users.findFirst({

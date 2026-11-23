@@ -13,10 +13,7 @@ Starlette's `BaseHTTPMiddleware` buffers streaming responses and can break `cont
 
 ```python
 # src/core/middleware.py
-import time
-import uuid
-from starlette.types import ASGIApp, Message, Receive, Scope, Send
-
+# Excerpt: routine imports omitted.
 class RequestContextMiddleware:
     """Pure ASGI middleware for correlation IDs and request timing without buffering."""
 
@@ -77,11 +74,7 @@ class ResourceNotFoundError(DomainError):
 
 ```python
 # src/core/exception_handlers.py
-from fastapi import FastAPI, Request
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from src.common.exceptions import DomainError
-
+# Excerpt: routine imports omitted.
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(DomainError)
     async def domain_error_handler(request: Request, exc: DomainError) -> JSONResponse:
@@ -112,9 +105,7 @@ Centralize environment variables in `src/core/config.py` using `pydantic-setting
 
 ```python
 # src/core/config.py
-from functools import lru_cache
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
+# Excerpt: routine imports omitted.
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
@@ -136,17 +127,7 @@ Use a `create_app()` factory to keep test instantiation clean and guarantee midd
 
 ```python
 # src/main.py
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.gzip import GZipMiddleware
-
-from src.core.config import get_settings
-from src.core.exception_handlers import register_exception_handlers
-from src.core.lifespan import lifespan
-from src.core.middleware import RequestContextMiddleware
-from src.modules.orders.router import router as orders_router
-from src.modules.users.router import router as users_router
-
+# Excerpt: routine imports omitted.
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(

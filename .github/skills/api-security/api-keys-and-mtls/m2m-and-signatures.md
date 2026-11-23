@@ -61,10 +61,7 @@ sequenceDiagram
 
 ### Python HMAC Verification Example:
 ```python
-import hmac
-import hashlib
-import time
-
+# Excerpt: routine imports omitted.
 def verify_webhook_signature(
     raw_payload_bytes: bytes, 
     signature_header: str, 

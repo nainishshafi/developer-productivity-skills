@@ -70,8 +70,7 @@ NestJS provides an Angular-style Dependency Injection container built on decorat
 
 #### Injection Styles & Custom Providers
 ```typescript
-import { Injectable, Inject } from '@nestjs/common';
-
+// Excerpt: routine imports omitted.
 // 1. Class Injection
 @Injectable()
 export class OrderService {
@@ -239,8 +238,7 @@ export function withTiming<TArgs extends any[], TReturn>(
 **Intent**: Notify multiple decoupled handlers when domain events occur.
 
 ```typescript
-import { EventEmitter } from 'node:events';
-
+// Excerpt: routine imports omitted.
 export interface UserRegisteredEvent {
   userId: string;
   email: string;

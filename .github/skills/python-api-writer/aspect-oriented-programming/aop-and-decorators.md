@@ -34,13 +34,7 @@ flowchart TD
 
 ### Universal Dual Async/Sync AOP Decorator Pattern
 ```python
-import functools
-import inspect
-import time
-import logging
-from collections.abc import Callable
-from typing import Any, TypeVar
-
+# Excerpt: routine imports omitted.
 logger = logging.getLogger("audit")
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -93,9 +87,7 @@ Avoid writing manual `for attempt in range(...)` loops across external HTTP/data
 
 ```python
 # Using Tenacity (Industry-standard AOP retry library)
-from tenacity import retry, stop_after_attempt, wait_exponential_jitter, retry_if_exception_type
-import httpx
-
+# Excerpt: routine imports omitted.
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential_jitter(initial=1, max=10, jitter=1),
@@ -114,11 +106,7 @@ async def fetch_exchange_rates(currency: str) -> dict:
 Encapsulate caching logic entirely in an aspect, leaving the service function clean:
 
 ```python
-import functools
-import hashlib
-import json
-from typing import Any, Callable
-
+# Excerpt: routine imports omitted.
 def cache_response(key_prefix: str, ttl_seconds: int = 300):
     """AOP Cache Aspect: Intercepts call, checks Redis, returns or caches result."""
     def decorator(func: Callable):
@@ -158,10 +146,7 @@ Django provides native decorators for view protection and transaction boundaries
 
 ### Function-Based Views (FBVs):
 ```python
-from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required, permission_required
-from django.db import transaction
-
+# Excerpt: routine imports omitted.
 @require_http_methods(["POST"])
 @login_required
 @permission_required("orders.add_order", raise_exception=True)
@@ -175,9 +160,7 @@ def create_order_view(request):
 In Django Class-Based Views, decorators cannot be applied directly to methods like `get()` or `post()` because the first argument is `self`, not `request`. Use `@method_decorator`:
 
 ```python
-from django.utils.decorators import method_decorator
-from django.views import View
-
+# Excerpt: routine imports omitted.
 # Apply to a single method:
 class OrderDashboardView(View):
     @method_decorator(login_required)

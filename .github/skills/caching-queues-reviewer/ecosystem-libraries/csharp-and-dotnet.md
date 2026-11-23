@@ -22,8 +22,7 @@ Comprehensive architectural guidance for .NET 8 LTS and .NET 9 when architecting
 `HybridCache` solves the dual challenges of Redis network latency and cache stampedes.
 
 ```csharp
-using Microsoft.Extensions.Caching.Hybrid;
-
+// Excerpt: routine imports omitted.
 public class ProductCatalogService(HybridCache cache, AppDbContext db)
 {
     public async Task<ProductDto> GetProductByIdAsync(int id, CancellationToken ct = default)
@@ -63,8 +62,7 @@ public class ProductCatalogService(HybridCache cache, AppDbContext db)
 `ConnectionMultiplexer` is designed to be a thread-safe **singleton** shared across the entire application lifecycle. Never create a new multiplexer per request.
 
 ```csharp
-using StackExchange.Redis;
-
+// Excerpt: routine imports omitted.
 public class RedisDistributedLockService(IConnectionMultiplexer muxer)
 {
     private readonly IDatabase _db = muxer.GetDatabase();
@@ -102,8 +100,7 @@ public class RedisDistributedLockService(IConnectionMultiplexer muxer)
 ## 4. Local Asynchronous Producer-Consumer with `Channel<T>`
 
 ```csharp
-using System.Threading.Channels;
-
+// Excerpt: routine imports omitted.
 public class AuditQueue
 {
     // Bounded capacity prevents unbounded memory growth under load
@@ -142,9 +139,7 @@ public class AuditWorker(AuditQueue queue, IServiceProvider serviceProvider) : B
 ## 5. Kafka High-Throughput Consumer with `Confluent.Kafka`
 
 ```csharp
-using Confluent.Kafka;
-using System.Text.Json;
-
+// Excerpt: routine imports omitted.
 public class OrderKafkaConsumerService : BackgroundService
 {
     private readonly ConsumerConfig _config = new()

@@ -108,8 +108,7 @@ Provide flexible, accessible UI widgets without rigid configuration objects:
 
 ```tsx
 // shared/components/Accordion.tsx
-import React, { createContext, useContext, useState, type ReactNode } from 'react';
-
+// Excerpt: routine imports omitted.
 interface AccordionContextType {
   activeId: string | null;
   toggle: (id: string) => void;

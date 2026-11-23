@@ -91,13 +91,7 @@ app:
 ```java
 package com.example.app.reporting.config;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.bind.DefaultValue;
-import org.springframework.validation.annotation.Validated;
-
+// Excerpt: routine imports omitted.
 @Validated
 @ConfigurationProperties(prefix = "app.datasource.reporting")
 public record ReportingDataSourceProperties(
@@ -118,16 +112,7 @@ public record ReportingDataSourceProperties(
 ```java
 package com.example.app.reporting.config;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-import javax.sql.DataSource;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.transaction.PlatformTransactionManager;
-
+// Excerpt: routine imports omitted.
 @Configuration(proxyBeanMethods = false)
 public class ReportingDataSourceConfig {
 
@@ -169,11 +154,7 @@ Spring resolves constructor dependencies **by type** first. Because this applica
 ```java
 package com.example.app.reporting;
 
-import java.util.List;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.jdbc.core.simple.JdbcClient;
-import org.springframework.stereotype.Repository;
-
+// Excerpt: routine imports omitted.
 @Repository
 public class ReportingQueryRepository {
 
@@ -278,10 +259,7 @@ When a service orchestrates across different data stores (e.g., primary DB + rep
 ```java
 package com.example.app.reporting;
 
-import com.example.app.order.OrderRepository;
-import com.example.app.payment.PaymentGatewayClient;
-import org.springframework.stereotype.Service;
-
+// Excerpt: routine imports omitted.
 @Service
 public class ReconciliationService {
 

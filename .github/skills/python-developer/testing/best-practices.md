@@ -18,10 +18,7 @@ Avoid over-mocking with `unittest.mock.MagicMock` (which easily silently passes 
 
 ```python
 # tests/fakes/fake_account_repo.py
-from uuid import UUID
-from domain.models import Account
-from domain.ports import AccountRepositoryPort
-
+# Excerpt: routine imports omitted.
 class FakeAccountRepository(AccountRepositoryPort):
     def __init__(self) -> None:
         self.accounts: dict[UUID, Account] = {}

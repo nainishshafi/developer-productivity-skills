@@ -18,8 +18,7 @@ Comprehensive architectural guidance for Node.js (20+), Bun, and TypeScript when
 ## 2. In-Memory Caching with `lru-cache`
 
 ```typescript
-import { LRUCache } from 'lru-cache';
-
+// Excerpt: routine imports omitted.
 interface UserSession {
   userId: string;
   role: string;
@@ -39,8 +38,7 @@ export const sessionCache = new LRUCache<string, UserSession>({
 ## 3. High-Performance Redis & Lua Execution with `ioredis`
 
 ```typescript
-import Redis from 'ioredis';
-
+// Excerpt: routine imports omitted.
 export const redis = new Redis({
   host: process.env.REDIS_HOST ?? '127.0.0.1',
   port: Number(process.env.REDIS_PORT ?? 6379),
@@ -84,9 +82,7 @@ export async function batchIncrementViews(productIds: string[]): Promise<void> {
 ## 4. Distributed Background Job Processing with `BullMQ`
 
 ```typescript
-import { Queue, Worker, Job } from 'bullmq';
-import { redis } from './redis.js';
-
+// Excerpt: routine imports omitted.
 interface EmailJobData {
   to: string;
   template: string;
@@ -130,8 +126,7 @@ export const emailWorker = new Worker<EmailJobData>(
 ## 5. Kafka Event Consumer with Manual Offset Commit in `kafkajs`
 
 ```typescript
-import { Kafka, logLevel } from 'kafkajs';
-
+// Excerpt: routine imports omitted.
 const kafka = new Kafka({
   clientId: 'order-service',
   brokers: (process.env.KAFKA_BROKERS ?? 'localhost:9092').split(','),

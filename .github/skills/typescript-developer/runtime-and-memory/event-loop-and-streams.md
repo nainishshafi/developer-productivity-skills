@@ -15,8 +15,7 @@ Node.js executes JavaScript on a single thread. Blocking this thread freezes all
 
 ```typescript
 // ❌ ANTI-PATTERN: Synchronous crypto or JSON blocks the single thread
-import crypto from 'node:crypto';
-
+// Excerpt: routine imports omitted.
 export function hashPasswordSync(password: string) {
   // Freezes the server for 200ms per request!
   return crypto.pbkdf2Sync(password, 'salt', 100_000, 64, 'sha512').toString('hex');
@@ -41,8 +40,7 @@ For CPU-heavy tasks (image resizing, video compression, PDF generation, cryptogr
 
 ```typescript
 // worker-runner.ts
-import { Worker } from 'node:worker_threads';
-
+// Excerpt: routine imports omitted.
 export function runWorkerTask<TInput, TOutput>(workerScript: string, data: TInput): Promise<TOutput> {
   return new Promise((resolve, reject) => {
     const worker = new Worker(workerScript, { workerData: data });
@@ -63,16 +61,13 @@ Loading multi-gigabyte or even 100MB+ files entirely into a RAM `Buffer` causes 
 
 ```typescript
 // ❌ ANTI-PATTERN: Buffering entire 1GB file into RAM
-import fs from 'node:fs/promises';
-
+// Excerpt: routine imports omitted.
 export async function exportCsv(filePath: string, res: Response) {
   const fileBuffer = await fs.readFile(filePath); // Spikes RAM by 1GB!
   res.send(fileBuffer);
 }
 
 // ✅ BEST PRACTICE: Stream with backpressure handling using pipeline()
-import { createReadStream } from 'node:fs';
-import { pipeline } from 'node:stream/promises';
 
 export async function exportCsv(filePath: string, responseWritable: NodeJS.WritableStream) {
   const sourceStream = createReadStream(filePath);
