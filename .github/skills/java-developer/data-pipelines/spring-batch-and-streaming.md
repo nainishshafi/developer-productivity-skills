@@ -112,85 +112,138 @@ public void bulkInsertOrders(List<OrderDto> orders) {
 
 ## 3. Spring Batch: Enterprise Pipeline Architecture
 
-Spring Batch provides chunk-oriented, transactional processing designed for high-volume ETL workloads with built-in checkpointing and fault tolerance.
+Choose the processing model for each step, not for the entire job:
 
-```text
-[ JobRepository ] ── Metadata & Checkpointing
-       │
-    [ Job ]
-       │
-   [ Step ] ── Chunk-Oriented Processing (e.g. Commit Interval = 1,000)
-       ├── ItemReader    ──> Reads 1 item at a time until chunk is full (1,000 items)
-       ├── ItemProcessor ──> Transforms/validates items
-       └── ItemWriter    ──> Writes entire chunk (1,000 items) in a single DB transaction
-```
+- **Chunk-oriented (chunk-based):** Use for a stream of records. An `ItemReader` reads one item at a time, an optional `ItemProcessor` transforms or filters items, and an `ItemWriter` receives the resulting group before the transaction commits. A failed chunk can roll back without undoing earlier committed chunks. Use restartable readers and writers when the job needs to resume from its last checkpoint.
+- **Tasklet-based:** Use for a custom operation that does not need an item pipeline, such as checking an input file, calling a stored procedure, or archiving a file. `Tasklet.execute()` returns `RepeatStatus.FINISHED` when done or `RepeatStatus.CONTINUABLE` to run again. Each invocation is wrapped in a transaction, but that transaction cannot undo a filesystem move; make such operations safe to repeat on restart.
 
-### Complete Chunk-Oriented Step Configuration (Spring Batch 5 / Boot 3)
+### Example: Check a CSV, then import orders (Spring Batch 5 / Boot 3)
+
+This configuration assumes Boot provides a JDBC `JobRepository` and a transaction manager for the same PostgreSQL data source used by the writer. Create the Spring Batch metadata tables and an `orders` table with `id BIGINT PRIMARY KEY` and `payload TEXT NOT NULL`. Launch with an identifying `input` job parameter containing a trusted local file path. The UTF-8 CSV starts with an `id,payload` header followed by rows such as `42,ready`.
+
 ```java
+import java.nio.file.Files;
+import java.nio.file.Path;
+import javax.sql.DataSource;
+
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
-import org.springframework.batch.item.ItemProcessor;
-import org.springframework.batch.item.database.JdbcCursorItemReader;
-import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder;
+import org.springframework.batch.item.database.JdbcBatchItemWriter;
+import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
+import org.springframework.batch.item.file.FlatFileItemReader;
+import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
+import org.springframework.batch.repeat.RepeatStatus;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import javax.sql.DataSource;
-
-@Configuration
+@Configuration(proxyBeanMethods = false)
 public class OrderBatchJobConfig {
+    record Order(long id, String payload) {}
+    static class InvalidOrderException extends RuntimeException {
+        InvalidOrderException(long id) {
+            super("Blank payload for order " + id);
+        }
+    }
 
     @Bean
-    public Job orderProcessingJob(JobRepository jobRepository, Step orderStep) {
-        return new JobBuilder("orderProcessingJob", jobRepository)
-            .start(orderStep)
+    Job orderImport(JobRepository repository, @Qualifier("checkInput") Step checkInput,
+                    @Qualifier("importOrders") Step importOrders) {
+        return new JobBuilder("orderImport", repository).start(checkInput).next(importOrders).build();
+    }
+
+    @Bean
+    Step checkInput(JobRepository repository, PlatformTransactionManager transactions) {
+        return new StepBuilder("checkInput", repository)
+            .tasklet((contribution, context) -> {
+                Object input = context.getStepContext().getJobParameters().get("input");
+                if (!(input instanceof String file) || file.isBlank()) {
+                    throw new IllegalArgumentException("The input job parameter is required");
+                }
+                Path path = Path.of(file);
+                if (!Files.isRegularFile(path) || !Files.isReadable(path)) {
+                    throw new IllegalArgumentException("Input must be a readable file: " + path);
+                }
+                return RepeatStatus.FINISHED;
+            }, transactions)
             .build();
     }
 
     @Bean
-    public Step orderStep(JobRepository jobRepository,
-                         PlatformTransactionManager transactionManager,
-                         DataSource dataSource) {
-        return new StepBuilder("orderStep", jobRepository)
-            .<RawOrder, CleanOrder>chunk(1000, transactionManager) // Chunk size: 1,000 items per commit
-            .reader(orderCursorReader(dataSource))
-            .processor(orderProcessor())
-            .writer(orderItemWriter(dataSource))
+    Step importOrders(JobRepository repository, PlatformTransactionManager transactions,
+                      FlatFileItemReader<Order> orderReader, JdbcBatchItemWriter<Order> orderWriter) {
+        return new StepBuilder("importOrders", repository)
+            .<Order, Order>chunk(500, transactions)
+            .reader(orderReader)
+            .processor(order -> {
+                if (order.payload().isBlank()) {
+                    throw new InvalidOrderException(order.id());
+                }
+                return new Order(order.id(), order.payload().strip());
+            })
+            .writer(orderWriter)
             .faultTolerant()
             .skip(InvalidOrderException.class)
-            .skipLimit(50) // Skip up to 50 bad records without failing job
-            .retry(TransientNetworkException.class)
-            .retryLimit(3)
+            .skipLimit(10)
+            .retry(CannotAcquireLockException.class)
+            .retryLimit(3) // Up to three attempts for this failure, including the initial attempt.
             .build();
     }
 
     @Bean
-    public JdbcCursorItemReader<RawOrder> orderCursorReader(DataSource dataSource) {
-        return new JdbcCursorItemReaderBuilder<RawOrder>()
-            .name("orderCursorReader")
+    @StepScope
+    FlatFileItemReader<Order> orderReader(@Value("#{jobParameters['input']}") String input) {
+        return new FlatFileItemReaderBuilder<Order>()
+            .name("orderCsvReader")
+            .resource(new FileSystemResource(input))
+            .encoding("UTF-8")
+            .linesToSkip(1)
+            .delimited().names("id", "payload")
+            .fieldSetMapper(fields -> new Order(fields.readLong("id"), fields.readString("payload")))
+            .build();
+    }
+
+    @Bean
+    JdbcBatchItemWriter<Order> orderWriter(DataSource dataSource) {
+        return new JdbcBatchItemWriterBuilder<Order>()
             .dataSource(dataSource)
-            .sql("SELECT id, raw_payload FROM inbound_orders WHERE processed = false")
-            .fetchSize(1000)
-            .rowMapper((rs, rowNum) -> new RawOrder(rs.getLong("id"), rs.getString("raw_payload")))
-            .verifyCursorPosition(false)
+            .sql("""
+                INSERT INTO orders (id, payload) VALUES (?, ?)
+                ON CONFLICT (id) DO UPDATE SET payload = EXCLUDED.payload
+                """)
+            .itemPreparedStatementSetter((order, statement) -> {
+                statement.setLong(1, order.id());
+                statement.setString(2, order.payload());
+            })
             .build();
-    }
-
-    @Bean
-    public ItemProcessor<RawOrder, CleanOrder> orderProcessor() {
-        return raw -> {
-            if (raw.payload() == null || raw.payload().isBlank()) {
-                throw new InvalidOrderException("Empty payload for order: " + raw.id());
-            }
-            return new CleanOrder(raw.id(), raw.payload().trim().toUpperCase());
-        };
     }
 }
 ```
+
+### Chunk step best practices
+
+- **Tune the commit interval by measurement.** With 1,201 valid rows and no failures, the writer gets batches of 500, 500, and 201. Filtering or skipping can make a write smaller. Smaller chunks reduce lock duration and rollback work; larger chunks amortize commit overhead but buffer more items. JDBC fetch size is a separate driver setting. Compare throughput, heap use, and transaction duration before tuning either.
+- **Keep processors repeatable and batch writes.** A retry or rollback can run processing again. Avoid remote calls, file moves, or notifications inside the processor. Return `null` to intentionally filter an item; throw a specific exception only for a failure. Let the step manage the transaction rather than committing inside the writer.
+- **Retry transient failures and skip only known bad data.** The example retries lock acquisition failures and skips up to 10 orders with blank payloads. Malformed CSV and unrelated errors fail the step. When skipping is allowed, surface the skip count and record enough information to trace rejected rows without logging sensitive payloads.
+- **Design for restart, not just retry.** Restart a failed execution with the same identifying job parameters and unchanged input. The `JobRepository` and the step-scoped reader's saved position let the step resume from the last committed chunk. A position-based checkpoint is unsafe if records move: keep files immutable and give database readers a stable input set and deterministic ordering. The example's upsert is appropriate only if the incoming payload should replace the current one; it does not make triggers or external effects exactly-once.
+
+### Tasklet step best practices
+
+- **Keep `execute()` focused on one operation.** Return `FINISHED` for a one-shot check or stored procedure. Use `CONTINUABLE` only when each invocation completes one bounded unit of work and moves closer to completion. For a record import, prefer a chunk step to a manual loop.
+- **Persist progress explicitly for repeating tasklets.** Store a resume key in the step `ExecutionContext` when an invocation completes its unit of work. Each invocation has its own transaction; a later rollback does not undo prior committed invocations. Don't rely on instance fields to carry state across restarts.
+- **Plan for external effects and completed steps.** An archive step can move a file successfully and then fail before Spring Batch records completion. Use a deterministic destination and verify that an existing archive matches the intended input before treating replay as complete. Completed steps are normally skipped on restart; set `allowStartIfComplete(true)` only when a step must run again, such as when repeating an input check is required.
+
+### Verify failure and restart behavior
+
+Use a real test database with persisted batch metadata. Import enough rows to reach a second chunk, force a non-retryable failure on its write, and verify that only the first chunk persisted. Remove the fault, restart with the same identifying parameters, and verify the final row count and absence of duplicates. Also test that a missing file fails `checkInput` without starting `importOrders`, and that known invalid data is skipped while an unexpected exception fails the step.
 
 ---
 
@@ -217,4 +270,3 @@ Selecting the wrong reader causes transaction timeouts or duplicate processing.
 3. **Partitioning for Horizontal Scaling**:
    - Split a monolithic step into $N$ parallel steps using Spring Batch `PartitionHandler`:
    - Example: Partition by range (`WHERE id BETWEEN 1 AND 1000000`, `WHERE id BETWEEN 1000001 AND 2000000`) across separate worker threads or remote worker nodes.
-
