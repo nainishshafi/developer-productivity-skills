@@ -1,7 +1,7 @@
 ---
 name: react-developer
 description: Architectural and engineering guidance for modern React development (React 18 & 19, Next.js, Remix/React Router, Vite, React Server Components), React hooks (useState, useReducer, useEffect, useTransition, useDeferredValue, React 19 use, useActionState, useOptimistic, custom hooks), functional programming in React (pure render UI = f(state), immutability, anti-procedural patterns, Functional Core / Imperative Shell), React code review & clean code audits, and React testing (Vitest, React Testing Library, MSW v2, TanStack Query/Zustand harnesses, RSC, vitest-axe). Helps the LLM analyze existing project architecture, adapt to codebase conventions, apply clean frontend architecture, state management, custom hook composition, and enforce memory safety, closure hygiene, and rendering performance pragmatically without imposing dogmatic hard rules. Use when designing, writing, reviewing, testing, or refactoring React components and applications, or when the user asks to "write react code", "develop react component", "react architecture best practices", "nextjs server components", "refactor react frontend", "react hooks", "custom hook patterns", "useeffect best practices", "react 19 hooks", "functional programming react", "procedural vs functional react", "declarative react patterns", "prop drilling", "prop drilling hell", "react code review", "review react code", "react clean code", "react testing", "react testing library", "test react component", or "msw react test".
-version: 2.6.0
+version: 2.7.1
 ---
 
 # React Developer Skill

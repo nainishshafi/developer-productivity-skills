@@ -141,6 +141,19 @@ afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 ```
 
+## 5.1 TypeScript Test Project Wiring for Vitest + `jest-dom`
+
+Do not stop at runtime setup alone. Importing `@testing-library/jest-dom/vitest` in `setup.ts` makes matchers work at test runtime, but the editor and `tsc` will still miss matcher types when test files are excluded from the active TypeScript project.
+
+- Ensure the TypeScript project that owns frontend tests includes those test files. A common failure mode is moving specs into `src/test/` while `tsconfig.json` still excludes `src/test` or `src/**/*.test.tsx`.
+- Add matcher types explicitly when using Vitest + React Testing Library:
+  - `"types": ["vitest/globals", "@testing-library/jest-dom"]`
+- After reorganizing test folders, verify both:
+  - `tsc` still sees the test files you expect
+  - editor diagnostics recognize matchers such as `toBeInTheDocument()` and `toHaveTextContent()`
+
+This is a TypeScript project-wiring problem, not a React Testing Library runtime problem.
+
 ### Per-Test Error & Latency Overrides
 ```tsx
 import { http, HttpResponse, delay } from 'msw';

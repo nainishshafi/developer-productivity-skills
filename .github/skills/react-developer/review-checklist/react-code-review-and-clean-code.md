@@ -28,6 +28,7 @@ Senior-level code review rubric for modern React (React 18 & 19, Next.js App Rou
 - [ ] **"You Might Not Need an Effect"**: Is `useEffect` absent for derived state, prop-change state resets (use `key={entityId}` instead), and user-triggered mutations?
 - [ ] **Exhaustive Dependencies & Stale Closures**: Are ESLint `react-hooks/exhaustive-deps` rules honored without disabling comments, using functional updaters (`setCount(c => c + 1)`) or Latest-Ref patterns rather than suppressing missing dependencies?
 - [ ] **Mandatory Cleanup Teardown**: Do `useEffect` hooks clean up in-flight `fetch` calls (`AbortController`), intervals/timeouts, DOM observers, and third-party canvas/map instances on unmount?
+- [ ] **Polling Race Protection**: Do refresh loops avoid overlapping requests and stale-response overwrites by using single-flight polling (`setTimeout` chaining, aborts, or request version guards) instead of naive `setInterval` fetches?
 - [ ] **React 19 Idioms**: Are new React 19 components accepting `ref` directly as a prop (instead of legacy `forwardRef`) and leveraging `useActionState`/`useFormStatus`/`useOptimistic` where appropriate for progressive form actions?
 
 ### Dimension 4: State Architecture & Immutability
@@ -176,4 +177,3 @@ function Page({ user, onLogout }: Props) {
   );
 }
 ```
-

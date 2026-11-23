@@ -129,3 +129,63 @@ export function CanvasChart({ data }: { data: DataPoint[] }) {
 }
 ```
 
+---
+
+## 5. Polling Effects Must Be Single-Flight and Stale-Response Aware
+
+Naive `setInterval` polling can start a second request before the first one finishes, which creates overlapping fetches, flickering UI state, and stale responses winning the race after newer data has already arrived.
+
+```tsx
+// ❌ ANTI-PATTERN: Overlapping polling requests with no stale-response guard
+export function useActions() {
+  const [actions, setActions] = useState<ActionItem[]>([]);
+
+  useEffect(() => {
+    const id = setInterval(async () => {
+      const next = await fetchActions();
+      setActions(next);
+    }, 5000);
+
+    return () => clearInterval(id);
+  }, []);
+
+  return actions;
+}
+
+// ✅ BEST PRACTICE: Schedule the next poll only after the current one settles
+export function useActions() {
+  const [actions, setActions] = useState<ActionItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let requestId = 0;
+
+    async function poll() {
+      const currentRequestId = ++requestId;
+
+      try {
+        const next = await fetchActions();
+        if (!cancelled && currentRequestId === requestId) {
+          setActions(next);
+        }
+      } finally {
+        if (!cancelled) {
+          timer = setTimeout(poll, 5000);
+        }
+      }
+    }
+
+    void poll();
+
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
+
+  return actions;
+}
+```
+
+Use recursive `setTimeout`, `AbortController`, or a request token/version guard so a hook never has more than one in-flight poll and outdated responses cannot overwrite newer state.
