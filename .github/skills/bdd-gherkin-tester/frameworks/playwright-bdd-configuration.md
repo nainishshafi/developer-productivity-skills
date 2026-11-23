@@ -33,7 +33,9 @@ tests/
 ## 2. Configuration: `playwright.config.ts`
 
 ```typescript
-// Excerpt: routine imports omitted.
+import { defineConfig, devices } from '@playwright/test';
+import { defineBddConfig } from 'playwright-bdd';
+
 // Configure Gherkin feature files and step definition locations
 const testDir = defineBddConfig({
   features: 'tests/features/**/*.feature',
@@ -83,7 +85,9 @@ addopts = --browser chromium --screenshot only-on-failure --tracing retain-on-fa
 
 ### Feature Glue Spec (`tests/test_checkout.py`):
 ```python
-# Excerpt: routine imports omitted.
+from pytest_bdd import scenarios
+from tests.steps.checkout_steps import *
+
 # Binds all scenarios in checkout.feature to pytest runner
 scenarios("checkout.feature")
 ```
@@ -124,7 +128,11 @@ In Java, combine Microsoft Playwright (`com.microsoft.playwright:playwright`) wi
 ```java
 package com.example.bdd;
 
-// Excerpt: routine imports omitted.
+import org.junit.platform.suite.api.ConfigurationParameter;
+import org.junit.platform.suite.api.IncludeEngines;
+import org.junit.platform.suite.api.SelectClasspathResource;
+import org.junit.platform.suite.api.Suite;
+
 import static io.cucumber.junit.platform.engine.Constants.GLUE_PROPERTY_NAME;
 import static io.cucumber.junit.platform.engine.Constants.PLUGIN_PROPERTY_NAME;
 
@@ -180,4 +188,3 @@ npx bddgen --tags "@regression and not (@flaky or @wip)" && npx playwright test
 ```
 
 For CI parallel sharding (`--shard`) and Trace Viewer diagnostics (`show-trace`), see [`playwright-tester`](../../playwright-tester/reporting-and-ci/ci-and-reporting.md).
-

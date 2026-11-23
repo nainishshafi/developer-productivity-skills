@@ -58,7 +58,8 @@ When global client state is truly required (e.g. user session, shopping cart, th
 
 ```typescript
 // shared/stores/useCartStore.ts
-// Excerpt: routine imports omitted.
+import { create } from 'zustand';
+
 export interface CartItem {
   id: string;
   name: string;
@@ -90,4 +91,3 @@ export const useCartStore = create<CartState>((set) => ({
     set((state) => ({ items: state.items.filter((i) => i.id !== id) })),
 }));
 ```
-

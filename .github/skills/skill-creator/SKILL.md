@@ -1,7 +1,7 @@
 ---
 name: skill-creator
 description: Use when the user asks to "create a new skill", "add a skill", "write a skill", "scaffold a skill", "make a claude skill", "build a skill", or wants to create a reusable Claude Code skill from scratch. Handles modular knowledge-pack developer skills, task/action skills with scripts, and lightweight reference skills.
-version: 1.2.0
+version: 1.2.1
 ---
 
 # Skill Creator
@@ -50,8 +50,8 @@ Run the scaffold script using Node.js (available in this environment) or Python:
 # Using Node.js (Recommended in this environment):
 node .github/skills/skill-creator/scripts/scaffold-skill.js <skill-name> [base-path] --modular
 
-# Or using Python (if Python runtime is installed):
-python .github/skills/skill-creator/scripts/scaffold-skill.py <skill-name> [base-path] --modular
+# Or using the local Python virtual environment (Windows PowerShell):
+.\.venv\Scripts\python.exe .github/skills/skill-creator/scripts/scaffold-skill.py <skill-name> [base-path] --modular
 ```
 
 - Default `base-path` is `.github/skills/`
@@ -79,7 +79,7 @@ Use `references/skill-anatomy.md` as your architectural guide.
 - `scripts/<script>.py` or `.sh` — executable logic with error handling
 
 **For code examples in any skill:**
-- Use focused excerpts to teach a pattern. Omit routine imports and setup when they are not the point, label the snippet as an excerpt, and name any dependency or package needed to resolve an ambiguous type.
+- Use focused excerpts to teach a pattern. Keep imports for symbols used in the snippet, including framework APIs and application classes; they show dependency provenance. Omit unrelated setup only when it is not the point, and label incomplete snippets as excerpts. Import count alone is never a reason to remove imports.
 - For examples meant to be copied and compiled or run, keep all required imports and state the dependencies and version. If setup obscures the pattern, show the excerpt first and link to a complete example. Remove unused imports, not required ones; verify complete examples with the stated toolchain.
 
 ## Additional Resources

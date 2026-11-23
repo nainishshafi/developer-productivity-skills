@@ -14,7 +14,8 @@ CPython uses reference counting as its primary memory management mechanism, supp
 ### Breaking Cycles with `weakref`
 ```python
 # ✅ BEST PRACTICE: Parent-child relationship without circular reference memory leak
-# Excerpt: routine imports omitted.
+import weakref
+
 class Node:
     def __init__(self, name: str) -> None:
         self.name = name
@@ -38,7 +39,8 @@ Using `@functools.lru_cache(maxsize=None)` creates an infinite in-memory cache t
 
 ```python
 # ❌ ANTI-PATTERN: Cache grows without bound
-# Excerpt: routine imports omitted.
+from functools import lru_cache
+
 @lru_cache(maxsize=None)
 def get_user_profile(user_id: str):
     ...
@@ -61,7 +63,8 @@ def fetch_all_logs() -> list[dict]:
     return [row for row in db.execute("SELECT * FROM audit_logs")]
 
 # ✅ BEST PRACTICE: Generator stream yields row by row with minimal constant memory
-# Excerpt: routine imports omitted.
+from typing import Iterator
+
 def stream_audit_logs() -> Iterator[dict]:
     for row in db.execute_streaming("SELECT * FROM audit_logs"):
         yield row
@@ -83,4 +86,3 @@ class Measurement:
         self.value = value
 ```
 *(Or use `@dataclass(slots=True)` which automatically builds `__slots__` for you).*
-

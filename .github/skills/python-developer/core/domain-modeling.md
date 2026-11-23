@@ -9,7 +9,10 @@ Guidelines for modeling clean business domains using modern Python features (dat
 For domain models that should remain free of third-party framework dependencies, use Python standard library dataclasses with `slots=True` and `frozen=True`:
 
 ```python
-# Excerpt: routine imports omitted.
+from dataclasses import dataclass
+from datetime import datetime
+from uuid import UUID
+
 @dataclass(slots=True, frozen=True)
 class Customer:
     id: UUID
@@ -32,7 +35,8 @@ class Customer:
 Use Pydantic v2 for parsing and validating external untrusted inputs at the API presentation boundary:
 
 ```python
-# Excerpt: routine imports omitted.
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
 class CreateCustomerRequest(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -74,9 +78,9 @@ class UserResponse(BaseModel):
 Decouple interfaces without forcing inheritance hierarchies:
 
 ```python
-# Excerpt: routine imports omitted.
+from typing import Protocol, runtime_checkable
+
 @runtime_checkable
 class Notifier(Protocol):
     async def send_notification(self, recipient: str, body: str) -> None: ...
 ```
-

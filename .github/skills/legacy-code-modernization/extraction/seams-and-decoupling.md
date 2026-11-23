@@ -57,7 +57,8 @@ class NotificationService:
         self.client.mail.send(to=email, content=msg)
 
 # ✅ EXTRACTED SEAM: Introduce a Protocol/Interface Port
-# Excerpt: routine imports omitted.
+from typing import Protocol
+
 class EmailSenderPort(Protocol):
     def send(self, to: str, content: str) -> None: ...
 
@@ -105,4 +106,3 @@ When adding new functionality to a 3,000-line legacy method:
 - **Do NOT** add another 50 lines to the giant method.
 - **Sprout a new class** or standalone pure function containing the new logic.
 - Call the sprouted component from the legacy method. Write 100% TDD unit tests for the sprouted component.
-

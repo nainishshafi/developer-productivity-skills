@@ -15,7 +15,9 @@ Choosing the wrong embedding dimension, overflowing `max_seq_length`, or misconf
 Models trained with MRL pack coarse semantic signal into earlier vector dimensions. You can truncate a 1536-d or 3072-d vector down to `512` or `256` dimensions to cut RAM/disk footprint by $3\text{x}\text{--}6\text{x}$ with minimal recall loss—**provided you L2-renormalize after slicing**:
 
 ```python
-# Excerpt: routine imports omitted.
+import math
+
+
 def truncate_mrl_vector(vec: list[float], target_dim: int) -> list[float]:
     """Slice an MRL embedding to target_dim and renormalize to unit L2 length."""
     if target_dim <= 0 or target_dim > len(vec):
@@ -113,4 +115,3 @@ CREATE INDEX idx_rag_chunks_hnsw ON rag_chunks
     USING hnsw (embedding halfvec_cosine_ops)
     WITH (m = 16, ef_construction = 64);
 ```
-

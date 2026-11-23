@@ -44,7 +44,8 @@ export function handleRequest(eventEmitter: EventEmitter, req: Request, res: Res
 }
 
 // ✅ BEST PRACTICE: Use AbortSignal to auto-remove listeners upon task completion
-// Excerpt: routine imports omitted.
+import { EventEmitter } from 'node:events';
+
 export async function waitForSpecificEvent(
   emitter: EventEmitter,
   eventName: string,
@@ -81,7 +82,8 @@ export function getCachedUser(id: string) {
 }
 
 // ✅ BEST PRACTICE: Use a bounded LRU Cache with Max Capacity and TTL
-// Excerpt: routine imports omitted.
+import { LRUCache } from 'lru-cache';
+
 export const userCache = new LRUCache<string, User>({
   max: 5000,              // Keep at most 5,000 users in memory
   ttl: 1000 * 60 * 15,    // 15-minute TTL
@@ -133,4 +135,3 @@ export class HeartbeatService {
   }
 }
 ```
-

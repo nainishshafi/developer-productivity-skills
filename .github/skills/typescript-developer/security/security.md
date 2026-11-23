@@ -39,7 +39,8 @@ export function safeMerge<T extends object, U extends object>(target: T, source:
 TypeScript types exist only at compile time; runtime JavaScript has no type safety. Validate every external payload (HTTP bodies, query params, environment variables, webhooks) with runtime schemas:
 
 ```typescript
-// Excerpt: routine imports omitted.
+import { z } from 'zod';
+
 export const CreateUserSchema = z.object({
   email: z.string().email().max(255),
   age: z.number().int().min(18).max(120),
@@ -60,7 +61,8 @@ export function parseCreateUser(input: unknown): CreateUserInput {
 When comparing secret tokens, API keys, or HMAC signatures, use constant-time comparison to prevent side-channel timing attacks:
 
 ```typescript
-// Excerpt: routine imports omitted.
+import crypto from 'node:crypto';
+
 export function timingSafeTokenEqual(a: string, b: string): boolean {
   const bufA = Buffer.from(a);
   const bufB = Buffer.from(b);
@@ -91,4 +93,3 @@ export function safeHref(rawUrl: string): string {
   }
 }
 ```
-

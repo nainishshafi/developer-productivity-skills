@@ -101,7 +101,7 @@ db = connect("postgresql://admin:SuperSecret99@db.prod.example.com/mydb")  # pra
 
 **Remediation — use environment variables or a secrets manager:**
 ```python
-# Excerpt: routine imports omitted.
+import os
 API_KEY = os.environ["API_KEY"]
 db = connect(os.environ["DATABASE_URL"])
 ```
@@ -186,7 +186,7 @@ element.insertAdjacentHTML("beforeend", DOMPurify.sanitize(commentHtml));
 return flask.render_template_string(f"<h1>Hello {name}</h1>")
 
 # GOOD — static template file with autoescaping or Django format_html
-# Excerpt: routine imports omitted.
+from django.utils.html import format_html
 safe_html = format_html("<span>{}</span>", user_input)
 return flask.render_template("greeting.html", name=name)
 ```
@@ -263,7 +263,8 @@ cfg = yaml.safe_load(raw_yaml)
 **Remediation:**
 ```python
 # GOOD — allowlist host and require HTTPS before outbound fetch or redirect
-# Excerpt: routine imports omitted.
+from urllib.parse import urlparse
+
 parsed = urlparse(target_url)
 if parsed.scheme != "https" or parsed.hostname not in {"api.example.com"}:
     raise ValueError("Blocked untrusted URL target")
@@ -365,7 +366,7 @@ The audit prompts for each unreviewed secret — answer `n` (not a secret) to ad
 .\.venv\Scripts\python.exe -m detect_secrets scan --baseline .secrets.baseline [files...]
 ```
 
-When a `.secrets.baseline` exists in the repo root, `scan-staged.py` automatically passes `--baseline .secrets.baseline` to detect-secrets.
+When a `.secrets.baseline` exists in the repo root, `scan-staged.py` passes a temporary copy to detect-secrets and filters previously recorded findings. The CLI updates the supplied baseline in place; the wrapper preserves the repository baseline. Do not use the direct command above as a read-only check.
 
 ### Commit the baseline safely
 
@@ -394,10 +395,9 @@ Common sources:
 3. Mark as `n` (not a real secret) when prompted
 4. Commit the updated `.secrets.baseline`
 
-**Alternative — exclude specific files from scanning:**
-```bash
-.\.venv\Scripts\python.exe -m detect_secrets scan --exclude-files "tests/fixtures/.*" > .secrets.baseline
-```
+For a verified dummy value that must remain in a tutorial or test, add a line-specific `pragma: allowlist secret` comment and explain why it is synthetic. Prefer environment-backed credentials in production examples. Describe private-key headers in prose when no actual key material is needed; a quoted header can trigger the private-key detector without representing a leaked key.
+
+Do not exclude whole documentation or test directories, generate an unreviewed baseline, or allowlist real secrets to force a clean result. Re-stage fixes and rerun the same scan scope.
 
 ---
 

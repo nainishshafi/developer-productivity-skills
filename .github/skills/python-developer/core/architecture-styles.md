@@ -20,7 +20,10 @@ Guidance on identifying, choosing, and implementing architectural patterns in mo
 ### A. The Domain & Port (Pure Python, Zero Framework Dependencies)
 ```python
 # domain/models.py
-# Excerpt: routine imports omitted.
+from dataclasses import dataclass
+from datetime import datetime
+from uuid import UUID
+
 @dataclass(slots=True, frozen=True)
 class Account:
     id: UUID
@@ -32,7 +35,7 @@ class Account:
         return self.balance_cents >= amount_cents
 
 # domain/ports.py
-
+from typing import Protocol
 class AccountRepositoryPort(Protocol):
     async def get_by_id(self, account_id: UUID) -> Account | None: ...
     async def update_balance(self, account_id: UUID, new_balance_cents: int) -> None: ...
@@ -41,7 +44,10 @@ class AccountRepositoryPort(Protocol):
 ### B. The Application Service (Orchestration & Business Logic)
 ```python
 # application/transfer_service.py
-# Excerpt: routine imports omitted.
+from uuid import UUID
+from domain.ports import AccountRepositoryPort
+from domain.exceptions import InsufficientFundsError, AccountNotFoundError
+
 class TransferService:
     def __init__(self, repo: AccountRepositoryPort) -> None:
         self._repo = repo
@@ -65,7 +71,11 @@ class TransferService:
 ### C. The Infrastructure Adapter (SQLAlchemy / SQLModel)
 ```python
 # infrastructure/adapters/sql_account_repository.py
-# Excerpt: routine imports omitted.
+from uuid import UUID
+from sqlalchemy.ext.asyncio import AsyncSession
+from domain.models import Account
+from domain.ports import AccountRepositoryPort
+
 class SqlAccountRepository(AccountRepositoryPort):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
@@ -89,4 +99,3 @@ When inspecting an unfamiliar Python codebase:
    - If routers directly call `db.execute()` or import ORM models: Keep changes direct; do not force a multi-layer abstraction.
    - If services and repositories exist: Respect the abstraction layers.
 3. **Dependency Injection**: If FastAPI uses `Depends(get_service)`, follow dependency injection rather than instantiating global state.
-

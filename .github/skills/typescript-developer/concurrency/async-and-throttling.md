@@ -16,7 +16,8 @@ Control asynchronous concurrency, prevent socket/connection exhaustion, and impl
 await Promise.all(recordIds.map(id => syncRecord(id)));
 
 // ✅ BEST PRACTICE: Pool concurrency with p-limit
-// Excerpt: routine imports omitted.
+import pLimit from 'p-limit';
+
 export async function processBatchConcurrently<T, R>(
   items: T[],
   fn: (item: T) => Promise<R>,
@@ -61,4 +62,3 @@ for (const step of migrationSteps) {
   await executeMigrationStep(step);
 }
 ```
-

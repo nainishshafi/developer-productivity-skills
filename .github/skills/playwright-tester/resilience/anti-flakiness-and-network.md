@@ -48,7 +48,8 @@ Logging in through the UI before every single test slows suites down by 10x. Use
 
 ```typescript
 // tests/setup/auth.setup.ts
-// Excerpt: routine imports omitted.
+import { test as setup, expect } from '@playwright/test';
+
 const authFile = 'playwright/.auth/user.json';
 
 setup('authenticate user once', async ({ page }) => {
@@ -95,4 +96,3 @@ test('displays fallback banner when inventory service is unavailable', async ({ 
   // Trigger inventory lookup and assert graceful error state...
 });
 ```
-

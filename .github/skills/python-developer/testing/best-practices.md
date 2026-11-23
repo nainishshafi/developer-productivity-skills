@@ -18,7 +18,10 @@ Avoid over-mocking with `unittest.mock.MagicMock` (which easily silently passes 
 
 ```python
 # tests/fakes/fake_account_repo.py
-# Excerpt: routine imports omitted.
+from uuid import UUID
+from domain.models import Account
+from domain.ports import AccountRepositoryPort
+
 class FakeAccountRepository(AccountRepositoryPort):
     def __init__(self) -> None:
         self.accounts: dict[UUID, Account] = {}
@@ -43,4 +46,3 @@ class FakeAccountRepository(AccountRepositoryPort):
 - Use `scope="function"` (the default) for anything that mutates state (DB transactions, in-memory repositories).
 - Use `scope="session"` only for immutable read-only resources (e.g. running Testcontainer container instance).
 - Always use `yield` in fixtures to ensure teardown runs even when tests fail.
-

@@ -29,7 +29,9 @@ When dealing with complex legacy algorithms with dozens of hidden branching path
 
 ### TypeScript / Vitest / Jest (Snapshot Pinning)
 ```typescript
-// Excerpt: routine imports omitted.
+import { describe, it, expect } from 'vitest';
+import { legacyTaxCalculator } from './legacy-tax-calculator';
+
 describe('LegacyTaxCalculator (Characterization)', () => {
   const testInputs = [
     { country: 'US', state: 'CA', amount: 100, isExempt: false },
@@ -52,7 +54,9 @@ describe('LegacyTaxCalculator (Characterization)', () => {
 
 ### Python (Approval / Golden Master with pytest)
 ```python
-# Excerpt: routine imports omitted.
+import pytest
+from legacy_engine import calculate_discount
+
 INPUT_MATRIX = [
     (0, "STANDARD", False),
     (100, "VIP", False),
@@ -90,4 +94,3 @@ Characterization tests are **scaffolding**. Once:
 3. Parity is proven,
 
 The characterization tests can either be archived or replaced with domain-level acceptance tests.
-

@@ -32,7 +32,10 @@ export const todoKeys = {
 
 ```typescript
 // features/todos/hooks/useTodos.ts
-// Excerpt: routine imports omitted.
+import { useQuery } from '@tanstack/react-query';
+import { todoKeys } from '../queryKeys';
+import { fetchTodos } from '../api';
+
 export function useTodos(status?: string) {
   return useQuery({
     queryKey: todoKeys.list({ status }),
@@ -57,7 +60,10 @@ Provide instant UI responsiveness by updating the query cache immediately and ro
 
 ```typescript
 // features/todos/hooks/useToggleTodo.ts
-// Excerpt: routine imports omitted.
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { todoKeys } from '../queryKeys';
+import { toggleTodoApi, Todo } from '../api';
+
 export function useToggleTodo() {
   const queryClient = useQueryClient();
 
@@ -94,4 +100,3 @@ export function useToggleTodo() {
   });
 }
 ```
-

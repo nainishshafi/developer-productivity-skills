@@ -25,7 +25,8 @@ tests/
 
 ### Configuration: `playwright.config.ts`
 ```typescript
-// Excerpt: routine imports omitted.
+import { defineConfig, devices } from '@playwright/test';
+
 export default defineConfig({
   testDir: './tests/e2e',
   timeout: 30_000,
@@ -69,7 +70,8 @@ addopts = --browser chromium --screenshot only-on-failure --tracing retain-on-fa
 
 ### Test Spec (`tests/test_checkout.py`):
 ```python
-# Excerpt: routine imports omitted.
+from playwright.sync_api import Page, expect
+
 def test_checkout_flow(page: Page):
     page.goto("/checkout")
     page.get_by_label("Shipping Address").fill("123 Main St")
@@ -104,4 +106,3 @@ def test_checkout_flow(page: Page):
   <PackageReference Include="Microsoft.Playwright.NUnit" Version="1.49.0" />
 </ItemGroup>
 ```
-

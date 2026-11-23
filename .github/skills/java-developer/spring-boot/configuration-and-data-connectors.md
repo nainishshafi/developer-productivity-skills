@@ -91,7 +91,13 @@ app:
 ```java
 package com.example.app.reporting.config;
 
-// Excerpt: routine imports omitted.
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
+import org.springframework.validation.annotation.Validated;
+
 @Validated
 @ConfigurationProperties(prefix = "app.datasource.reporting")
 public record ReportingDataSourceProperties(
@@ -112,7 +118,16 @@ public record ReportingDataSourceProperties(
 ```java
 package com.example.app.reporting.config;
 
-// Excerpt: routine imports omitted.
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import javax.sql.DataSource;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+
 @Configuration(proxyBeanMethods = false)
 public class ReportingDataSourceConfig {
 
@@ -154,7 +169,11 @@ Spring resolves constructor dependencies **by type** first. Because this applica
 ```java
 package com.example.app.reporting;
 
-// Excerpt: routine imports omitted.
+import java.util.List;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.stereotype.Repository;
+
 @Repository
 public class ReportingQueryRepository {
 
@@ -259,7 +278,10 @@ When a service orchestrates across different data stores (e.g., primary DB + rep
 ```java
 package com.example.app.reporting;
 
-// Excerpt: routine imports omitted.
+import com.example.app.order.OrderRepository;
+import com.example.app.payment.PaymentGatewayClient;
+import org.springframework.stereotype.Service;
+
 @Service
 public class ReconciliationService {
 
@@ -377,4 +399,3 @@ class ReportingConfigTest {
     }
 }
 ```
-

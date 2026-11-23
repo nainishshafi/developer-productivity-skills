@@ -32,7 +32,8 @@ export function canPromoteToAdmin(user: User): boolean {
 }
 
 // core/ports/user-repository.port.ts
-// Excerpt: routine imports omitted.
+import { User } from '../domain/user.entity';
+
 export interface UserRepositoryPort {
   findById(id: string): Promise<User | null>;
   save(user: User): Promise<void>;
@@ -42,7 +43,9 @@ export interface UserRepositoryPort {
 ### B. The Application Use Case (Coordinates Business Logic)
 ```typescript
 // application/promote-user.use-case.ts
-// Excerpt: routine imports omitted.
+import { UserRepositoryPort } from '../core/ports/user-repository.port';
+import { canPromoteToAdmin, User } from '../core/domain/user.entity';
+
 export class PromoteUserUseCase {
   constructor(private readonly userRepo: UserRepositoryPort) {}
 
@@ -66,7 +69,10 @@ export class PromoteUserUseCase {
 ### C. The Infrastructure Adapter (Prisma / Drizzle / TypeORM)
 ```typescript
 // infra/adapters/prisma-user-repository.ts
-// Excerpt: routine imports omitted.
+import { PrismaClient } from '@prisma/client';
+import { UserRepositoryPort } from '../../core/ports/user-repository.port';
+import { User } from '../../core/domain/user.entity';
+
 export class PrismaUserRepository implements UserRepositoryPort {
   constructor(private readonly prisma: PrismaClient) {}
 
@@ -131,4 +137,3 @@ When inspecting an unfamiliar codebase:
 - **Plugin Registry Over Shotgun-Surgery Unions**: For extensible integrations (adapters, connectors, job boards, providers), avoid closed string unions paired with duplicated alias/handler maps across `types.ts`, `runner.ts`, and `cli.ts`. Export a self-describing plugin object (`{ id, aliases, fetch }`) from each adapter and register it in one canonical `REGISTRY` array.
 - **Externalize Mutable Lists**: Keep company/tenant/board token lists in external JSON config (`config/*.json`) rather than hardcoding them in `.ts` source files.
 - **Static Assets in `tsc` Builds**: `tsc` only compiles `.ts`/`.tsx` files; non-TS assets (e.g., `.sql`, `.json`, templates) loaded at runtime must be explicitly copied in the `build` script.
-

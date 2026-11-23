@@ -19,7 +19,8 @@ handlers = [lambda i=i: i for i in range(5)]
 print([h() for h in handlers])  # [0, 1, 2, 3, 4]
 
 # ✅ BEST PRACTICE 2: Use functools.partial
-# Excerpt: routine imports omitted.
+from functools import partial
+
 def identify(val: int) -> int:
     return val
 
@@ -75,4 +76,3 @@ def with_audit(large_context: ContextWithBuffers):
         return wrapper
     return decorator
 ```
-

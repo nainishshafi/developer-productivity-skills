@@ -63,7 +63,10 @@ A chunk reading *"Latency increased by 40% after the v2.4 migration"* fails retr
 Re-embedding an entire corpus on every CI deploy wastes compute and causes transient search outages if chunks are deleted before replacements land.
 
 ```python
-# Excerpt: routine imports omitted.
+import hashlib
+from dataclasses import dataclass
+
+
 @dataclass(frozen=True, slots=True)
 class ChunkRecord:
     chunk_id: str
@@ -92,4 +95,3 @@ def build_chunk_id(doc_id: str, chunk_index: int, content_hash: str) -> str:
 2. **Skip Unchanged Documents**: Compare incoming `(doc_id, doc_hash)` against stored ingestion state; skip unmodified files completely.
 3. **Batch Embed & Upsert**: Embed changed chunks in bounded batches (e.g., 64–128 chunks/request with exponential backoff on 429s) and upsert with `doc_version = new_version`.
 4. **Tombstone Sweep**: Inside a transaction, `DELETE FROM rag_chunks WHERE doc_id = :doc_id AND doc_version <> :new_version` so users never see partial or missing search results during re-indexing.
-

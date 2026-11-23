@@ -86,7 +86,9 @@ Java 22+ introduces the **Foreign Function & Memory API (JEP 454)**, providing s
 
 ### Using `Arena` and `MemorySegment` (Java 22+)
 ```java
-// Excerpt: routine imports omitted.
+import java.lang.foreign.*;
+import java.lang.invoke.VarHandle;
+
 public class OffHeapRingBuffer implements AutoCloseable {
     private final Arena arena;
     private final MemorySegment segment;
@@ -121,7 +123,11 @@ public class OffHeapRingBuffer implements AutoCloseable {
 ### Memory-Mapped Files with FFM
 Zero-copy persistence directly mapped to operating system virtual memory:
 ```java
-// Excerpt: routine imports omitted.
+import java.lang.foreign.*;
+import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+
 public class MemoryMappedJournal {
     public static void mapJournal(Path path, long sizeBytes) throws Exception {
         try (var channel = FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
@@ -179,4 +185,3 @@ For ultra-fast communication between independent JVM processes on the same machi
 - **Microsecond Latency**: Writing a message takes $< 100$ nanoseconds; reading takes $< 100$ nanoseconds.
 - **Persistence for Free**: Because the queue is mapped directly to a file, every message is inherently recorded to disk while remaining in OS page cache.
 - **Multi-Process Sharing**: One JVM writes to the queue; another JVM tail-reads it immediately via shared memory without network serialization.
-

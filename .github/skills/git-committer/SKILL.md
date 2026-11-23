@@ -1,7 +1,7 @@
 ---
 name: git-committer
 description: Creates conventional Git commits and handles pre-commit outcomes. Use when asked to git commit, commit changes, or update the git-committer skill.
-version: 1.2.4
+version: 1.2.5
 ---
 
 # Git Committer
@@ -19,12 +19,13 @@ version: 1.2.4
 ### 0. Check for a Recycle Bin report
 Use `git --no-optional-locks status --short` for status checks so inspection does not refresh the index on disk.
 
-If a Recycle Bin report names only this repository's `index.lock`, pause writes and let any running Git command finish. Verify HEAD, staged changes, and working-tree status against the expected state. Resolve the index with `git rev-parse --path-format=absolute --git-path index`; its sibling `<index>.lock` must be absent. If the intended commit exists, report it. If the checks match and the last write did not fail, continue the normal workflow with hooks and signing enabled. If the report accompanied a failed write, stop rather than retrying it.
+If a Recycle Bin report names Git metadata, pause writes and let any running Git command finish. Verify live HEAD, staged changes, and working-tree status against the expected state. Resolve the live index with `git rev-parse --path-format=absolute --git-path index`; the index must exist and its sibling `<index>.lock` must be absent. If the intended commit exists, report it without retrying. A report alone establishes neither corruption nor the cause of a failed command.
 
-Stop writes if a report names any other Git metadata, a lock remains, or the read-only checks fail or show unexpected changes. Report the specific blocker. Never delete or restore Git metadata or switch tools to bypass a stop.
+Stop writes if live metadata is missing, a lock remains, checks fail or show unexpected changes, or the tool prohibits further writes. Otherwise, continue within the user's authorization after diagnosing any failed command and fixing its confirmed cause. Never access or restore recycled items, delete Git metadata, or switch tools to bypass a restriction.
 
 ### 1. Check Staged Files
 Review status, staged and unstaged diffs, and recent commit messages. Stage only the intended paths, verify the staged diff, and leave unrelated edits and generated files alone.
+The hook checks selected staged paths, not all pending edits or repository history. When asked to commit everything, verify the complete pending scope before scanning; do not report repository-wide coverage from a staged scan.
 
 ### 2. Check Identity and Record HEAD
 Verify the effective identity with `git var GIT_AUTHOR_IDENT` and note the current commit before attempting a commit. An unborn branch has no current commit.
@@ -68,6 +69,7 @@ Check `git log -1` and `git status --short` after the attempt. If the command ti
 Report whether the commit output confirmed a hook scan or a direct staged scan ran. Do not infer that the hook ran from commit success alone.
 
 If no commit was created, distinguish a blocking finding from a hook or scanner failure. Fix the reported cause before retrying. When the hook reports built-in fallback after a Semgrep timeout, report the fallback result, not a Semgrep pass. See the reference for recovery details.
+If error output is unavailable, isolate the hook and scanner components before another commit attempt. Report a direct component result only for that component; a detect-secrets pass does not establish Semgrep or full-hook completion.
 
 ## Resources
 

@@ -28,7 +28,11 @@ When running Django under ASGI (Uvicorn/Daphne) with `async def` views, synchron
 
 ```python
 # apps/common/middleware.py
-# Excerpt: routine imports omitted.
+import time
+import uuid
+from asgiref.sync import iscoroutinefunction
+from django.utils.decorators import sync_and_async_middleware
+
 @sync_and_async_middleware
 def RequestContextMiddleware(get_response):
     if iscoroutinefunction(get_response):
@@ -62,7 +66,10 @@ Keep service modules decoupled from HTTP by raising pure domain exceptions (`Dom
 ### Django REST Framework (`EXCEPTION_HANDLER`)
 ```python
 # apps/common/exceptions.py
-# Excerpt: routine imports omitted.
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import exception_handler
+
 class DomainError(Exception):
     def __init__(self, message: str, code: str = "DOMAIN_ERROR", status_code: int = 400) -> None:
         self.message = message
@@ -110,7 +117,10 @@ REST_FRAMEWORK = {
 ### Django Ninja (`@api.exception_handler`)
 ```python
 # config/api.py
-# Excerpt: routine imports omitted.
+from ninja import NinjaAPI
+from ninja.security import HttpBearer
+from apps.common.exceptions import DomainError
+
 class BearerAuth(HttpBearer):
     def authenticate(self, request, token: str):
         # Validate JWT/token and return user or None
@@ -171,4 +181,3 @@ In `config/settings/production.py`, avoid opening a fresh TCP/TLS connection on 
 - **Async Views & Django Async ORM (`a-` methods)**: [event-loop-hygiene.md](../async-and-concurrency/event-loop-hygiene.md)
 - **ORMs & Connection Pooling**: [orms-and-migrations.md](../persistence/orms-and-migrations.md)
 - **Automated API Testing (`pytest-django`)**: [api-testing-patterns.md](../testing/api-testing-patterns.md)
-

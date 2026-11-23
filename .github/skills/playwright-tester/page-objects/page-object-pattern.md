@@ -24,7 +24,9 @@ Always select locators matching how real users interact with the page (accessibi
 
 ```typescript
 // tests/pages/CheckoutPage.ts
-// Excerpt: routine imports omitted.
+import { type Page, type Locator } from '@playwright/test';
+import { BasePage } from './BasePage';
+
 export class CheckoutPage extends BasePage {
   // 1. Expose locators as readonly properties using resilient selectors
   readonly totalAmount: Locator;
@@ -62,7 +64,10 @@ Never instantiate Page Objects manually inside every test. Inject them as Playwr
 
 ```typescript
 // tests/fixtures/testFixtures.ts
-// Excerpt: routine imports omitted.
+import { test as base } from '@playwright/test';
+import { LoginPage } from '../pages/LoginPage';
+import { CheckoutPage } from '../pages/CheckoutPage';
+
 type CustomPages = {
   loginPage: LoginPage;
   checkoutPage: CheckoutPage;
@@ -88,7 +93,10 @@ export { expect } from '@playwright/test';
 // src/test/java/com/example/e2e/pages/CheckoutPage.java
 package com.example.e2e.pages;
 
-// Excerpt: routine imports omitted.
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
+
 public class CheckoutPage {
     private final Page page;
     public final Locator totalAmount;
@@ -121,7 +129,9 @@ public class CheckoutPage {
 
 ```csharp
 // Pages/CheckoutPage.cs
-// Excerpt: routine imports omitted.
+using System.Threading.Tasks;
+using Microsoft.Playwright;
+
 namespace MyE2eTests.Pages
 {
     public class CheckoutPage
@@ -154,4 +164,3 @@ namespace MyE2eTests.Pages
     }
 }
 ```
-

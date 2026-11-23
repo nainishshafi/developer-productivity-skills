@@ -80,7 +80,8 @@ END get_customer_orders;
 
 ### Consuming `SYS_REFCURSOR` in Node.js `oracledb` Thin Client
 ```typescript
-// Excerpt: routine imports omitted.
+import oracledb from 'oracledb';
+
 async function fetchCustomerOrders(connection: oracledb.Connection, customerId: number) {
   const result = await connection.execute<{ p_cursor: oracledb.ResultSet<any> }>(
     `BEGIN get_customer_orders(:p_customer_id, :p_cursor); END;`,

@@ -28,7 +28,7 @@ export default async function ProductPage() { ... } // Loses all RSC benefits!
 
 // ✅ BEST PRACTICE: Server Component page importing interactive client leaf
 // app/products/[id]/page.tsx (Server Component)
-// Excerpt: routine imports omitted.
+import { db } from '@/lib/db';
 import { AddToCartButton } from './AddToCartButton'; // 'use client'
 
 export default async function ProductPage({ params }: { params: { id: string } }) {
@@ -53,7 +53,10 @@ export default async function ProductPage({ params }: { params: { id: string } }
 Break slow-loading parts of the page into Suspense boundaries so the initial page shell renders instantly:
 
 ```tsx
-// Excerpt: routine imports omitted.
+import { Suspense } from 'react';
+import { ProductSkeleton } from '@/components/skeletons';
+import { ProductReviews } from './ProductReviews';
+
 export default function Page() {
   return (
     <div>
@@ -66,4 +69,3 @@ export default function Page() {
   );
 }
 ```
-

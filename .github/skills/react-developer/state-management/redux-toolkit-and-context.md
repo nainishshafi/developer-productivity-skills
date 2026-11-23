@@ -60,7 +60,8 @@ For complex relational client data, avoid deeply nested arrays. Use `createEntit
 
 ```typescript
 // features/users/usersSlice.ts
-// Excerpt: routine imports omitted.
+import { createSlice, createEntityAdapter, PayloadAction } from '@reduxjs/toolkit';
+
 export interface UserEntity {
   id: string;
   name: string;
@@ -93,4 +94,3 @@ export const usersSlice = createSlice({
 export const { selectAll: selectAllUsers, selectById: selectUserById } =
   usersAdapter.getSelectors((state: any) => state.users);
 ```
-

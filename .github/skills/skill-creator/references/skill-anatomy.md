@@ -309,7 +309,8 @@ echo "$result"
 
 ```python
 #!/usr/bin/env python3
-# Excerpt: routine imports omitted.
+import sys
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: script.py <arg>", file=sys.stderr)

@@ -83,7 +83,8 @@ export function GoodSearch({ query }: { query: string }) {
 Instead of rolling manual `useEffect` + `useState` subscriptions to window events or external publishers (which suffer from tearing in concurrent React and memory leak risks), use React 18+'s `useSyncExternalStore`:
 
 ```tsx
-// Excerpt: routine imports omitted.
+import { useSyncExternalStore } from 'react';
+
 function subscribeOnlineStatus(callback: () => void) {
   window.addEventListener('online', callback);
   window.addEventListener('offline', callback);

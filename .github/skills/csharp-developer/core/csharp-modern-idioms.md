@@ -100,7 +100,8 @@ public static decimal CalculateTax(Order order) => order switch
 For read-only lookup dictionaries or sets configured at application startup, use `FrozenDictionary` and `FrozenSet`. They optimize memory layout and hash lookups for maximum read performance:
 
 ```csharp
-// Excerpt: routine imports omitted.
+using System.Collections.Frozen;
+
 public class CountryRegistry
 {
     // Read operations are 2-3x faster than standard Dictionary
@@ -115,4 +116,3 @@ public class CountryRegistry
     public static CountryInfo? Find(string code) => Countries.GetValueOrDefault(code);
 }
 ```
-

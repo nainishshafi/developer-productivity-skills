@@ -84,7 +84,8 @@ def get_user(user_id: str):
     return user_cache[user_id]
 
 # ✅ GOOD: Bounded TTL cache with automatic eviction
-# Excerpt: routine imports omitted.
+from cachetools import TTLCache
+
 user_cache = TTLCache(maxsize=10_000, ttl=900)
 
 def get_user(user_id: str):
@@ -92,4 +93,3 @@ def get_user(user_id: str):
         user_cache[user_id] = query_db(user_id)
     return user_cache[user_id]
 ```
-

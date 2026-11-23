@@ -18,7 +18,9 @@ Comprehensive architectural guidance for Python (3.10–3.13) when designing and
 ## 2. In-Memory Caching with `cachetools`
 
 ```python
-# Excerpt: routine imports omitted.
+from cachetools import TTLCache, cached
+import threading
+
 # Thread-safe TTL cache: max 5,000 items, expires in 10 minutes
 cache_lock = threading.RLock()
 api_cache = TTLCache(maxsize=5000, ttl=600)
@@ -34,7 +36,8 @@ def get_user_permissions(user_id: str) -> frozenset[str]:
 ## 3. High-Throughput Async Redis & Lua Execution with `redis.asyncio`
 
 ```python
-# Excerpt: routine imports omitted.
+import redis.asyncio as aioredis
+
 # Always share a single ConnectionPool across the application lifecycle
 pool = aioredis.ConnectionPool(
     host="localhost",
@@ -77,7 +80,9 @@ For FastAPI and asyncio applications, `Arq` avoids the heavy thread/process over
 
 ```python
 # worker.py
-# Excerpt: routine imports omitted.
+from arq import create_pool
+from arq.connections import RedisSettings
+
 async def send_welcome_email(ctx, user_id: str, email: str) -> None:
     # Asynchronous task logic
     await mailer_client.send(to=email, template="welcome")
@@ -98,7 +103,10 @@ class WorkerSettings:
 ## 5. Kafka High-Throughput Consumer with `confluent-kafka`
 
 ```python
-# Excerpt: routine imports omitted.
+from confluent_kafka import Consumer, KafkaError, KafkaException
+import json
+import logging
+
 logger = logging.getLogger(__name__)
 
 conf = {
@@ -138,4 +146,3 @@ def run_consumer_loop():
     finally:
         consumer.close()
 ```
-

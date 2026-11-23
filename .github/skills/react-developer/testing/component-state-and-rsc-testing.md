@@ -10,8 +10,10 @@ Never share a singleton `QueryClient` across tests—cached entries and backgrou
 
 ```tsx
 // tests/test-utils.tsx
-// Excerpt: routine imports omitted.
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, type RenderOptions } from '@testing-library/react';
 import type { ReactElement, ReactNode } from 'react';
+import { MemoryRouter, type MemoryRouterProps } from 'react-router-dom';
 
 interface ProviderOptions extends Omit<RenderOptions, 'wrapper'> {
   initialEntries?: MemoryRouterProps['initialEntries'];
@@ -54,7 +56,13 @@ export function renderWithProviders(
 Pair `renderWithProviders` with MSW v2 overrides to test loading $\to$ success $\to$ optimistic update $\to$ server rollback:
 
 ```tsx
-// Excerpt: routine imports omitted.
+import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
+import { server } from '../mocks/server';
+import { renderWithProviders } from '../test-utils';
+import { TodoList } from './TodoList';
+
 test('rolls back optimistic toggle when PATCH fails', async () => {
   const user = userEvent.setup();
   server.use(
@@ -87,7 +95,9 @@ Run component tests against the **real** Zustand store instead of mocking `useSt
 
 ```typescript
 // stores/cartStore.test.ts
-// Excerpt: routine imports omitted.
+import { beforeEach, expect, test } from 'vitest';
+import { useCartStore } from './cartStore';
+
 const initialState = useCartStore.getInitialState();
 
 beforeEach(() => {
@@ -110,7 +120,10 @@ test('adds item and computes total price', () => {
 Test pending states by controlling an unresolved promise inside the mocked action or MSW handler, then resolving it:
 
 ```tsx
-// Excerpt: routine imports omitted.
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { ProfileNameForm } from './ProfileNameForm';
+
 test('disables submit button while action is pending and renders server result', async () => {
   const user = userEvent.setup();
   let resolveAction!: (msg: string) => void;
@@ -163,7 +176,10 @@ test('renders ErrorBoundary fallback when child throws', () => {
 
 ```tsx
 // app/users/[id]/page.test.tsx
-// Excerpt: routine imports omitted.
+import { render, screen } from '@testing-library/react';
+import { expect, test, vi } from 'vitest';
+import UserProfilePage from './page';
+
 vi.mock('@/lib/users', () => ({
   getUserById: vi.fn().mockResolvedValue({ id: '1', name: 'Grace Hopper' }),
 }));
@@ -183,7 +199,11 @@ test('renders async Server Component output', async () => {
 Add automated WCAG checks to interactive components (forms, dialogs, menus, tabs) alongside keyboard interaction tests:
 
 ```tsx
-// Excerpt: routine imports omitted.
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { axe } from 'vitest-axe';
+import { ConfirmModal } from './ConfirmModal';
+
 test('modal has no axe violations and closes on Escape', async () => {
   const user = userEvent.setup();
   const onClose = vi.fn();
@@ -200,4 +220,3 @@ test('modal has no axe violations and closes on Escape', async () => {
   expect(onClose).toHaveBeenCalledTimes(1);
 });
 ```
-

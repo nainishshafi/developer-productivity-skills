@@ -22,7 +22,10 @@ Modern Python APIs use either **SQLAlchemy 2.0** (standard for FastAPI and async
 In SQLAlchemy 2.0, the legacy 1.x `session.query(Model)` syntax is deprecated in favor of explicit `select()` statements:
 
 ```python
-# Excerpt: routine imports omitted.
+from sqlalchemy import select, String, ForeignKey
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, selectinload, joinedload
+from sqlalchemy.ext.asyncio import AsyncSession
+
 class Base(DeclarativeBase):
     pass
 
@@ -67,7 +70,9 @@ order = result.scalar_one_or_none()
 An incorrectly sized connection pool either exhausts database server connections or starves API worker threads.
 
 ```python
-# Excerpt: routine imports omitted.
+from sqlalchemy.ext.asyncio import create_async_engine
+import os
+
 engine = create_async_engine(
     os.environ["DATABASE_URL"],
     pool_size=20,           # Steady-state open connections per worker process

@@ -1,7 +1,7 @@
 ---
 name: github-security-scanner-hook
 description: Use when the user asks to "scan for security vulnerabilities", "check for secrets in code", "set up a pre-commit security hook", "install security scanning", "scan staged files for secrets", "check for hardcoded credentials", "run a security scan before commit", "detect leaked API keys", "add a git commit hook for security", "security check before push", "scan for SQL injection", "check for XSS vulnerabilities", "check for prompt injection", "scan for SSTI", "check for unsafe deserialization", "scan for SSRF", "detect weak cryptography", "detect injection flaws", "check for command injection", "audit subprocess security", or wants to prevent committing security issues to git.
-version: 1.4.4
+version: 1.4.5
 ---
 
 # GitHub Security Scanner Hook
@@ -29,6 +29,7 @@ Both `detect-secrets` and `semgrep` are optional independently. If either is una
 ### Step 2 — Run Security Scan on Staged Files
 
 Run `scan-staged.py` to check all currently staged files:
+The default mode selects paths from the index and scans their entire working-tree contents. It excludes unstaged-only paths and does not scan only added lines or commit history. For partially staged files, reconcile unstaged edits before treating the result as evidence about the final commit.
 
 ```bash
 $PYTHON .github/skills/github-security-scanner-hook/scripts/scan-staged.py
@@ -39,6 +40,7 @@ To scan the entire repository instead of only staged files:
 ```bash
 $PYTHON .github/skills/github-security-scanner-hook/scripts/scan-staged.py --full-repo
 ```
+`--full-repo` covers tracked paths, not untracked files or history. State the scanned scope explicitly; a successful earlier commit does not certify documents excluded from that commit's staged scan.
 
 The script prints a JSON summary to stdout and exits with:
 - **Exit code 0** — no findings (clean)
@@ -91,12 +93,13 @@ For each HIGH or MEDIUM finding the user wants to fix:
 6. **For SQL/NoSQL, Command/Code Injection & Unsafe Deserialization:** Use parameterized queries (`?` / `$1` / `ExecuteSqlInterpolated`), replace MongoDB `$where`, use `subprocess.run([...], shell=False)` / `execFile()` / `spawn(..., { shell: false })`, eliminate `Invoke-Expression`, remove `eval()`/`exec()`/`new Function()`, and replace `pickle.loads()`/`yaml.load()` with JSON or `yaml.safe_load()`
 7. **For SSRF, Open Redirects, Weak Crypto & TLS Bypass:** Allowlist HTTPS schemes/hosts and block private/link-local IPs for outbound requests and redirects, replace MD5/SHA-1 with SHA-256 or argon2/bcrypt/scrypt, and remove `verify=False` / `rejectUnauthorized: false` / `NODE_TLS_REJECT_UNAUTHORIZED=0`
 8. **For hardcoded personal filesystem paths / PII & env leaks:** Scrub `process.env`/`os.environ` before spawning subprocesses, constrain paths inside allowed base directories, and replace machine-specific user directory paths with portable relative paths (`./`) or generic placeholders (`/path/to/...`)
-9. **For false positives:** Add secrets to `.secrets.baseline` using `$PYTHON -m detect_secrets audit .secrets.baseline`, or suppress reviewed code patterns inline with `# nosemgrep`
+9. **For false positives:** Verify the flagged value is synthetic before suppressing it. Prefer environment lookups in production examples. For intentional dummy values, use a line-specific `pragma: allowlist secret` comment with a reason; audit an existing `.secrets.baseline` for reviewed secret findings, or use a rule-specific `nosemgrep` comment for code findings. Never allowlist real credentials or exclude entire documentation/test trees merely to obtain a pass.
 10. Re-stage the fixed files and re-run Step 2 to confirm all HIGH findings are resolved
 
 ## Audit Guardrails
 
 - Never rely solely on manual visual inspection for security sign-off; always execute `scan-staged.py` (running `detect-secrets`, bundled `semgrep` rules, or built-in fallback rules) against the actual staged files or git diff.
+- If only one scanner component completes, name that component and its result; do not claim a complete security scan or Semgrep pass from detect-secrets output or commit success.
 
 ## Additional Resources
 
@@ -104,3 +107,4 @@ For each HIGH or MEDIUM finding the user wants to fix:
 - **`rules/security.yml`** — Bundled Semgrep rules (53 rules) covering SQL/NoSQL injection, command/shell injection, XSS & SSTI, prompt injection & stealth Unicode, code injection & unsafe deserialization, path traversal & destructive FS, SSRF & open redirects, weak crypto & TLS bypass, subprocess env leaks, and hardcoded personal paths across Python, JS/TS, Go, C#, PowerShell, and generic files
 - **`scripts/scan-staged.py`** — Scans staged (or all tracked) files using `detect-secrets`, `semgrep`, and zero-dependency built-in fallback/prompt-injection rules; outputs structured JSON with findings and severity summary
 - **`scripts/install-hook.py`** — Installs or extends the git pre-commit hook to automate scanning on every future commit
+- **`scripts/test_pre_commit.py`** — Regression tests for scanner execution and hook installation

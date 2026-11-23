@@ -33,7 +33,9 @@ Pydantic v2 is powered by `pydantic-core` (written in Rust), offering $5\text{--
 Prefer modern `typing.Annotated` with `Field` over legacy default parameters for cleaner, reusable constraints:
 
 ```python
-# Excerpt: routine imports omitted.
+from typing import Annotated
+from pydantic import BaseModel, Field, EmailStr, HttpUrl
+
 Username = Annotated[
     str, 
     Field(min_length=3, max_length=30, pattern=r"^[a-zA-Z0-9_-]+$", description="Alphanumeric username")
@@ -52,7 +54,8 @@ class ProductCreate(BaseModel):
 Use `@field_validator` for single-field transformations and domain sanitization:
 
 ```python
-# Excerpt: routine imports omitted.
+from pydantic import BaseModel, field_validator
+
 class UserRegistration(BaseModel):
     email: str
     phone: str
@@ -81,7 +84,9 @@ class UserRegistration(BaseModel):
 Use `@model_validator` when validation depends on multiple fields simultaneously (e.g., date ranges, password confirmation):
 
 ```python
-# Excerpt: routine imports omitted.
+from pydantic import BaseModel, model_validator
+from datetime import date
+
 class BookingRequest(BaseModel):
     check_in: date
     check_out: date
@@ -103,7 +108,8 @@ class BookingRequest(BaseModel):
 Calculate derived fields dynamically for response schemas without saving redundant data in the database:
 
 ```python
-# Excerpt: routine imports omitted.
+from pydantic import BaseModel, computed_field
+
 class OrderResponse(BaseModel):
     id: int
     subtotal_cents: int
@@ -125,7 +131,9 @@ class OrderResponse(BaseModel):
 To serialize SQLAlchemy or Tortoise models into Pydantic response models, set `from_attributes = True` in `model_config`:
 
 ```python
-# Excerpt: routine imports omitted.
+from pydantic import BaseModel, ConfigDict
+from datetime import datetime
+
 class CustomerOut(BaseModel):
     id: int
     email: str
@@ -142,7 +150,9 @@ class CustomerOut(BaseModel):
 When an endpoint accepts multiple variations of a message or payment type, use **Discriminated Unions** instead of loose dictionaries or optional fields:
 
 ```python
-# Excerpt: routine imports omitted.
+from typing import Literal, Annotated, Union
+from pydantic import BaseModel, Field
+
 class CreditCardPayment(BaseModel):
     method: Literal["credit_card"]
     card_token: str
@@ -185,7 +195,10 @@ flowchart TD
 
 ### Clean DRF Serializer Pattern
 ```python
-# Excerpt: routine imports omitted.
+from rest_framework import serializers
+from django.utils import timezone
+from .models import Subscription
+
 class SubscriptionSerializer(serializers.ModelSerializer):
     tier = serializers.ChoiceField(choices=["starter", "pro", "enterprise"])
     referral_code = serializers.CharField(required=False, allow_blank=True, max_length=20)
@@ -216,7 +229,9 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 Clients can submit 50 MB JSON payloads to cause high CPU parsing overhead and RAM exhaustion. Add a request size limit middleware:
 
 ```python
-# Excerpt: routine imports omitted.
+from fastapi import Request, HTTPException, status
+from starlette.middleware.base import BaseHTTPMiddleware
+
 class ContentLengthLimitMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, max_upload_size_bytes: int = 2 * 1024 * 1024):  # 2 MB default
         super().__init__(app)
@@ -235,10 +250,11 @@ class ContentLengthLimitMiddleware(BaseHTTPMiddleware):
 ### 2. Strict Collection Sizing
 Never accept unbounded lists of IDs or objects:
 ```python
-# Excerpt: routine imports omitted.
+from typing import Annotated
+from pydantic import BaseModel, Field
+
 class BulkTagAssignRequest(BaseModel):
     # Enforces minimum 1 and maximum 100 elements to prevent DoS via massive batch sizes
     user_ids: Annotated[list[int], Field(min_length=1, max_length=100)]
     tag: Annotated[str, Field(min_length=2, max_length=30)]
 ```
-

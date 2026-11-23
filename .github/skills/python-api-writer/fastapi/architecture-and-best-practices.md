@@ -9,7 +9,10 @@ FastAPI is an asynchronous, high-performance web framework based on Starlette an
 FastAPI deprecated `@app.on_event("startup")` and `@app.on_event("shutdown")`. Always use the **Lifespan Context Manager** pattern with `contextlib.asynccontextmanager`:
 
 ```python
-# Excerpt: routine imports omitted.
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+import logging
+
 logger = logging.getLogger(__name__)
 
 @asynccontextmanager
@@ -72,7 +75,12 @@ src/
 
 ```python
 # src/modules/orders/router.py
-# Excerpt: routine imports omitted.
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from src.core.database import get_db_session
+from src.modules.orders.schemas import OrderCreate, OrderResponse
+from src.modules.orders import service
+
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
 @router.post(
@@ -97,7 +105,10 @@ Dependency Injection in FastAPI ensures database connections are automatically o
 
 ```python
 # src/core/database.py
-# Excerpt: routine imports omitted.
+from collections.abc import AsyncGenerator
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+import os
+
 engine = create_async_engine(
     os.environ["DATABASE_URL"],
     pool_size=20,
@@ -124,7 +135,8 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
 FastAPI includes a built-in `BackgroundTasks` parameter, but its scope is often misunderstood:
 
 ```python
-# Excerpt: routine imports omitted.
+from fastapi import BackgroundTasks
+
 @router.post("/send-receipt")
 async def send_receipt(order_id: str, bg_tasks: BackgroundTasks):
     # OK for: Lightweight, non-critical in-process tasks (e.g. logging metrics, fire-and-forget emails)
@@ -142,7 +154,9 @@ async def send_receipt(order_id: str, bg_tasks: BackgroundTasks):
 FastAPI makes streaming token-by-token output straightforward:
 
 ```python
-# Excerpt: routine imports omitted.
+from fastapi.responses import StreamingResponse
+from collections.abc import AsyncGenerator
+
 async def token_generator(prompt: str) -> AsyncGenerator[str, None]:
     async for chunk in llm_client.stream(prompt):
         yield f"data: {chunk.content}\n\n"

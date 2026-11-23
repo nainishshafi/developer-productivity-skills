@@ -31,7 +31,9 @@ Enterprise desktop and mobile client architectures using Model-View-ViewModel an
 Replace hundreds of lines of boilerplate `INotifyPropertyChanged` and `ICommand` backing fields with source generators:
 
 ```csharp
-// Excerpt: routine imports omitted.
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
 public partial class UserProfileViewModel : ObservableObject
 {
     private readonly IUserService _userService;
@@ -172,4 +174,3 @@ Connect Views and ViewModels cleanly with Dependency Injection:
     </StackPanel>
 </UserControl>
 ```
-

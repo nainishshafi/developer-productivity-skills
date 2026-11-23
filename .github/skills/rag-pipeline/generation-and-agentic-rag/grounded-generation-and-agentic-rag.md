@@ -28,7 +28,10 @@ Never force the LLM to answer from garbage chunks when the retrieval pipeline re
 
 ### Structured Citation Contract (Pydantic v2)
 ```python
-# Excerpt: routine imports omitted.
+from typing import Literal
+from pydantic import BaseModel, Field
+
+
 class Citation(BaseModel):
     source_id: str = Field(min_length=1)
     source_uri: str = Field(min_length=1)
@@ -76,7 +79,11 @@ Keep agentic loops **bounded** (max 2–3 retrieval hops) to avoid unbounded lat
 Pair with [`python-api-writer`](file:///.github/skills/python-api-writer/SKILL.md) and [`caching-queues-reviewer`](file:///.github/skills/caching-queues-reviewer/SKILL.md) for non-blocking async I/O and bounded caches:
 
 ```python
-# Excerpt: routine imports omitted.
+import json
+from collections.abc import AsyncIterator
+from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
+
 router = APIRouter(prefix="/rag", tags=["RAG"])
 
 
@@ -119,4 +126,3 @@ async def query_rag_stream(
 ### Two-Tier RAG Caching Discipline
 1. **Query Embedding Cache**: Key `sha256(embedding_model + ":" + normalized_query)` in Redis with TTL (e.g., 24h) to eliminate redundant embedding API latency on repeated queries.
 2. **ACL-Scoped Retrieval / Answer Cache**: Always include `(tenant_id, sorted(user_groups), corpus_version)` inside the cache key! Never serve a cached RAG answer from Tenant A or Admin Group to Tenant B or Guest Group.
-

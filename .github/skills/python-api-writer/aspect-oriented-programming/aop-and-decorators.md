@@ -34,7 +34,13 @@ flowchart TD
 
 ### Universal Dual Async/Sync AOP Decorator Pattern
 ```python
-# Excerpt: routine imports omitted.
+import functools
+import inspect
+import time
+import logging
+from collections.abc import Callable
+from typing import Any, TypeVar
+
 logger = logging.getLogger("audit")
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -87,7 +93,9 @@ Avoid writing manual `for attempt in range(...)` loops across external HTTP/data
 
 ```python
 # Using Tenacity (Industry-standard AOP retry library)
-# Excerpt: routine imports omitted.
+from tenacity import retry, stop_after_attempt, wait_exponential_jitter, retry_if_exception_type
+import httpx
+
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential_jitter(initial=1, max=10, jitter=1),
@@ -106,7 +114,11 @@ async def fetch_exchange_rates(currency: str) -> dict:
 Encapsulate caching logic entirely in an aspect, leaving the service function clean:
 
 ```python
-# Excerpt: routine imports omitted.
+import functools
+import hashlib
+import json
+from typing import Any, Callable
+
 def cache_response(key_prefix: str, ttl_seconds: int = 300):
     """AOP Cache Aspect: Intercepts call, checks Redis, returns or caches result."""
     def decorator(func: Callable):
@@ -146,7 +158,10 @@ Django provides native decorators for view protection and transaction boundaries
 
 ### Function-Based Views (FBVs):
 ```python
-# Excerpt: routine imports omitted.
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required, permission_required
+from django.db import transaction
+
 @require_http_methods(["POST"])
 @login_required
 @permission_required("orders.add_order", raise_exception=True)
@@ -160,7 +175,9 @@ def create_order_view(request):
 In Django Class-Based Views, decorators cannot be applied directly to methods like `get()` or `post()` because the first argument is `self`, not `request`. Use `@method_decorator`:
 
 ```python
-# Excerpt: routine imports omitted.
+from django.utils.decorators import method_decorator
+from django.views import View
+
 # Apply to a single method:
 class OrderDashboardView(View):
     @method_decorator(login_required)
@@ -184,4 +201,3 @@ class CheckoutView(View):
 1. **Hidden Control Flow**: Do not use decorators to secretly mutate function arguments without documenting it; this creates confusing, un-debuggable "magic".
 2. **Double-Execution Trap in Retry Decorators**: Ensure functions wrapped with retry aspects are strictly **idempotent**. Retrying a non-idempotent operation (e.g. charging a credit card without an idempotency key) causes duplicate charges.
 3. **The FastAPI Signature Eraser**: When wrapping a FastAPI route handler with a custom decorator, always use `@functools.wraps(func)`. If FastAPI sees generic `*args, **kwargs`, it cannot generate query parameters in OpenAPI documentation.
-

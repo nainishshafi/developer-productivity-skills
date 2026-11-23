@@ -127,7 +127,9 @@ Over-engineering occurs when software is designed to solve hypothetical problems
 
 #### Before (Over-Engineered — 65 LOC, 4 classes, 1 interface)
 ```python
-# Excerpt: routine imports omitted.
+from abc import ABC, abstractmethod
+from typing import Dict
+
 class DiscountStrategy(ABC):
     @abstractmethod
     def calculate(self, price: float) -> float:
