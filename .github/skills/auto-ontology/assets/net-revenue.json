@@ -1,0 +1,16 @@
+{
+  "schema": {
+    "orders": ["order_id", "subtotal", "booked_at"],
+    "refunds": ["refund_id", "order_id", "amount", "status"]
+  },
+  "metric": {
+    "name": "Net revenue",
+    "owner": "Finance (synthetic example)",
+    "grain": "Fiscal quarter of the order booking",
+    "calculation": "Sum pretax order subtotals minus completed refunds aggregated per order; retain orders with no refunds.",
+    "columns": ["orders.subtotal", "orders.booked_at", "refunds.amount", "refunds.status"],
+    "joins": [
+      {"left": "orders.order_id", "right": "refunds.order_id", "cardinality": "one-to-many"}
+    ]
+  }
+}

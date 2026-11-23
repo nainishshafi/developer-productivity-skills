@@ -45,6 +45,7 @@ These skills provide ready-made workflows for modern software engineering across
 | [`design-pattern-detector`](#design-pattern-detector) | **Architecture & Quality** | Structural AST extraction of design patterns & anti-patterns | `"detect design patterns"` |
 | [`architectural-planning`](#architectural-planning) | **Architecture & Quality** | Interactive system design, Mermaid specs, ADRs & foundational book references | `"plan my architecture"` |
 | [`rag-pipeline`](#rag-pipeline) | **Architecture & Quality** | End-to-end RAG architecture, hybrid search (BM25 + RRF), chunking, reranking & IR evaluation | `"build rag pipeline"` |
+| [`auto-ontology`](#auto-ontology) | **Architecture & Quality** | NVIDIA Auto Ontology setup and offline validation of business metric mappings | `"validate a metric mapping"` |
 | [`scan-halucinated-tests`](#scan-halucinated-tests) | **Architecture & Quality** | Cross-validates test symbols against AST ground truth | `"scan for hallucinated tests"` |
 | [`trace-code-context`](#trace-code-context) | **Architecture & Quality** | AST symbol extraction, callers/callees & Mermaid graph | `"trace code context"` |
 | [`eval-driven-development`](#eval-driven-development) | **Testing & Quality** | Methodology for improving LLM system quality via iterative evaluation cycles | `"run evals"` |
@@ -162,6 +163,11 @@ Interactively guides architecture design for new or existing applications. Recom
 ### `rag-pipeline`
 End-to-end architectural and engineering guidance for designing, building, and evaluating production Retrieval-Augmented Generation (RAG) pipelines. Covers document ingestion & layout/table preservation, structure-aware & contextual/parent-child chunking, Matryoshka (MRL) embeddings, vector databases (`pgvector` `halfvec` HNSW with iterative scan, Qdrant, Milvus, SQLite FTS5), hybrid search (`BM25` + dense vectors + Reciprocal Rank Fusion `RRF`), cross-encoder reranking, query transformations (rewrite, multi-query, step-back, HyDE), grounded generation with citations & abstention, Agentic/Corrective RAG, RAG Triad & offline IR metrics (`Recall@K`, `Precision@K`, `MRR`, `NDCG@K`), and document-level ACL security. Includes zero-dependency CLI utility `rag-pipeline-eval.py`.
 - **Trigger phrases:** `"rag-pipeline"`, `"rag-pipeline-creator"`, `"build rag pipeline"`, `"create rag pipeline"`, `"design rag architecture"`, `"chunking strategy"`, `"hybrid search rag"`, `"vector database indexing"`, `"reranking pipeline"`, `"agentic rag"`, `"evaluate rag pipeline"`, `"rag grounding"`.
+
+### `auto-ontology`
+Build a semantic layer that maps business metrics to source tables, columns, and joins. The included offline validator checks those references against supplied schema metadata and reports joins that may multiply rows. It does not execute SQL or certify metrics.
+- **Trigger phrases:** `"set up Auto Ontology"`, `"build a semantic layer"`, `"validate a metric mapping"`, `"check text-to-SQL"`.
+- **Quickstart:** [Run the offline net-revenue example](.github/skills/auto-ontology/README.md).
 
 ### `eval-driven-development`
 Methodology for improving LLM-based system quality through iterative evaluation cycles. Focuses on defining ground truth (golden datasets), instrumenting multi-level evaluation (Stepwise/Trajectory), and using Agent-as-a-Judge for complex scoring.
@@ -403,6 +409,7 @@ developer-productivity-skills/
 │       ├── api-security/             # Universal API authentication & AppSec audit pack
 │       ├── algorithmic-complexity-analyzer/ # Language-agnostic Big-O analysis
 │       ├── architectural-planning/   # Interactive system architecture designer & book references
+│       ├── auto-ontology/            # Semantic-layer workflow & offline metric mapping validator
 │       ├── caching-queues-reviewer/  # Redis, Kafka, Lua scripts & queue auditor
 │       ├── code-reviewer/            # 7-dimension code reviewer ([P0] to [P3])
 │       ├── csharp-developer/         # Modern C# 12/13, .NET 8/9, Minimal APIs, MVVM pack
