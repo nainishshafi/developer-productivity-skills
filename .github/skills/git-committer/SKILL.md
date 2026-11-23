@@ -1,7 +1,7 @@
 ---
 name: git-committer
 description: Creates conventional Git commits and handles pre-commit outcomes. Use when asked to git commit, commit changes, or update the git-committer skill.
-version: 1.2.3
+version: 1.2.4
 ---
 
 # Git Committer
@@ -17,9 +17,11 @@ version: 1.2.3
 ## Workflow
 
 ### 0. Check for a Recycle Bin report
-If the agent's shell tool has reported `<recycle_bin>` entries under this repository's `.git` directory, do not use that tool to stage files, commit, or install hooks in this repository. Do not retry through another agent tool. Use read-only checks (`git --no-optional-locks status --short`, `git diff`, and `git log -1`) and inspect the active hook without installing it. If the intended commit already exists, report it and stop. Otherwise, provide the exact paths to stage and the commit command for the user to run in their own terminal with hooks and signing enabled. Flag a missing or unverified hook before handing off the commit.
+Use `git --no-optional-locks status --short` for status checks so inspection does not refresh the index on disk.
 
-If the report first appears during a Git operation, stop further writes and follow the same read-only checks. Do not infer corruption or commit failure from the report alone, and do not delete or restore Git metadata.
+If a Recycle Bin report names only this repository's `index.lock`, pause writes and let any running Git command finish. Verify HEAD, staged changes, and working-tree status against the expected state. Resolve the index with `git rev-parse --path-format=absolute --git-path index`; its sibling `<index>.lock` must be absent. If the intended commit exists, report it. If the checks match and the last write did not fail, continue the normal workflow with hooks and signing enabled. If the report accompanied a failed write, stop rather than retrying it.
+
+Stop writes if a report names any other Git metadata, a lock remains, or the read-only checks fail or show unexpected changes. Report the specific blocker. Never delete or restore Git metadata or switch tools to bypass a stop.
 
 ### 1. Check Staged Files
 Review status, staged and unstaged diffs, and recent commit messages. Stage only the intended paths, verify the staged diff, and leave unrelated edits and generated files alone.
