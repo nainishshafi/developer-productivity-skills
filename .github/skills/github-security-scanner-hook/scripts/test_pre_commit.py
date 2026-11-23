@@ -1,5 +1,7 @@
 import contextlib
 import io
+import json
+import os
 import runpy
 import subprocess
 import sys
@@ -61,6 +63,42 @@ class HookInstallerTests(unittest.TestCase):
 
 
 class ScannerTimeoutTests(unittest.TestCase):
+    def test_scanner_discovery_prefers_shared_installation(self):
+        resolve = SCANNER["resolve_tool"]
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            shared = home / ".gemini" / "agent-venv" / ("Scripts" if os.name == "nt" else "bin")
+            shared.mkdir(parents=True)
+            for name in ("detect-secrets", "semgrep"):
+                executable = shared / (f"{name}.exe" if os.name == "nt" else name)
+                executable.touch(0o755)
+                with self.subTest(name=name), patch.object(Path, "home", return_value=home):
+                    self.assertEqual(resolve(name), executable.resolve())
+
+    def test_detect_secrets_keeps_baseline_unchanged_and_reports_new_findings(self):
+        scan = SCANNER["run_detect_secrets"]
+        with tempfile.TemporaryDirectory() as tmp:
+            baseline = Path(tmp) / ".secrets.baseline"
+            known = {"type": "TestDetector", "hashed_secret": "known", "line_number": 1}
+            new = {**known, "hashed_secret": "new", "line_number": 2}
+            original = json.dumps({"results": {"example.py": [known]}})
+            baseline.write_text(original, encoding="utf-8")
+
+            def run(cmd):
+                copy = Path(cmd[cmd.index("--baseline") + 1])
+                self.assertNotEqual(copy, baseline)
+                copy.write_text(json.dumps({"results": {"example.py": [known, new]}}), encoding="utf-8")
+                return subprocess.CompletedProcess(cmd, 0, "", "")
+
+            original_path = Path
+            with patch.dict(scan.__globals__, {
+                "Path": lambda name: baseline if name == ".secrets.baseline" else original_path(name),
+                "run": run,
+            }):
+                findings = scan(Path("detect-secrets"), ["example.py"])
+            self.assertEqual([finding["line"] for finding in findings], [2])
+            self.assertEqual(baseline.read_text(encoding="utf-8"), original)
+
     def test_timeout_does_not_wait_for_grandchild_output(self):
         command = [
             sys.executable, "-c",
@@ -79,9 +117,8 @@ class ScannerTimeoutTests(unittest.TestCase):
         with patch.object(sys, "argv", ["scan-staged.py"]), patch.dict(main.__globals__, {
             "ensure_in_git_repo": lambda: None,
             "get_git_files": lambda _: [__file__],
-            "check_tool": lambda *_: True,
             "run_detect_secrets": lambda *_: [],
-            "resolve_semgrep": lambda _: Path("semgrep"),
+            "resolve_tool": Path,
             "run": lambda _: completed,
         }), patch.dict(main.__globals__, {
             "run_builtin_fallback": unittest.mock.Mock(return_value=[]),

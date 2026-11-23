@@ -27,10 +27,10 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from tempfile import TemporaryFile
+from tempfile import TemporaryDirectory, TemporaryFile
 
 
-# External scanners (pip, detect-secrets, semgrep) can hang on a broken or
+# External scanners can hang on a broken or
 # sandboxed install. Bound every subprocess so a hung tool degrades into a
 # warning instead of blocking the commit.
 TOOL_TIMEOUT_SECONDS = 20
@@ -495,19 +495,6 @@ BUILTIN_CODE_RULES: tuple[FallbackRule, ...] = (
 # Helpers
 # ---------------------------------------------------------------------------
 
-def resolve_python() -> Path:
-    """Return the .venv Python interpreter for this platform, falling back to sys.executable."""
-    candidates = [
-        Path(".venv") / "Scripts" / "python.exe",
-        Path(".venv") / "Scripts" / "python",
-        Path(".venv") / "bin" / "python",
-    ]
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    return Path(sys.executable)
-
-
 def run(cmd: list[str], timeout: float | None = TOOL_TIMEOUT_SECONDS) -> subprocess.CompletedProcess:
     """Run a subprocess without waiting on pipes inherited by its children."""
     with TemporaryFile() as stdout, TemporaryFile() as stderr:
@@ -550,65 +537,64 @@ def get_git_files(full_repo: bool) -> list[str]:
     return [line for line in result.stdout.splitlines() if line.strip()]
 
 
-def check_tool(python: Path, package_name: str) -> bool:
-    """Return True if the pip package is installed in the current environment."""
-    return run([str(python), "-m", "pip", "show", package_name]).returncode == 0
-
-
-def resolve_semgrep(python: Path | None = None) -> Path | None:
-    """Return the semgrep binary from .venv, the active Python Scripts dir, or PATH."""
-    candidates = [
-        Path(".venv") / "Scripts" / "semgrep.exe",
-        Path(".venv") / "Scripts" / "semgrep",
-        Path(".venv") / "bin" / "semgrep",
-    ]
-    if python is not None:
-        candidates.extend([
-            python.parent / "semgrep.exe",
-            python.parent / "semgrep",
-        ])
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    which_semgrep = shutil.which("semgrep")
-    return Path(which_semgrep) if which_semgrep else None
+def resolve_tool(name: str) -> Path | None:
+    """Find a scanner in the shared venv, repo venv, active venv, or PATH."""
+    shared = Path.home() / ".gemini" / "agent-venv"
+    for directory in (shared / "Scripts", shared / "bin", Path(".venv/Scripts"),
+                      Path(".venv/bin"), Path(sys.executable).parent):
+        executable = shutil.which(str(directory.resolve() / name))
+        if executable:
+            return Path(executable)
+    executable = shutil.which(name)
+    return Path(executable) if executable else None
 
 
 # ---------------------------------------------------------------------------
 # detect-secrets scanning
 # ---------------------------------------------------------------------------
 
-def run_detect_secrets(python: Path, files: list[str]) -> list[dict] | None:
+def run_detect_secrets(executable: Path, files: list[str]) -> list[dict] | None:
     """Run detect-secrets scan on the given files and return finding dicts."""
     if not files:
         return []
 
-    cmd = [str(python), "-m", "detect_secrets", "scan"]
-    if Path(".secrets.baseline").exists():
-        cmd += ["--baseline", ".secrets.baseline"]
-    cmd += files
-    result = run(cmd)
-
-    if result.returncode != 0:
-        print(f"Warning: detect-secrets exited with code {result.returncode}", file=sys.stderr)
-        if result.stderr:
-            print(result.stderr, file=sys.stderr)
-        return None
-
+    cmd = [str(executable), "scan"]
+    baseline = Path(".secrets.baseline")
+    known: set[tuple[str, str, str]] = set()
     try:
-        data = json.loads(result.stdout)
-    except json.JSONDecodeError as exc:
-        print(f"Warning: could not parse detect-secrets output: {exc}", file=sys.stderr)
+        with TemporaryDirectory() as tmp:
+            output = Path(tmp) / "baseline.json"
+            if baseline.is_file():
+                # The CLI updates a supplied baseline in place instead of printing JSON.
+                shutil.copyfile(baseline, output)
+                for filepath, entries in json.loads(output.read_text(encoding="utf-8")).get("results", {}).items():
+                    known.update(
+                        (filepath.replace("\\", "/"), entry["type"], entry["hashed_secret"])
+                        for entry in entries
+                    )
+                cmd += ["--baseline", str(output)]
+            result = run([*cmd, *files])
+            if result.returncode != 0:
+                print(f"Warning: detect-secrets exited with code {result.returncode}", file=sys.stderr)
+                if result.stderr:
+                    print(result.stderr, file=sys.stderr)
+                return None
+            data = json.loads(output.read_text(encoding="utf-8") if output.exists() else result.stdout)
+    except (OSError, ValueError, KeyError) as exc:
+        print(f"Warning: could not read detect-secrets results: {exc}", file=sys.stderr)
         return None
 
     findings = []
     for filepath, secret_list in data.get("results", {}).items():
+        filepath = filepath.replace("\\", "/")
         for secret in secret_list:
             plugin_name = secret.get("type", "Unknown")
+            if (filepath, plugin_name, secret.get("hashed_secret")) in known:
+                continue
             severity = DETECT_SECRETS_SEVERITY.get(plugin_name, "MEDIUM")
             readable_type = plugin_name.replace("KeyDetector", " key").replace("Detector", "").strip()
             findings.append({
-                "file": filepath.replace("\\", "/"),
+                "file": filepath,
                 "line": secret.get("line_number", 0),
                 "type": plugin_name,
                 "tool": "detect-secrets",
@@ -632,7 +618,10 @@ def run_semgrep(semgrep: Path, files: list[str]) -> list[dict] | None:
         print(f"Warning: bundled semgrep rules not found at {rules_file} — skipping semgrep scan.", file=sys.stderr)
         return None
 
-    cmd = [str(semgrep), "--config", str(rules_file), "--json", "--quiet", "--", *files]
+    cmd = [
+        str(semgrep), "--config", str(rules_file), "--json", "--quiet",
+        "--metrics=off", "--disable-version-check", "--", *files,
+    ]
     result = run(cmd)
 
     if result.returncode not in (0, 1):
@@ -741,7 +730,6 @@ def main() -> None:
     args = parser.parse_args()
 
     ensure_in_git_repo()
-    python = resolve_python()
     files = get_git_files(args.full_repo)
 
     if not files:
@@ -755,26 +743,27 @@ def main() -> None:
     existing_files = [f for f in files if Path(f).exists()]
     findings: list[dict] = []
 
-    secrets = run_detect_secrets(python, existing_files) if check_tool(python, "detect-secrets") else None
+    detect_secrets = resolve_tool("detect-secrets")
+    secrets = run_detect_secrets(detect_secrets, existing_files) if detect_secrets else None
     if secrets is not None:
         findings.extend(secrets)
     else:
         print(
-            "Info: detect-secrets did not complete — using built-in secret scanner fallback.\n"
-            f"Install full scanner with: {python} -m pip install detect-secrets",
+            f"Info: detect-secrets {'did not complete' if detect_secrets else 'not found'}"
+            " — using built-in secret scanner fallback.",
             file=sys.stderr,
         )
         findings.extend(run_builtin_fallback(existing_files, BUILTIN_SECRET_RULES))
 
-    semgrep = resolve_semgrep(python)
+    semgrep = resolve_tool("semgrep")
     code_findings = run_semgrep(semgrep, existing_files) if semgrep else None
     if code_findings is not None:
         findings.extend(code_findings)
         findings.extend(run_builtin_fallback(existing_files, BUILTIN_PROMPT_RULES))
     else:
         print(
-            "Info: semgrep did not complete — using built-in security & prompt-injection fallback.\n"
-            f"Install full AST scanner with: {python} -m pip install semgrep",
+            f"Info: semgrep {'did not complete' if semgrep else 'not found'}"
+            " — using built-in security & prompt-injection fallback.",
             file=sys.stderr,
         )
         findings.extend(run_builtin_fallback(existing_files, BUILTIN_PROMPT_RULES + BUILTIN_CODE_RULES))

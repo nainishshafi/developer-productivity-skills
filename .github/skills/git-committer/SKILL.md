@@ -1,7 +1,7 @@
 ---
 name: git-committer
 description: Creates conventional Git commits and handles pre-commit outcomes. Use when asked to git commit, commit changes, or update the git-committer skill.
-version: 1.2.1
+version: 1.2.2
 ---
 
 # Git Committer
@@ -28,6 +28,8 @@ From the repository root, resolve the active hook with `git rev-parse --path-for
 When the repository provides a [security hook installer](../github-security-scanner-hook/SKILL.md) and the active hook is absent, run `scripts/install-hook.py` from that skill directory using the repository's Python environment with the working directory set to the repository root. Install automatically only if the installer can write to the resolved active path; the bundled installer targets `.git/hooks/pre-commit`. Recheck the active hook after installation.
 
 Verify that the active hook invokes the expected scanner, directly or through a hook manager. If an existing hook cannot be verified or installation fails or is unsupported, pause before `git commit` and offer to run the scanner directly on the final staged changes. Do not modify existing hooks without approval or commit if the direct scan fails or reports blocking findings.
+
+Keep the hook's Python in the repository venv. The scanner locates `detect-secrets` and Semgrep in the shared agent venv first; check that environment before installing duplicate tools in the repository venv.
 
 ### 4. Stage and Commit
 Use a shell-appropriate multi-line commit message pattern.

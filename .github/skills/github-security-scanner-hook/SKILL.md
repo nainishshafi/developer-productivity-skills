@@ -1,7 +1,7 @@
 ---
 name: github-security-scanner-hook
 description: Use when the user asks to "scan for security vulnerabilities", "check for secrets in code", "set up a pre-commit security hook", "install security scanning", "scan staged files for secrets", "check for hardcoded credentials", "run a security scan before commit", "detect leaked API keys", "add a git commit hook for security", "security check before push", "scan for SQL injection", "check for XSS vulnerabilities", "check for prompt injection", "scan for SSTI", "check for unsafe deserialization", "scan for SSRF", "detect weak cryptography", "detect injection flaws", "check for command injection", "audit subprocess security", or wants to prevent committing security issues to git.
-version: 1.4.3
+version: 1.4.4
 ---
 
 # GitHub Security Scanner Hook
@@ -20,29 +20,11 @@ Can run as a one-off manual scan or install as an automated git pre-commit hook.
 
 ## Workflow
 
-### Step 1 — Select Python Venv and Install Tools
+### Step 1 — Select the Project Python and Locate Scanners
 
-Prefer a shared agent venv if configured (e.g., `~/.gemini/agent-venv/Scripts/python.exe` on Windows or `~/.gemini/agent-venv/bin/python` on POSIX) or an existing project `.venv`; otherwise create `.venv` and optionally install `detect-secrets` and `semgrep`:
+Run the workspace scripts with the project's Python: set `$PYTHON` to `.\.venv\Scripts\python.exe` on Windows or `.venv/bin/python` on POSIX. The script looks for each scanner executable first in `~/.gemini/agent-venv` (`Scripts/` or `bin/`), then in the project or active Python environment, and finally on `PATH`. Do not install duplicate copies in the project venv when the shared launchers are available.
 
-**Windows (PowerShell):**
-```powershell
-$SHARED_PY = Join-Path $HOME ".gemini\agent-venv\Scripts\python.exe"
-$PYTHON = if (Test-Path $SHARED_PY) { $SHARED_PY } elseif (Test-Path .venv\Scripts\python.exe) { ".venv\Scripts\python.exe" } else { python -m venv .venv; ".venv\Scripts\python.exe" }
-& $PYTHON -m pip show detect-secrets *> $null; if ($LASTEXITCODE -ne 0) { & $PYTHON -m pip install detect-secrets }
-& $PYTHON -m pip show semgrep *> $null; if ($LASTEXITCODE -ne 0) { & $PYTHON -m pip install semgrep }
-```
-
-**Unix / macOS (Bash):**
-```bash
-SHARED_PY="$HOME/.gemini/agent-venv/bin/python"
-if [ -x "$SHARED_PY" ]; then PYTHON="$SHARED_PY"
-elif [ -x .venv/bin/python ]; then PYTHON=".venv/bin/python"
-else python3 -m venv .venv && PYTHON=".venv/bin/python"; fi
-"$PYTHON" -m pip show detect-secrets > /dev/null 2>&1 || "$PYTHON" -m pip install detect-secrets
-"$PYTHON" -m pip show semgrep > /dev/null 2>&1 || "$PYTHON" -m pip install semgrep
-```
-
-Both `detect-secrets` and `semgrep` are optional independently. If either is unavailable or fails to complete, `scan-staged.py` reports the fallback and runs the corresponding built-in rules. External commands have a 20-second timeout per invocation. A clean fallback means the built-in rules reported no findings; it does not mean the external scanner passed. When `semgrep` is installed (in `.venv`, alongside the selected `python`, or on `PATH`), it uses the bundled rules in `rules/security.yml` (no login or network access required).
+Both `detect-secrets` and `semgrep` are optional independently. If either is unavailable or fails to complete, `scan-staged.py` reports the fallback and runs the corresponding built-in rules. External commands have a 20-second timeout per invocation. A clean fallback does not mean the external scanner passed. Semgrep uses the bundled `rules/security.yml` with metrics and version checks disabled.
 
 ### Step 2 — Run Security Scan on Staged Files
 
