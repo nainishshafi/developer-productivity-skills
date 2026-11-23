@@ -7,7 +7,7 @@ Behaviour:
   2. Resolves the absolute path to scan-staged.py (sibling of this script).
   3. Resolves the correct Python interpreter (.venv or sys.executable).
   4. If .git/hooks/pre-commit does not exist: creates it fresh.
-  5. If pre-commit exists and already contains our stanza: prints "already installed".
+  5. If pre-commit contains our stanza: upgrades only that stanza if needed.
   6. If pre-commit exists without our stanza: shows contents, offers Append / Overwrite / Skip.
   7. Makes the hook executable (chmod +x — silent no-op on Windows).
 
@@ -19,6 +19,7 @@ Usage:
 
 import argparse
 import os
+import shlex
 import stat
 import sys
 from pathlib import Path
@@ -26,8 +27,8 @@ from pathlib import Path
 
 HOOK_SHEBANG = "#!/usr/bin/env bash\n"
 
-# Marker used to detect whether our stanza is already present
-HOOK_MARKER = "github-security-scanner-hook"
+HOOK_START = "# --- github-security-scanner-hook (installed by install-hook.py) ---"
+HOOK_END = "# --- end github-security-scanner-hook ---"
 
 
 def build_hook_stanza(scan_script: str, python_path: str) -> str:
@@ -38,34 +39,54 @@ def build_hook_stanza(scan_script: str, python_path: str) -> str:
     regardless of the shell's PATH. Forward slashes are used throughout so
     Git Bash on Windows can read the paths correctly.
     """
-    # Normalise to forward slashes for Git Bash on Windows
-    scan_script_fwd = scan_script.replace("\\", "/")
-    python_path_fwd = python_path.replace("\\", "/")
+    if os.name == "nt":
+        scan_script = scan_script.replace("\\", "/")
+        python_path = python_path.replace("\\", "/")
 
     return f"""
-# --- {HOOK_MARKER} (installed by install-hook.py) ---
-SCAN_SCRIPT="{scan_script_fwd}"
-SCAN_PYTHON="{python_path_fwd}"
+{HOOK_START}
+SCAN_SCRIPT={shlex.quote(scan_script)}
+SCAN_PYTHON={shlex.quote(python_path)}
 
-if [ -f "$SCAN_SCRIPT" ]; then
-    "$SCAN_PYTHON" "$SCAN_SCRIPT"
-    SCAN_EXIT=$?
-    if [ "$SCAN_EXIT" -eq 1 ]; then
-        echo ""
-        echo "COMMIT BLOCKED: HIGH severity security findings detected."
-        echo "Fix the issues above, then re-stage and commit."
-        echo "Emergency bypass (use with caution): git commit --no-verify"
-        echo "---------------------------------------------------------------"
-        exit 1
-    elif [ "$SCAN_EXIT" -eq 2 ]; then
-        echo ""
-        echo "WARNING: MEDIUM/LOW severity security findings detected."
-        echo "Review the findings above. Press Enter to commit anyway, or Ctrl+C to abort."
-        read -r _CONFIRM || true   # non-interactive (CI): auto-continue
-    fi
+if [ ! -f "$SCAN_SCRIPT" ]; then
+    echo "COMMIT BLOCKED: Security scanner script not found." >&2
+    exit 1
 fi
-# --- end {HOOK_MARKER} ---
+
+SCAN_EXIT=0
+"$SCAN_PYTHON" "$SCAN_SCRIPT" || SCAN_EXIT=$?
+case "$SCAN_EXIT" in
+    0) ;;
+    1)
+        echo "COMMIT BLOCKED: HIGH severity security findings detected." >&2
+        exit 1
+        ;;
+    2)
+        echo "WARNING: MEDIUM/LOW severity security findings detected." >&2
+        if [ -t 0 ]; then
+            echo "Review the findings above. Press Enter to continue or Ctrl+C to abort." >&2
+            read -r _CONFIRM || exit 1
+        fi
+        ;;
+    *)
+        echo "COMMIT BLOCKED: Security scanner failed (exit $SCAN_EXIT)." >&2
+        exit 1
+        ;;
+esac
+{HOOK_END}
 """
+
+
+def refresh_hook_stanza(existing: str, stanza: str) -> str | None:
+    """Replace one complete managed block, or return None for an unmanaged hook."""
+    lines = existing.splitlines(keepends=True)
+    starts = [i for i, line in enumerate(lines) if line.rstrip("\r\n") == HOOK_START]
+    ends = [i for i, line in enumerate(lines) if line.rstrip("\r\n") == HOOK_END]
+    if not starts and not ends:
+        return None
+    if len(starts) != 1 or len(ends) != 1 or starts[0] >= ends[0]:
+        raise ValueError("Incomplete or duplicate security scanner markers; hook left unchanged.")
+    return "".join(lines[:starts[0]]) + stanza.lstrip("\n") + "".join(lines[ends[0] + 1:])
 
 
 # ---------------------------------------------------------------------------
@@ -168,14 +189,18 @@ def main() -> None:
     # -----------------------------------------------------------------------
     # Case 2: hook exists
     # -----------------------------------------------------------------------
-    existing = hook_path.read_text(encoding="utf-8")
-
-    # Guard: our stanza is already present — nothing to do
-    if HOOK_MARKER in existing:
-        print(
-            f"Notice: the security scanner is already installed in:\n  {hook_path}\n"
-            "Nothing changed."
-        )
+    with hook_path.open(encoding="utf-8", newline="") as hook:
+        existing = hook.read()
+    try:
+        refreshed = refresh_hook_stanza(existing, stanza)
+    except ValueError as exc:
+        parser.exit(1, f"Error: {exc}\n")
+    if refreshed is not None:
+        if refreshed == existing:
+            print(f"Security scanner hook is up to date at:\n  {hook_path}")
+        else:
+            write_hook(hook_path, refreshed)
+            print(f"Updated the security scanner block at:\n  {hook_path}")
         return
 
     # Show the existing hook so the user can make an informed choice

@@ -1,7 +1,7 @@
 ---
 name: github-security-scanner-hook
 description: Use when the user asks to "scan for security vulnerabilities", "check for secrets in code", "set up a pre-commit security hook", "install security scanning", "scan staged files for secrets", "check for hardcoded credentials", "run a security scan before commit", "detect leaked API keys", "add a git commit hook for security", "security check before push", "scan for SQL injection", "check for XSS vulnerabilities", "check for prompt injection", "scan for SSTI", "check for unsafe deserialization", "scan for SSRF", "detect weak cryptography", "detect injection flaws", "check for command injection", "audit subprocess security", or wants to prevent committing security issues to git.
-version: 1.4.2
+version: 1.4.3
 ---
 
 # GitHub Security Scanner Hook
@@ -42,7 +42,7 @@ else python3 -m venv .venv && PYTHON=".venv/bin/python"; fi
 "$PYTHON" -m pip show semgrep > /dev/null 2>&1 || "$PYTHON" -m pip install semgrep
 ```
 
-Both `detect-secrets` and `semgrep` are optional independently — if either is missing (e.g., offline environments), `scan-staged.py` automatically falls back to its built-in secret, OWASP code, and prompt-injection rules. When `semgrep` is installed (in `.venv`, alongside the selected `python`, or on `PATH`), it uses the bundled rules in `rules/security.yml` (no login or network access required).
+Both `detect-secrets` and `semgrep` are optional independently. If either is unavailable or fails to complete, `scan-staged.py` reports the fallback and runs the corresponding built-in rules. External commands have a 20-second timeout per invocation. A clean fallback means the built-in rules reported no findings; it does not mean the external scanner passed. When `semgrep` is installed (in `.venv`, alongside the selected `python`, or on `PATH`), it uses the bundled rules in `rules/security.yml` (no login or network access required).
 
 ### Step 2 — Run Security Scan on Staged Files
 
@@ -87,14 +87,14 @@ $PYTHON .github/skills/github-security-scanner-hook/scripts/install-hook.py
 ```
 
 The installer:
-1. Detects whether `.git/hooks/pre-commit` already exists — if it does, it offers to Append (default), Overwrite, or Skip rather than silently destroying existing hooks
-2. Creates or extends the hook to call `scan-staged.py` before every commit
-3. Makes the hook executable
-4. Prints the hook path and a confirmation message
+1. Updates an existing managed scanner block in place, preserving other hook logic. Refuses to edit incomplete or duplicate managed blocks.
+2. For a hook without a managed block, offers to Append (default), Overwrite, or Skip.
+3. Creates or extends the hook to call `scan-staged.py` before every commit.
+4. Makes the hook executable and prints its path.
 
 After installation, remind the user:
 - The hook lives in `.git/hooks/pre-commit` — this directory is **not tracked by git**, so each contributor must run `install-hook.py` themselves to opt in
-- HIGH severity findings block the commit; MEDIUM/LOW prompt a confirmation
+- HIGH severity findings, a missing scanner script, or an unexpected scanner exit status block the commit. MEDIUM/LOW findings prompt only in an interactive terminal; otherwise the hook reports the warning and continues.
 - Emergency bypass: `git commit --no-verify` — see the reference for important caveats
 
 ### Step 5 — Remediate Issues

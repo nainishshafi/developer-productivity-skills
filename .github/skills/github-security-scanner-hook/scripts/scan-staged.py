@@ -27,6 +27,13 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from tempfile import TemporaryFile
+
+
+# External scanners (pip, detect-secrets, semgrep) can hang on a broken or
+# sandboxed install. Bound every subprocess so a hung tool degrades into a
+# warning instead of blocking the commit.
+TOOL_TIMEOUT_SECONDS = 20
 
 
 # ---------------------------------------------------------------------------
@@ -501,9 +508,23 @@ def resolve_python() -> Path:
     return Path(sys.executable)
 
 
-def run(cmd: list[str]) -> subprocess.CompletedProcess:
-    """Run a subprocess and return the result. Never raises on non-zero exit."""
-    return subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+def run(cmd: list[str], timeout: float | None = TOOL_TIMEOUT_SECONDS) -> subprocess.CompletedProcess:
+    """Run a subprocess without waiting on pipes inherited by its children."""
+    with TemporaryFile() as stdout, TemporaryFile() as stderr:
+        try:
+            result = subprocess.run(
+                cmd, stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr, timeout=timeout
+            )
+        except subprocess.TimeoutExpired:
+            return subprocess.CompletedProcess(cmd, 124, "", f"{Path(cmd[0]).name} timed out after {timeout}s")
+        except OSError as exc:
+            return subprocess.CompletedProcess(cmd, 126, "", str(exc))
+        stdout.seek(0)
+        stderr.seek(0)
+        return subprocess.CompletedProcess(
+            cmd, result.returncode, stdout.read().decode("utf-8", errors="replace"),
+            stderr.read().decode("utf-8", errors="replace"),
+        )
 
 
 def ensure_in_git_repo() -> None:
@@ -557,7 +578,7 @@ def resolve_semgrep(python: Path | None = None) -> Path | None:
 # detect-secrets scanning
 # ---------------------------------------------------------------------------
 
-def run_detect_secrets(python: Path, files: list[str]) -> list[dict]:
+def run_detect_secrets(python: Path, files: list[str]) -> list[dict] | None:
     """Run detect-secrets scan on the given files and return finding dicts."""
     if not files:
         return []
@@ -568,20 +589,17 @@ def run_detect_secrets(python: Path, files: list[str]) -> list[dict]:
     cmd += files
     result = run(cmd)
 
-    if result.returncode not in (0, 1):
+    if result.returncode != 0:
         print(f"Warning: detect-secrets exited with code {result.returncode}", file=sys.stderr)
         if result.stderr:
             print(result.stderr, file=sys.stderr)
-        return []
-
-    if not result.stdout.strip():
-        return []
+        return None
 
     try:
         data = json.loads(result.stdout)
     except json.JSONDecodeError as exc:
         print(f"Warning: could not parse detect-secrets output: {exc}", file=sys.stderr)
-        return []
+        return None
 
     findings = []
     for filepath, secret_list in data.get("results", {}).items():
@@ -604,7 +622,7 @@ def run_detect_secrets(python: Path, files: list[str]) -> list[dict]:
 # semgrep scanning
 # ---------------------------------------------------------------------------
 
-def run_semgrep(semgrep: Path, files: list[str]) -> list[dict]:
+def run_semgrep(semgrep: Path, files: list[str]) -> list[dict] | None:
     """Run semgrep with the bundled rules/security.yml ruleset on the given files."""
     if not files:
         return []
@@ -612,7 +630,7 @@ def run_semgrep(semgrep: Path, files: list[str]) -> list[dict]:
     rules_file = Path(__file__).resolve().parent.parent / "rules" / "security.yml"
     if not rules_file.exists():
         print(f"Warning: bundled semgrep rules not found at {rules_file} — skipping semgrep scan.", file=sys.stderr)
-        return []
+        return None
 
     cmd = [str(semgrep), "--config", str(rules_file), "--json", "--quiet", "--", *files]
     result = run(cmd)
@@ -621,16 +639,13 @@ def run_semgrep(semgrep: Path, files: list[str]) -> list[dict]:
         print(f"Warning: semgrep exited with code {result.returncode}", file=sys.stderr)
         if result.stderr:
             print(result.stderr, file=sys.stderr)
-        return []
-
-    if not result.stdout.strip():
-        return []
+        return None
 
     try:
         data = json.loads(result.stdout)
     except json.JSONDecodeError as exc:
         print(f"Warning: could not parse semgrep output: {exc}", file=sys.stderr)
-        return []
+        return None
 
     findings = []
     for item in data.get("results", []):
@@ -740,23 +755,25 @@ def main() -> None:
     existing_files = [f for f in files if Path(f).exists()]
     findings: list[dict] = []
 
-    if check_tool(python, "detect-secrets"):
-        findings.extend(run_detect_secrets(python, existing_files))
+    secrets = run_detect_secrets(python, existing_files) if check_tool(python, "detect-secrets") else None
+    if secrets is not None:
+        findings.extend(secrets)
     else:
         print(
-            "Info: detect-secrets is not installed — using built-in secret scanner fallback.\n"
+            "Info: detect-secrets did not complete — using built-in secret scanner fallback.\n"
             f"Install full scanner with: {python} -m pip install detect-secrets",
             file=sys.stderr,
         )
         findings.extend(run_builtin_fallback(existing_files, BUILTIN_SECRET_RULES))
 
     semgrep = resolve_semgrep(python)
-    if semgrep:
-        findings.extend(run_semgrep(semgrep, existing_files))
+    code_findings = run_semgrep(semgrep, existing_files) if semgrep else None
+    if code_findings is not None:
+        findings.extend(code_findings)
         findings.extend(run_builtin_fallback(existing_files, BUILTIN_PROMPT_RULES))
     else:
         print(
-            "Info: semgrep is not installed — using built-in security & prompt-injection fallback.\n"
+            "Info: semgrep did not complete — using built-in security & prompt-injection fallback.\n"
             f"Install full AST scanner with: {python} -m pip install semgrep",
             file=sys.stderr,
         )
