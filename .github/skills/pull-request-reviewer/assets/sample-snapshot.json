@@ -1,0 +1,17 @@
+{
+  "repo": "example/order-service",
+  "number": 42,
+  "title": "Template preview — synthetic order validation PR",
+  "url": "",
+  "body": "Synthetic presentation fixture; not a real PR.",
+  "state": "SYNTHETIC",
+  "baseRefOid": "1111111111111111111111111111111111111111",
+  "headRefOid": "2222222222222222222222222222222222222222",
+  "mergeBaseOid": "1111111111111111111111111111111111111111",
+  "collection_notes": [],
+  "files": [
+    {"path": "src/orders.py", "status": "modified", "additions": 2, "deletions": 0},
+    {"path": "tests/test_orders.py", "status": "added", "additions": 2, "deletions": 0}
+  ],
+  "diff": "diff --git a/src/orders.py b/src/orders.py\n--- a/src/orders.py\n+++ b/src/orders.py\n@@ -1,2 +1,4 @@\n def place_order(quantity):\n+    if quantity < 0:\n+        raise ValueError('Quantity must be positive')\n     return save_order(quantity)\ndiff --git a/tests/test_orders.py b/tests/test_orders.py\nnew file mode 100644\n--- /dev/null\n+++ b/tests/test_orders.py\n@@ -0,0 +1,2 @@\n+def test_positive_order():\n+    assert place_order(1).quantity == 1\n"
+}

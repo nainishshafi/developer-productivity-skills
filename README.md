@@ -36,6 +36,7 @@ These skills provide ready-made workflows for modern software engineering across
 | [`csharp-developer`](#csharp-developer) | **Language Specialist** | C# 12/13, .NET 8/9, Minimal APIs, MVVM/WPF, EF Core | `"write c# code"` |
 | [`powershell-writer`](#powershell-writer) | **Language Specialist** | Advanced cmdlets, object pipelines, Set-StrictMode, Pester v5, modules | `"write powershell script"` |
 | [`code-reviewer`](#code-reviewer) | **Architecture & Quality** | 7-dimension senior review ([P0] Blocker to [P3] Nit) | `"review code"` |
+| [`pull-request-reviewer`](#pull-request-reviewer) | **Architecture & Quality** | GitHub PR diff, code-reviewer findings, and source-linked change flows in an offline HTML report | `"pull-request-reviewer"` |
 | [`api-security`](#api-security) | **Architecture & Quality** | JWT, OAuth 2.1 PKCE, session cookies, API keys, mTLS, HMAC | `"review api security"` |
 | [`algorithmic-complexity-analyzer`](#algorithmic-complexity-analyzer) | **Architecture & Quality** | Big-O time/space audits ($O(1) \dots O(2^n)$), hidden loop traps | `"check time complexity"` |
 | [`memory-analyzer`](#memory-analyzer) | **Architecture & Quality** | Language-independent OOM, stack overflow, unbounded growth & memory leak analysis | `"analyze memory"` |
@@ -120,6 +121,13 @@ Staff-level architectural and engineering guidance for modern PowerShell automat
 ## 📐 2. Architecture, Quality & Review Skills
 
 Review and audit skills operate on **pragmatic heuristics and evidence-driven severity tiers** rather than deterministic rules—evaluating findings within the context of project scale, team conventions, and operational trade-offs.
+
+### `pull-request-reviewer`
+
+Collects a stable GitHub PR snapshot with `gh`, reviews the complete change using `code-reviewer`, and renders an offline HTML report from a reusable template. Includes before/after behavioral flow diagrams, P0–P3 findings, inspection coverage, verification evidence, and expandable unified diffs.
+- **Workflow:** [Pull Request Reviewer](.github/skills/pull-request-reviewer/SKILL.md).
+- **CLI:** `.venv/Scripts/python.exe .github/skills/pull-request-reviewer/scripts/pr-review.py collect --pr 123 --repo owner/repository --output <temporary-directory>/snapshot.json`, then `render --snapshot <snapshot.json> --review <review.json> --output <report.html>`.
+- **Template preview:** Render `assets/sample-snapshot.json` and `assets/sample-review.json`; these are explicitly synthetic.
 
 ### `code-reviewer`
 Senior-level code review across languages (Python, TypeScript/JavaScript, React/Next.js, Java, C#, Go, SQL, PowerShell). Audits changes across 7 dimensions: correctness, architecture (SOLID/DRY/KISS), error handling, test coverage, security defense, performance & memory hygiene, and readability. Features dedicated language subdirectories with deep checklists. Standardizes findings into `[P0 - Blocker]`, `[P1 - Major]`, `[P2 - Minor]`, and `[P3 - Nit]` with concrete suggested fix diffs.

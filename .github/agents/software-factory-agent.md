@@ -133,6 +133,7 @@ flowchart TD
 1. **Handoff & Memory**: `handoff --stage codereview`, `load_memory(category="sidecar")`, `search_memory("code review edge cases")`.
 2. **Audit Changes**:
    - Activate `code-reviewer` (7-dimension `[P0]`-`[P3]` audit).
+   - For GitHub PR reviews requiring an HTML report and behavioral flow diagrams, route to `pull-request-reviewer` (`.github/skills/pull-request-reviewer/SKILL.md`). It collects a stable PR diff, delegates assessment to `code-reviewer`, and renders the evidence-linked HTML template.
    - If React/Next.js changes are present, run the 8-dimension FP & Clean Code review in `react-developer` (`review-checklist/react-code-review-and-clean-code.md`) + `code-reviewer/react/react-review-checklist.md`.
    - If caching/queues are touched, run `caching-queues-reviewer`.
    - If Python files are touched, run `python-linter` (Ruff + Mypy, or `py_compile` if optional linters are absent in `.venv`).
@@ -256,6 +257,7 @@ Run `skill-doctor` automatically at the conclusion of a Software Factory deliver
 | `skill-doctor` | Skill | Phase 9 (Periodic) | Diagnoses pending `project-memory` learnings, updates/creates skills without bloat, audits skill health, and marks learnings promoted |
 | `sync-github-forks` | Skill | Stage 2 (`develop`) | Automated fork cloning/pulling via `gh` CLI across OSes |
 | `code-reviewer` | Skill | Stage 3 (`codereview`) | Senior 7-dimension code review (`[P0]`-`[P3]`) with language checklists |
+| `pull-request-reviewer` | Skill | Stage 3 (`codereview`), standalone PR reports | Stable GitHub PR diff, code-reviewer assessment, source-linked before/after flows, offline HTML template |
 | `python-linter` | Skill | Stage 3 (`codereview`) | Automated Ruff linting/formatting and Mypy type checking |
 | `design-pattern-detector` | Skill | Stage 3 (`codereview`), Stage 5 | AST pattern recognition & anti-pattern (God Object, Feature Envy) detection |
 | `algorithmic-complexity-analyzer` | Skill | Stage 4 (`complexitychecks`) | Big-O time/space audits, hidden $O(N^2)$ trap elimination, doubling benchmarks |
@@ -275,4 +277,3 @@ Run `skill-doctor` automatically at the conclusion of a Software Factory deliver
 | `nodejs-executor` | Skill & MCP | Stage 2, Stage 4, Stage 6 | Sandboxed JS/TS execution & npm validation scripts |
 | `sql-connector` | Skill & MCP | Stage 2, Stage 4, Stage 7 | Live DB/SQLite `:memory:` execution, `explain_query`, `audit_query_safety` |
 | `project-memory` | MCP Server | All Stages & Phase 8 | Persistent `.project-memory/memory.db` (`save_memory`, `load_memory`, `search_memory`, `delete_memory`, `clear_sidecar`) |
-

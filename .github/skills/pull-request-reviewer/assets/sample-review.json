@@ -1,0 +1,54 @@
+{
+  "base_sha": "1111111111111111111111111111111111111111",
+  "head_sha": "2222222222222222222222222222222222222222",
+  "merge_base_sha": "1111111111111111111111111111111111111111",
+  "verdict": "REQUEST_CHANGES",
+  "summary": "SYNTHETIC TEMPLATE PREVIEW. Previously all quantities reached persistence. The change rejects negative quantities before saving, but zero still passes despite the stated positive-quantity contract.",
+  "strengths": ["The validation executes before persistence."],
+  "inspected_files": ["src/orders.py", "tests/test_orders.py"],
+  "context_files": [],
+  "limitations": ["Synthetic inputs for template demonstration. Source links illustrate the format and do not point to real commits."],
+  "verification": ["Not run — this report demonstrates presentation using synthetic source."],
+  "file_changes": [
+    {"file": "src/orders.py", "description": "Adds a quantity guard before persistence."},
+    {"file": "tests/test_orders.py", "description": "Adds positive-order coverage; the zero boundary remains uncovered."}
+  ],
+  "findings": [
+    {
+      "priority": "P1",
+      "title": "Zero quantity still reaches persistence",
+      "file": "src/orders.py",
+      "line": 2,
+      "side": "head",
+      "evidence": "With quantity = 0, the quantity < 0 condition is false.",
+      "impact": "An empty order is saved despite the positive-quantity contract stated in the validation message.",
+      "fix": "Reject quantity <= 0 and add a boundary test confirming persistence is not called."
+    }
+  ],
+  "flows": [
+    {
+      "title": "Before — quantity reaches persistence",
+      "nodes": [
+        {"id": "input", "label": "Receive quantity", "status": "unchanged", "evidence": [{"file": "src/orders.py", "line": 1, "side": "base"}]},
+        {"id": "save", "label": "Save order for any quantity", "status": "modified", "evidence": [{"file": "src/orders.py", "line": 2, "side": "base"}]}
+      ],
+      "edges": [
+        {"from": "input", "to": "save", "label": "No guard", "evidence": [{"file": "src/orders.py", "line": 2, "side": "base"}]}
+      ]
+    },
+    {
+      "title": "After — negative quantities rejected",
+      "nodes": [
+        {"id": "input", "label": "Receive quantity", "status": "unchanged", "evidence": [{"file": "src/orders.py", "line": 1, "side": "head"}]},
+        {"id": "guard", "label": "Check quantity < 0", "status": "added", "evidence": [{"file": "src/orders.py", "line": 2, "side": "head"}]},
+        {"id": "reject", "label": "Raise validation error", "status": "added", "evidence": [{"file": "src/orders.py", "line": 3, "side": "head"}]},
+        {"id": "save", "label": "Save order (zero still passes)", "status": "modified", "evidence": [{"file": "src/orders.py", "line": 4, "side": "head"}]}
+      ],
+      "edges": [
+        {"from": "input", "to": "guard", "label": "Validate before side effect", "evidence": [{"file": "src/orders.py", "line": 2, "side": "head"}]},
+        {"from": "guard", "to": "reject", "label": "Negative", "evidence": [{"file": "src/orders.py", "line": 3, "side": "head"}]},
+        {"from": "guard", "to": "save", "label": "Zero or positive", "evidence": [{"file": "src/orders.py", "line": 4, "side": "head"}]}
+      ]
+    }
+  ]
+}
