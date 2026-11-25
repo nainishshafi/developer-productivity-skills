@@ -125,9 +125,13 @@ Review and audit skills operate on **pragmatic heuristics and evidence-driven se
 ### `pull-request-reviewer`
 
 Collects a stable GitHub PR snapshot with `gh`, reviews the complete change using `code-reviewer`, and renders an offline HTML report from a reusable template. Includes before/after behavioral flow diagrams, P0–P3 findings, inspection coverage, verification evidence, and expandable unified diffs.
-- **Workflow:** [Pull Request Reviewer](.github/skills/pull-request-reviewer/SKILL.md).
-- **CLI:** `.venv/Scripts/python.exe .github/skills/pull-request-reviewer/scripts/pr-review.py collect --pr 123 --repo owner/repository --output <temporary-directory>/snapshot.json`, then `render --snapshot <snapshot.json> --review <review.json> --output <report.html>`.
-- **Template preview:** Render `assets/sample-snapshot.json` and `assets/sample-review.json`; these are explicitly synthetic.
+
+- **Setup and usage:** [Pull Request Reviewer README](.github/skills/pull-request-reviewer/README.md).
+- **Agent workflow:** [Skill instructions](.github/skills/pull-request-reviewer/SKILL.md); the agent authors review findings and diagrams using `code-reviewer`.
+- **Requirements:** Python 3.10+; authenticated GitHub CLI for live PR collection. Rendering and synthetic previews work without `gh`.
+- **CLI:** `collect` writes a temporary JSON snapshot and unified diff; `render` combines the snapshot, agent-authored review JSON, and [HTML template](.github/skills/pull-request-reviewer/assets/report-template.html).
+- **Report location:** `reports/pull-request-reviewer/`, excluded from Git by `/reports/` in `.gitignore`. Keep intermediate snapshots and review JSON in a temporary directory.
+- **Local commits:** Ask the agent to review the last commit against its parent; `collect` itself accepts GitHub PR URLs or numbers.
 
 ### `code-reviewer`
 Senior-level code review across languages (Python, TypeScript/JavaScript, React/Next.js, Java, C#, Go, SQL, PowerShell). Audits changes across 7 dimensions: correctness, architecture (SOLID/DRY/KISS), error handling, test coverage, security defense, performance & memory hygiene, and readability. Features dedicated language subdirectories with deep checklists. Standardizes findings into `[P0 - Blocker]`, `[P1 - Major]`, `[P2 - Minor]`, and `[P3 - Nit]` with concrete suggested fix diffs.

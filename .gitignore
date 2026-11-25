@@ -20,6 +20,9 @@ mcp/**/*.db
 mcp/**/*.db-journal
 .project-memory/
 
+# Generated reports
+/reports/
+
 # Python bytecode
 **/__pycache__/
 *.py[cod]
