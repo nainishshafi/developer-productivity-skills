@@ -11,7 +11,7 @@ Decision framework used by **`skill-doctor`** to turn raw `project-memory` entri
 | Documents a repeatable pitfall, shell/OS trap, library quirk, security hazard, or architectural rule missing from an existing skill | `UPDATE_EXISTING_SKILL` | Edit the matching skill's submodule or `references/` (or `SKILL.md` for non-modular skills), bump `version`, mark `promoted`. |
 | Same pitfall/rule is already explicitly covered in the matched skill's files | `SKIP_TRANSIENT` (`ALREADY_COVERED`) | Leave skill untouched to prevent duplication bloat; mark `skipped` with `targetSkill` set to the covering skill. |
 | Narrow one-off implementation detail (e.g., specific ticket ID, temporary file name, transient feature WIP) | `SKIP_TRANSIENT` | Do not pollute general-purpose skills; mark `skipped` with `targetSkill: "none"`. |
-| `>= 2` unprocessed learnings share an unmapped domain/tag cluster (e.g., `graphql`, `terraform`, `kafka-streams`) with no covering skill | `CREATE_NEW_SKILL` | Scaffold a new skill via `skill-creator`, author focused modules, register in factory/README, mark `promoted` with `targetSkill: "new:<skill-name>"`. |
+| An established reusable workflow lacks a suitable owning skill | `CREATE_NEW_SKILL` | Scaffold a focused skill via `skill-creator`, register and validate it, then mark `promoted` with `targetSkill: "new:<skill-name>"`; do not wait for another learning. |
 
 ---
 
@@ -43,12 +43,11 @@ Decision framework used by **`skill-doctor`** to turn raw `project-memory` entri
 
 ---
 
-## 4. Periodic Software Factory Cadence
+## 4. Immediate Learning Promotion
 
-`skill-doctor` should run at the end of `software-factory-agent` delivery when **any** of these triggers hold:
-1. **Batch Threshold**: `>= 3` memories in `.project-memory/memory.db` have `skill_status = 'pending'`.
-2. **Remediation Trigger**: Phase 8 (`troubleshoot-and-fix`) was activated during the pipeline run (meaning a real defect was diagnosed and fixed).
-3. **Explicit Request**: User asks to run `skill-doctor`, evolve skills, or audit skill health.
+Process each learning as soon as the task establishes sufficient evidence. Update the owning skill for novel reusable rules, validate the patch and global visibility, then mark the memory promoted. Recording memory alone does not complete promotion; do not wait for three memories or a later delivery.
+
+Use `ALREADY_COVERED` for rules already enforced and `SKIP_TRANSIENT` for task-specific details. An end-of-task pending-memory check catches omissions; it does not replace immediate promotion. Disclose blocked updates and their targets rather than marking them complete.
 
 ---
 
@@ -62,4 +61,3 @@ When auditing an existing skill (`SKILL.md`, `references/`, `scripts/`), diagnos
 | **Bloated / Noisy Instructions** | Modular `SKILL.md` router `> 65` lines; monolithic `SKILL.md` `> 1,000` lines; duplicated examples; orphan files in `references/` or `scripts/`. | Move deep content into `references/` or topical submodules; link or remove orphan assets. |
 | **Edge-Case Blind Spots** | Bare `python`/`py` commands, unquoted PowerShell `$` strings, missing Windows/POSIX notes, or scripts scoring `>= 40` on `check-overengineering`. | Switch to `.venv` Python paths, add OS/quoting caveats, and simplify bloated script helpers. |
 | **Missing Verification Steps** | Task skill executes `scripts/` or mutates files without stating how to verify success (expected stdout, exit codes, or validator command). | Add a concise verification step with exact command and expected pass criteria. |
-

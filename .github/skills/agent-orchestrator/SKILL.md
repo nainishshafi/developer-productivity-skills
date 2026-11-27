@@ -1,11 +1,45 @@
 ---
 name: agent-orchestrator
-description: >-
-  Orchestrates an end-to-end multi-agent development lifecycle across seven quality stages: plan -> develop -> codereview -> complexitychecks -> architecturechecks -> halucinationchecks -> securitychecks. Coordinates sub-agent handoffs, manages stage-isolated context, embeds automated detect-overengineering checks in the loop (develop, codereview, architecturechecks, and defect remediation), tracks sub-agent outputs via save-memory (ledger, sidecar, journal), selectively loads relevant context across quality gates via load-memory, provides structured verification guidance, and integrates isolated testbed remediation (troubleshoot-and-fix). Use when asked to "orchestrate a feature", "run full development pipeline", "plan-develop-review", "agent orchestrator", "orchestrate subagents", or "run full lifecycle checks".
-version: 1.4.0
+description: Orchestrate seven development and review stages with scoped handoffs and recorded quality gates. Use for full development pipelines, plan-develop-review, orchestrating subagents or lifecycle checks.
+version: 1.6.1
 ---
 
 # Agent Orchestrator
+
+## Required Plan, Checklist and Cost Controls
+
+Before implementation, create a concrete `plan.md` and `checklist.md` in the project run directory. Show their paths and summarize the scope to the user. An architecture review, memory entry or stage-status JSON alone does not satisfy this requirement. Do not substitute a retrospective audit or backdate a plan.
+
+The plan must state:
+- The requested outcome, scope boundaries, affected components and measurable acceptance criteria.
+- Implementation steps, dependencies, review assignments and the minimum validation needed.
+- Expected data-processing coverage separately from feature implementation; state whether a sample or complete backfill is included.
+- User-specified time/token limits, when provided; otherwise a rough effort estimate, planned review count and an explicit cost checkpoint. Label estimates and unavailable usage measurements honestly.
+- Stop conditions for repeated failures, unavailable tools and material scope or cost growth.
+
+The checklist must cover implementation acceptance criteria, all seven stage gates, necessary tests/typechecks, remediation and delivery. Mark items complete only with evidence. Update the same checklist at milestones; do not create duplicate tracking documents.
+
+Implementation may start only after both artifacts exist and the planning gate has checked them. Existing user authorization remains sufficient; this requirement does not introduce an extra approval turn.
+
+Keep execution proportional:
+- Use bounded sub-agent assignments and parallelize independent reviews. Do not have several agents repeat the same broad inspection or test suite.
+- Run each required check once for the implementation milestone. After remediation, rerun affected checks; repeat broader validation only when changes, failures or unresolved concerns justify it.
+- Re-review the specific findings and changed behavior instead of restarting every completed stage.
+- At the planned cost checkpoint, compare progress with the estimate or user limit. Explain material growth before expanding work, reduce optional overhead, and ask only when a user decision is necessary.
+- Keep one canonical stage record with concise summaries, evidence and learnings. Persist required memory once per stage; avoid duplicating transcripts or repeatedly rewriting equivalent reports.
+- If required tooling is unavailable, record that once and use an allowed scoped fallback. Do not repeatedly probe, install tools or claim an automated pass.
+
+## Executable Gates
+
+Run [orchestrator_gates.py](scripts/orchestrator_gates.py); the context manager also enforces gates during handoff and PASSED recording.
+
+- `source --file <changed-file>` (repeat `--file`) counts physical lines, including comments and blanks, and UTF-8 bytes. Defaults are at most 500 lines and 256 KiB per file. Missing, unreadable, oversized or empty selections fail with exit code 1.
+- `plan --run-dir <run-directory>` requires nonempty `plan.md` and `checklist.md`. Use plan section labels `Scope`, `Acceptance criteria`, `Implementation`, `Validation`, `Effort`, and `Limits`; the checklist needs actionable Markdown checkboxes.
+- Handoff and PASSED recording require planning artifacts and a passed predecessor. Every PASSED record requires `--summary`, `--learnings`, and `--artifact` (absolute or run-relative, existing and nonempty).
+- PASSED `develop`, `codereview` and `architecturechecks` records also require `--source-file` for every changed source. These run the line/byte gate. Skipped stages do not advance the pipeline; final completion requires all earlier stages passed and all checklist items checked.
+- `check-overengineering` runs source gates before extraction and rejects invalid JSON, empty results, missing/nonfinite scores and incomplete selected-file coverage. It never assumes a missing score is zero.
+- Prefer the repository virtual-environment interpreter. If absent, use a verified installed Python interpreter for these standard-library gates and context-manager commands; no environment installation is necessary. Never silently omit executable gates because `.venv` is missing.
+- Inspect source responsibilities even when size gates pass. These checks validate measurable structure and evidence presence, not semantic correctness or the truth of manually reported outcomes.
 
 The **Agent Orchestrator** is an automated multi-agent workflow conductor that coordinates specialized skills across the seven phases of modern software engineering:
 
@@ -196,7 +230,7 @@ Downstream sub-agents must never receive raw upstream transcripts. Instead, the 
 Sub-agents are executed in isolated contexts. State and bounded handoff payloads are managed by the Context Manager.
 
 > [!IMPORTANT]
-> **Always run the Context Manager using the repository virtual environment:**
+> **Prefer the repository virtual environment; if unavailable, use a verified installed interpreter as specified under Executable Gates:**
 > - Windows: `.\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py <command>`
 > - POSIX: `.venv/bin/python .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py <command>`
 
@@ -211,7 +245,7 @@ Sub-agents are executed in isolated contexts. State and bounded handoff payloads
 .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py check-overengineering --file <path>
 
 # Record stage completion and quality gate verdict
-.\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage <stage-name> --status PASSED --summary "<summary>"
+.\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage <stage-name> --status PASSED --summary "<summary>" --learnings "<lesson>" --artifact "<evidence>" --source-file "<changed-source>"
 
 # Inspect pipeline status
 .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py status
@@ -219,7 +253,7 @@ Sub-agents are executed in isolated contexts. State and bounded handoff payloads
 # Generate final delivery report
 .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py report
 
-# Periodically diagnose pending learnings for skill evolution
+# Diagnose any unprocessed learnings; promote new reusable rules immediately
 .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py skill-doctor
 ```
 
@@ -234,6 +268,8 @@ Sub-agents are executed in isolated contexts. State and bounded handoff payloads
    - Call `load_memory(category="sidecar")` to check for active WIP or recent task handoffs.
 
 ### Step 2: Stage 1 — `plan`
+Before the steps below, write `plan.md` and `checklist.md` as required above. The planning review must verify their scope, acceptance criteria, review boundaries and cost checkpoint. Record this gate as incomplete until both artifacts exist; architecture approval alone is insufficient.
+
 1. **Load Context**: Retrieve existing architecture decisions via `load_memory(category="ledger")` and past planning traps via `load_memory(category="journal", limit=3)`.
 2. **Execute**: Invoke sub-agent with role `Architecture & Planning Specialist` and skill `architectural-planning`.
    - Produce system design, interface contracts, and list of files to create/modify.
@@ -244,16 +280,19 @@ Sub-agents are executed in isolated contexts. State and bounded handoff payloads
    - Record planning learnings to `journal`: `save_memory(category="journal", title="Stage 1 (plan) Recap", summary="...", learnings="...")`.
 4. **Record Gate**:
    ```bash
-   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage plan --status PASSED --summary "Plan approved: contracts defined" --artifact "plan.md" --judge-verdict "APPROVED: 4-archetype consensus"
+   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage plan --status PASSED --summary "Plan approved: contracts defined" --learnings "<planning lesson>" --artifact "plan.md" --judge-verdict "APPROVED: 4-archetype consensus"
    ```
 
 ### Step 3: Stage 2 — `develop`
+Verify the initial plan and checklist exist before editing production code. Carry their paths into the bounded handoff and update checklist evidence at implementation milestones.
+
 1. **Load Context**: Generate handoff payload (`handoff --stage develop`).
    - Call `load_memory(category="ledger")` to pull the interface contracts and schema requirements established in `plan`.
    - Call `search_memory("<target-technology> gotchas pitfalls")` to retrieve past mistakes avoided.
 2. **Execute**: Activate language developer skill (`python-developer`, `typescript-developer`, `react-developer`, `java-developer`, `csharp-developer`, `python-api-writer`, or `powershell-writer`).
    - For database fixtures, use `sql-connector` with ephemeral SQLite (`:memory:`) to seed fixtures without external dependencies.
    - Write production code and automated tests.
+   - Check compiler coverage of changed tests separately from runtime execution. TypeScript runners may transpile without typechecking, while production configs exclude tests; use the language skill's test-source verification guidance.
 3. **In-The-Loop Over-Engineering Check**:
    - Run `check-overengineering` on all newly modified source files:
      ```bash
@@ -265,7 +304,7 @@ Sub-agents are executed in isolated contexts. State and bounded handoff payloads
    - Save implementation lessons to `journal`: `save_memory(category="journal", title="Stage 2 (develop) Recap", summary="...", learnings="...")`.
 5. **Record Gate**:
    ```bash
-   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage develop --status PASSED --summary "All unit tests passing, over-engineering checks clean"
+   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage develop --status PASSED --summary "<actual test results>" --learnings "<lesson>" --artifact "<test evidence>" --source-file "<changed-source>"
    ```
 
 ### Step 4: Stage 3 — `codereview`
@@ -280,7 +319,7 @@ Sub-agents are executed in isolated contexts. State and bounded handoff payloads
    - Save review findings to `journal`: `save_memory(category="journal", title="Stage 3 (codereview) Findings", summary="...", learnings="...")`.
 4. **Record Gate**:
    ```bash
-   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage codereview --status PASSED --summary "Clean code review: 0 blocking issues"
+   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage codereview --status PASSED --summary "<actual findings>" --learnings "<lesson>" --artifact "<review evidence>" --source-file "<changed-source>"
    ```
 
 ### Step 5: Stage 4 — `complexitychecks`
@@ -296,7 +335,7 @@ Sub-agents are executed in isolated contexts. State and bounded handoff payloads
    - Save complexity optimizations to `journal`: `save_memory(category="journal", title="Stage 4 (complexitychecks) Audit", summary="...", learnings="...")`.
 4. **Record Gate**:
    ```bash
-   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage complexitychecks --status PASSED --summary "Complexity verified: O(n) time, O(1) auxiliary space"
+   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage complexitychecks --status PASSED --summary "<actual resource bounds>" --learnings "<lesson>" --artifact "<analysis evidence>"
    ```
 
 ### Step 6: Stage 5 — `architecturechecks` & Simplification Loop
@@ -316,7 +355,7 @@ Sub-agents are executed in isolated contexts. State and bounded handoff payloads
    - Save YAGNI learnings to `journal`: `save_memory(category="journal", title="Stage 5 (architecturechecks) Audit", summary="...", learnings="...")`.
 4. **Record Gate**:
    ```bash
-   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage architecturechecks --status PASSED --summary "Low over-engineering risk: score 12/100"
+   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage architecturechecks --status PASSED --summary "<actual structural findings>" --learnings "<lesson>" --artifact "<architecture evidence>" --source-file "<changed-source>"
    ```
 
 ### Step 7: Stage 6 — `halucinationchecks`
@@ -325,11 +364,12 @@ Sub-agents are executed in isolated contexts. State and bounded handoff payloads
 2. **Execute**: Activate skill `scan-halucinated-tests` (supported by `trace-code-context`).
    - Cross-reference all test imports, assertions, method calls, and mocks against ground-truth AST source symbols.
    - Verify 0 phantom symbols or hallucinated methods exist.
+   - Verify assertions against dependency behavior as well as symbols; inspect filesystem mock declarations and SQLite SHM bookkeeping when applicable.
 3. **Save Sub-Agent Output**:
    - Save mock verification learnings to `journal`: `save_memory(category="journal", title="Stage 6 (halucinationchecks) Audit", summary="...", learnings="...")`.
 4. **Record Gate**:
    ```bash
-   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage halucinationchecks --status PASSED --summary "0 hallucinated symbols detected"
+   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage halucinationchecks --status PASSED --summary "<actual grounding findings>" --learnings "<lesson>" --artifact "<verification evidence>"
    ```
 
 ### Step 8: Stage 7 — `securitychecks`
@@ -338,6 +378,7 @@ Sub-agents are executed in isolated contexts. State and bounded handoff payloads
 2. **Execute**: Activate skills `github-security-scanner-hook` and `api-security`.
    - Run `detect-secrets` scan for credentials, private keys, and tokens.
    - Run `semgrep` scan for OWASP injection flaws (command injection, path traversal, SQLi, XSS).
+   - Record each automated check actually executed and its result. If tools are unavailable, disclose that limit and label source inspection as manual; manual or fallback coverage cannot be reported as an external scanner pass. Do not copy example PASSED summaries as evidence.
    - Audit API auth and cryptographic hygiene with `api-security` (JWT RS256/ES256, OAuth 2.1 PKCE, session cookie flags, mTLS).
    - Verify database operations with `sql-connector` (`audit_query_safety`) to guarantee zero destructive SQL (`DROP TABLE`, `DELETE *`).
 3. **Save Sub-Agent Output**:
@@ -345,13 +386,15 @@ Sub-agents are executed in isolated contexts. State and bounded handoff payloads
    - Save security scan learnings to `journal`: `save_memory(category="journal", title="Stage 7 (securitychecks) Audit", summary="...", learnings="...")`.
 4. **Record Gate**:
    ```bash
-   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage securitychecks --status PASSED --summary "Security gate passed: 0 secrets, 0 vulnerabilities"
+   .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage securitychecks --status PASSED --summary "<actual coverage and findings>" --learnings "<lesson>" --artifact "<security evidence>"
    ```
 
 ### Step 9: Final Delivery, Cleanup & Periodic Skill Evolution
+Reconcile the original checklist with actual evidence, disclose incomplete coverage and unavailable checks, and link the completed artifacts. Report measured time/token usage only when available; otherwise state that it was not measured.
+
 1. Run `.\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py report`.
 2. Call `clear_sidecar` via `manage-memory` / `load-memory` to flush transient task WIP, preserving permanent `ledger` and `journal` entries.
-3. If the report shows `>= 3` pending unprocessed learnings or remediation ran during delivery, invoke `skill-doctor` (`orchestrator-context-manager.py skill-doctor`) to update or scaffold skills and mark learnings via `mark_learning_promoted`.
+3. Promote each reusable learning through `skill-doctor` as soon as its evidence is established during any stage or remediation. Before delivery, diagnose remaining pending entries (`orchestrator-context-manager.py skill-doctor`), validate owning-skill updates and global visibility, and mark processed entries via `mark_learning_promoted`. Memory-only recording and batch thresholds do not satisfy promotion.
 4. Present the user with the consolidated stage audit report and verified deliverables.
 
 ---
@@ -379,7 +422,7 @@ If any quality gate fails (`FAILED` or `BLOCKED`):
 ## References
 
 - [Software Factory Agent](file:///.github/agents/software-factory-agent.md) — Autonomous end-to-end closed-loop agent coordinating all repository skills and MCP servers.
-- [Skill Doctor](file:///.github/skills/skill-doctor/SKILL.md) — Periodic continuous learning skill that promotes `project-memory` learnings into skill updates or new skills.
+- [Skill Doctor](file:///.github/skills/skill-doctor/SKILL.md) — Immediate learning promotion into owning skills, with validation and deduplication.
 - [Detect Overengineering](file:///.github/skills/detect-overengineering/SKILL.md) — Anti-bloat heuristics, YAGNI auditing, and deterministic signal extractor (`extract-signals.py`).
 - [Save Memory](file:///.github/skills/save-memory/SKILL.md) — Persist high-signal project memory into `project-memory` (`ledger`, `sidecar`, `journal`).
 - [Load Memory](file:///.github/skills/load-memory/SKILL.md) — Retrieve project memory and hybrid semantic search without context bloat.

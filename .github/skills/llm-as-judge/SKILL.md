@@ -1,7 +1,7 @@
 ---
 name: llm-as-judge
 description: Agent-native LLM-as-Judge evaluation framework for Claude Code, Antigravity, and GitHub Copilot. Conducts critique-first rubric scoring, position-swapped pairwise comparisons, claim-level hallucination and RAG grounding audits, code quality evaluation, multi-agent consensus panels, and specialized evaluator archetypes (Pessimist, Contrarian, Pragmatist, Specialist)—all within agent context without external APIs. Use when asked to "judge this response", "compare these responses", "evaluate response quality", "score this output", "rate this response", "detect hallucinations", "verify rag grounding", "run multi-agent consensus", "evaluate architecture", or "audit technical proposal".
-version: 1.5.0
+version: 1.6.0
 ---
 
 # LLM-as-Judge Skill
@@ -274,6 +274,14 @@ When evaluating architectural proposals, architecture design records (ADRs), sys
 ---
 
 ## Common Pitfalls & Remedies
+
+### Classification evidence and periodic samples
+
+- Exact quotes, valid schemas and matching hashes establish structural/textual support. Judge whether the cited source entails the label separately; these checks do not authenticate a reported model identity or measure predictive accuracy.
+- Treat previous acting-model judgments as provisional examples unless independently verified. Agreement with the same model is consistency, not an independent accuracy benchmark; confidence scores are not calibrated probabilities without calibration evidence.
+- Distinguish prior-experience requirements from evidence about the current project. Choose an uncertain label when the latter is missing.
+- Verify sample membership across the actual review cadence. Daily modulo selection can repeat at weekly intervals; do not promise disjoint samples or coverage of the whole corpus from a bounded review.
+- A due check runs when invoked. A recurring background review requires an actual scheduling mechanism and an explicitly specified recurrence.
 
 | Pitfall | Problem | Remedy |
 |---|---|---|

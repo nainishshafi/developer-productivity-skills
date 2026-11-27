@@ -106,6 +106,7 @@ The Orchestrator solves this through **Bounded Stage Handoffs**:
   - Speculative generality (classes with 1 implementation and no variation points)
   - Trampoline methods (methods that simply forward to another layer)
   - God objects / God files (> 500 lines or > 15 public methods)
+  - Enforce physical source LOC and bytes with `scripts/orchestrator_gates.py source --file <path>`; at most 500 lines and 256 KiB. Count comments and blank lines. Structural responsibility and public-method reviews remain separate; no method-count parser is claimed.
   - Over-engineering risk score < 40 (Low risk)
   - Language-specialist anti-bloat guardrails
 - **In-The-Loop Simplification:** If score >= 40, triggers the Simplification Loop:
@@ -114,6 +115,7 @@ The Orchestrator solves this through **Bounded Stage Handoffs**:
   3. Re-verify score < 40 before advancing.
 - **Outputs:** `.orchestrator/runs/<run-id>/stages/architecturechecks/architecture-audit.md`
 - **Gate Check:** Overengineering risk score classified as LOW (< 40) or accepted by lead.
+- **Executable gates:** PASSED requires valid planning artifacts, the active stage, a passed predecessor, nonempty summary/learnings and existing evidence. Development/code/architecture records additionally require every changed source via `--source-file` and passing line/byte limits. Invalid extractor JSON, scoreless/empty results or incomplete file coverage fail closed. Final completion requires all prior stages PASSED and no unchecked checklist items; skipped stages cannot advance.
 
 ### Stage 6: `halucinationchecks`
 - **Objective:** Cross-validate newly written tests and mocks against the actual ground-truth source code.

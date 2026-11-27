@@ -80,6 +80,12 @@ while i < n:
 
 ## 4. Amortized Time Complexity
 
+### Shrinking active sets and source-text search
+
+- For round-robin sampling, sum the sizes of the active groups actually scanned each round. If each visited nonempty group emits an item, charge that visit to the emitted item; handle empty-group removal separately. Do not multiply initial group count by round count without checking whether groups shrink.
+- Distinguish `Array.prototype.includes` membership scans from `String.prototype.includes` substring searches. The latter depends on text length, query length and runtime implementation; do not claim a universal linear bound guaranteed by JavaScript. State an assumed search algorithm or report search cost separately.
+- A cap on emitted samples does not cap corpus inventory, sorting, hashing or quote-validation work. Keep corpus size, sample size and total source-text length as separate scaling variables.
+
 An operation has **Amortized Time Complexity** $O(1)$ if an occasional expensive operation (costing $O(n)$) happens so infrequently that the average cost per operation across a long sequence of $N$ operations remains constant.
 
 ### Classic Examples:
@@ -89,4 +95,3 @@ An operation has **Amortized Time Complexity** $O(1)$ if an occasional expensive
    - Across $N$ appends, total copy operations $\le 2N$, resulting in **amortized $O(1)$**.
 2. **Hash Table Rehashing**:
    - When load factor threshold is breached, a new bucket array is allocated and all keys re-hashed ($O(n)$). Amortized cost per insertion remains $O(1)$.
-

@@ -61,7 +61,7 @@ flowchart TD
     R["Phase 8: Self-Healing Remediation<br/>(troubleshoot-and-fix + site-reliability-engineer + check-overengineering)"] -->|"Iteration <= 3 & Verified"| S3
     R -->|"> 3 Attempts"| CB["Circuit Breaker Halt:<br/>Revert & Surface Out-of-Options Report"]
 
-    F["Finalize & Deliver<br/>(orchestrator report, save journal, clear_sidecar)"] -->|"Periodic Trigger:<br/>pending >= 3 or Phase 8 ran"| SD["Phase 9: Periodic Skill Doctor<br/>(skill-doctor, skill-creator, mark_learning_promoted)"]
+    F["Finalize & Deliver<br/>(orchestrator report, save journal, clear_sidecar)"] -->|"Reconcile any pending learnings<br/>(promote new rules during each phase)"| SD["Phase 9: Skill Doctor Reconciliation<br/>(skill-doctor, skill-creator, mark_learning_promoted)"]
 ```
 
 ---
@@ -209,11 +209,10 @@ flowchart TD
 
 ---
 
-### Phase 9: Periodic Continuous Learning & Skill Evolution (`skill-doctor`)
-Run `skill-doctor` automatically at the conclusion of a Software Factory delivery whenever **any** periodic trigger condition is met:
-- Unprocessed (`skill_status = 'pending'`) learnings in `project-memory` reach **`>= 3`**, OR
-- **Phase 8 (Self-Healing Remediation)** was activated during the run, OR
-- The user explicitly requests skill evolution / skill health maintenance.
+### Phase 9: Immediate Learning Promotion & Delivery Reconciliation (`skill-doctor`)
+Promote each novel reusable learning through `skill-doctor` immediately during its originating phase, including user corrections and remediation. Validate the owning-skill patch and global visibility, then mark its memory promoted. Saving memory alone is incomplete; do not wait for a batch threshold or an explicit request.
+
+At delivery, reconcile any pending entries to catch omissions. Deduplicate already-covered rules, keep transient details in memory, and disclose blocked updates with their pending targets.
 
 1. **Harvest & Diagnose Pending Learnings**:
    - Call `get_unprocessed_learnings()` via `project-memory` MCP or run:
@@ -223,7 +222,7 @@ Run `skill-doctor` automatically at the conclusion of a Software Factory deliver
 2. **Triage & Evolve Skills**:
    - Activate `skill-doctor` (consulting `.github/skills/skill-doctor/references/skill-evolution-rubric.md`).
    - Route novel, reusable pitfalls/patterns into existing skill submodules (never bloating lean modular `SKILL.md` routers).
-   - When `>= 2` unmapped learnings cluster around a missing capability, scaffold a new skill via `skill-creator` and register it.
+   - When an established reusable workflow has no owning skill, scaffold a focused skill via `skill-creator` and register it immediately.
    - Skip transient task-specific or already-covered entries without adding skill bloat.
 3. **Validate & Mark Promoted**:
    - Run `.\.venv\Scripts\python.exe .github/skills/skill-doctor/scripts/skill-doctor.py audit-skills` and `npm run validate:skills --prefix mcp/sql-connector`.
@@ -254,7 +253,7 @@ Run `skill-doctor` automatically at the conclusion of a Software Factory deliver
 | `legacy-code-modernization` | Skill | Stage 2 (`develop`) | Seam extraction, Golden Master pinning tests, TDD, Strangler Fig migration |
 | `test-data-creator` | Skill | Stage 2 (`develop`) | Schema-aware SQL batch seeding (`sql-connector`), streaming JSON mocks, Pareto skew |
 | `skill-creator` | Skill | Stage 2 (`develop`), Phase 9 | Scaffolding modular or task skills when extending repository capabilities |
-| `skill-doctor` | Skill | Phase 9 (Periodic) | Diagnoses pending `project-memory` learnings, updates/creates skills without bloat, audits skill health, and marks learnings promoted |
+| `skill-doctor` | Skill | Every phase; Phase 9 reconciliation | Immediately promotes reusable learnings into owning skills, validates updates, deduplicates rules, and reconciles pending entries before delivery |
 | `sync-github-forks` | Skill | Stage 2 (`develop`) | Automated fork cloning/pulling via `gh` CLI across OSes |
 | `code-reviewer` | Skill | Stage 3 (`codereview`) | Senior 7-dimension code review (`[P0]`-`[P3]`) with language checklists |
 | `pull-request-reviewer` | Skill | Stage 3 (`codereview`), standalone PR reports | Stable GitHub PR diff, code-reviewer assessment, source-linked before/after flows, offline HTML template |

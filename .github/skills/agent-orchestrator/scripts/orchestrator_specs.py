@@ -1,0 +1,60 @@
+"""Stage roles, contracts and skills used by the pipeline."""
+
+STAGE_SKILLS_MAP = {
+    "plan": {
+        "primary_skill": "architectural-planning",
+        "supporting_skills": ["scan-repo-readme", "trace-code-context", "load-memory", "save-memory", "bdd-gherkin-tester", "researcher-poc-tester", "rag-pipeline", "llm-as-judge", "api-security", "caching-queues-reviewer", "sql-executor"],
+        "subagent_role": "Architecture & Planning Specialist",
+        "description": "BDD-first Gherkin feature specifications, system design, empirical PoC benchmarking, requirements breakdown, component boundaries, and contract definition.",
+        "memory_load": "load_memory(category='ledger') for architecture truths; load_memory(category='journal') for design traps.",
+        "memory_save": "save_memory(category='ledger') for ADRs/contracts; save_memory(category='journal') for plan learnings.",
+    },
+    "develop": {
+        "primary_skill": "python-developer / typescript-developer / react-developer / java-developer / csharp-developer / python-api-writer / powershell-writer",
+        "supporting_skills": ["bdd-gherkin-tester", "playwright-tester", "rag-pipeline", "detect-overengineering", "load-memory", "save-memory", "troubleshoot-and-fix", "site-reliability-engineer", "legacy-code-modernization", "test-data-creator", "sql-connector", "nodejs-executor", "skill-creator", "skill-doctor", "sync-github-forks"],
+        "subagent_role": "Core Implementation & Test Engineer",
+        "description": "Production code authoring, synthetic testbed seeding, automated unit/integration tests, legacy code modernization, and embedded over-engineering checks in the loop.",
+        "memory_load": "load_memory(category='ledger') for plan contracts; load_memory(category='sidecar') for active WIP; search_memory for domain traps.",
+        "memory_save": "save_memory(category='sidecar') for WIP state & touched files; save_memory(category='journal') for implementation lessons.",
+    },
+    "codereview": {
+        "primary_skill": "code-reviewer",
+        "supporting_skills": ["detect-overengineering", "python-linter", "design-pattern-detector", "caching-queues-reviewer", "react-developer", "load-memory", "save-memory"],
+        "subagent_role": "Senior Code Reviewer",
+        "description": "Code quality, readability, style conformance, idiomatic usage, error handling, and in-the-loop over-engineering detection.",
+        "memory_load": "load_memory(category='sidecar') for WIP context; search_memory for past review patterns and missed bugs.",
+        "memory_save": "save_memory(category='journal') for review findings and traps detected.",
+    },
+    "complexitychecks": {
+        "primary_skill": "algorithmic-complexity-analyzer",
+        "supporting_skills": ["memory-analyzer", "trace-code-context", "sql-executor", "sql-connector", "nodejs-executor", "researcher-poc-tester", "load-memory", "save-memory"],
+        "subagent_role": "Algorithmic Complexity & Performance Auditor",
+        "description": "Asymptotic time/space analysis, memory/stack/leak audits, benchmarks and SQL query plans.",
+        "memory_load": "Search for known performance bottlenecks and quadratic scans.",
+        "memory_save": "Save complexity fixes and efficiency learnings to journal.",
+    },
+    "architecturechecks": {
+        "primary_skill": "detect-overengineering",
+        "supporting_skills": ["detect-overengineering", "design-pattern-detector", "trace-code-context", "load-memory", "save-memory"],
+        "subagent_role": "Principal Architecture Auditor",
+        "description": "Structural analysis, YAGNI, file/responsibility boundaries and dependency call graphs.",
+        "memory_load": "Load ledger architecture rules and prior YAGNI lessons.",
+        "memory_save": "Save accepted structure to ledger and lessons to journal.",
+    },
+    "halucinationchecks": {
+        "primary_skill": "scan-halucinated-tests",
+        "supporting_skills": ["trace-code-context", "playwright-tester", "bdd-gherkin-tester", "rag-pipeline", "llm-as-judge", "load-memory", "save-memory"],
+        "subagent_role": "Ground-Truth Verification Auditor",
+        "description": "Verify imports, mocks, assertions and dependency behavior against actual source.",
+        "memory_load": "Load verified API contracts and mock-drift lessons.",
+        "memory_save": "Record grounded test verification in journal.",
+    },
+    "securitychecks": {
+        "primary_skill": "github-security-scanner-hook",
+        "supporting_skills": ["semgrep", "detect-secrets", "api-security", "sql-connector", "load-memory", "save-memory"],
+        "subagent_role": "Application Security Auditor",
+        "description": "Secrets, injections, traversal, shell execution and secure defaults.",
+        "memory_load": "Load security invariants and OWASP lessons.",
+        "memory_save": "Save permanent rules to ledger and security lessons to journal.",
+    },
+}

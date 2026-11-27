@@ -1,7 +1,7 @@
 ---
 name: sql-executor
 description: Practitioner guidance for querying, tuning, validating, and troubleshooting enterprise databases (SQL Server, Oracle, PostgreSQL, SQLite, MongoDB, MS Access, MySQL) via the sql-connector MCP server. Covers multi-engine joins, query optimization methods, GIN/GiST/BRIN indexing, stored procedures, TVFs, Oracle cursors, CTEs, #temp tables, OLAP cubing, window functions, and cohort analytics. Use when asked to "write a sql join", "optimize sql query", "tune database index", "query optimization", "sql performance tuning", "sql cube", "grouping sets", "sql cohort analysis", "postgres gin index", "oracle cursor", "sql stored procedure", "sql cte", or "run database queries".
-version: 1.4.0
+version: 1.5.0
 ---
 
 # SQL Executor

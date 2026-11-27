@@ -1,7 +1,7 @@
 ---
 name: skill-creator
-description: Use when the user asks to "create a new skill", "add a skill", "write a skill", "scaffold a skill", "make a claude skill", "build a skill", or wants to create a reusable Claude Code skill from scratch. Handles modular knowledge-pack developer skills, task/action skills with scripts, and lightweight reference skills.
-version: 1.2.1
+description: Create, update, install, and synchronize reusable skills. Use for "create a skill", "update a skill", "install skills", "sync skills", or "sync global skills". Preserve existing content during synchronization.
+version: 1.3.0
 ---
 
 # Skill Creator
@@ -17,6 +17,16 @@ Scaffold and write new Claude Code skills following established repository conve
 - User asks to "create", "add", "write", or "scaffold" a skill
 - User wants to build a language or framework developer skill
 - User describes something they want Claude to do consistently across sessions
+- User wants to install existing skills or synchronize repository and global skills
+
+## Synchronizing Existing Skills
+
+1. Resolve the active product's global skills root and inspect both directories before writing. Compare versions, complete relative-file manifests, and substantive diffs; neither location is automatically authoritative. Older versions can still contain unique improvements.
+2. Preserve both existing versions in recoverable backups. Merge unique files and nonconflicting improvements, keep user edits, and resolve substantive conflicts from the task context. Do not silently replace a richer skill with a smaller or older copy.
+3. Restore every required module and referenced asset before replacing a global copy with a directory junction. Keep global-only skills unless their removal is explicitly requested. A junction is suitable when the repository is the maintained source and its path is stable.
+4. Verify the reconciled content retains the improvements from both versions, then check junction targets and relative-path/SHA-256 manifests. Equality after replacement proves synchronization, not preservation. Exclude generated caches from skill-content comparisons.
+5. Run the existing metadata validator and targeted checks for changed executable behavior. If a YAML parser is unavailable, use an existing trusted validator or disclose a scoped manual fallback; folded and multiline descriptions are valid YAML. Do not reject them with a single-line-only parser or install dependencies unnecessarily.
+6. Report restored versions, backups, and verification coverage. Filesystem visibility does not prove that the IDE refreshed its skill catalog.
 
 ## Workflow
 

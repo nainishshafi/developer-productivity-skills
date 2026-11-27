@@ -2,6 +2,12 @@
 
 Defend against common TypeScript / Node.js vulnerabilities, prototype pollution, injection, and untrusted inputs.
 
+## Artifact output destinations
+
+- Before opening or truncating a caller-selected output path, reject collisions with active databases, WAL/SHM sidecars, configuration, pending input snapshots and protected completion/audit artifacts. Apply this to both export and import/report paths.
+- Compare resolved filesystem identities where available, including symlinked parents, hard links and platform case rules; string path equality alone misses aliases. For a nonexistent destination, resolve its existing parent before comparison.
+- Test collisions with isolated fixtures and verify protected contents remain preserved. Record any limits on concurrent filesystem replacement; a pre-write path check alone does not eliminate that race.
+
 ---
 
 ## 1. Prototype Pollution Defense

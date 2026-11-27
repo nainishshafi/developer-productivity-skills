@@ -2,7 +2,7 @@
 name: skill-doctor
 description: >-
   Reads unprocessed learnings from project-memory (journal and ledger), triages whether each lesson should update an existing skill, scaffold a new skill via skill-creator, or be skipped, applies anti-bloat edits to the right skill module, audits and optimizes existing skills (diagnosing vague triggers, bloated instructions, orphan assets, edge-case blind spots, and missing verification steps to propose targeted patches), and marks learnings as promoted. Runs periodically inside software-factory-agent or on demand. Use when asked to "skill doctor", "run skill doctor", "update skills from memory", "evolve skills from learnings", "heal skills", "promote learnings to skills", "audit skill health", "audit skill", "optimize skill", or "inspect skill quality".
-version: 1.2.1
+version: 1.3.0
 ---
 
 # Skill Doctor
@@ -13,7 +13,7 @@ Closed-loop continuous improvement skill that converts hard-won `project-memory`
 
 ## When to Use This Skill
 
-- Periodically at the end of a `software-factory-agent` run (when `>= 3` unprocessed learnings accumulate or Phase 8 remediation was triggered).
+- Immediately when a task establishes a reusable learning, including user corrections and remediation findings.
 - After debugging a tricky platform, security, framework, or tooling trap that future sessions must not repeat.
 - When auditing or optimizing an existing skill's `SKILL.md`, `references/`, and `scripts/` for vague triggers, instruction bloat, edge-case blind spots, or missing verification steps.
 - When asked to `"run skill doctor"`, `"update skills from memory"`, `"evolve skills from learnings"`, `"promote learnings to skills"`, `"audit skill health"`, or `"optimize skill <name>"`.
@@ -21,6 +21,10 @@ Closed-loop continuous improvement skill that converts hard-won `project-memory`
 ---
 
 ## Mode A — Memory-Driven Skill Evolution
+
+### Immediate Promotion Requirement
+
+Process every newly established learning in the same task. For a reusable rule, update its owning skill as soon as the evidence is sufficient; saving memory alone is incomplete. Do not wait for a batch threshold, another user request, or final delivery. Deduplicate rules already enforced and keep transient task details in memory. Validate the patch and global visibility before marking it promoted. If permissions or unresolved evidence block promotion, record and disclose the specific pending target instead of claiming completion.
 
 ### Step 1 — Harvest Unprocessed Learnings
 
@@ -30,7 +34,7 @@ Retrieve pending `journal` and `ledger` learnings via the `project-memory` MCP t
 .\.venv\Scripts\python.exe .github/skills/skill-doctor/scripts/skill-doctor.py diagnose
 ```
 
-*(On POSIX, substitute `.\.venv\Scripts\python.exe` with `.venv/bin/python`.)*
+*(Prefer local `.venv` (`.\.venv\Scripts\python.exe` / `.venv/bin/python`) or shared `agent-venv` (`$env:USERPROFILE\.gemini\agent-venv\Scripts\python.exe` / `~/.gemini/agent-venv/bin/python`).)*
 
 If `0` pending learnings exist, run `audit-skills` to verify repository health and exit cleanly.
 
@@ -43,7 +47,7 @@ Consult [references/skill-evolution-rubric.md](references/skill-evolution-rubric
 | Classification | Criteria | Action |
 |---|---|---|
 | **`UPDATE_EXISTING_SKILL`** | Matches an existing skill domain and adds a reusable pitfall, guardrail, command convention, or pattern not yet documented. | Edit the target skill module (or `SKILL.md` / `references/`) and mark `promoted`. |
-| **`CREATE_NEW_SKILL`** | `>= 2` learnings cluster around a repeatable technology, workflow, or domain not covered by any existing skill. | Scaffold via `skill-creator`, populate modules, register in factory/orchestrator/README, and mark `promoted`. |
+| **`CREATE_NEW_SKILL`** | An established reusable workflow has no suitable existing owning skill. | Scaffold a focused skill via `skill-creator`, populate and register it, validate, and mark `promoted`; do not wait for a second learning. |
 | **`SKIP_TRANSIENT`** | Already documented in the target skill (`ALREADY_COVERED`) or one-off task/ticket state (`SKIP_TRANSIENT`). | Do not bloat skills; mark `skipped` so it is not re-triaged. |
 
 ---
@@ -55,6 +59,7 @@ Consult [references/skill-evolution-rubric.md](references/skill-evolution-rubric
    - Add new pitfalls, patterns, or guardrails to the matching topical submodule (`core/`, `runtime-and-memory/`, `concurrency/`, `security/`, `testing/`, etc.) or `references/`.
 2. **Task / Reference Skills**:
    - Update the relevant section (`## Workflow`, `## Common Pitfalls`, or `references/*.md`), or harden helper scripts in `scripts/`.
+   - Route reusable language/library lessons to their owning skills; keep repository-specific commands local. If filesystem permissions prevent an owning-skill update, record that limit and pending target rather than treating a local copy as completion of the global update.
 3. **Zero Personal Paths & Secret Hygiene**:
    - Never embed local user directory paths (`C:\Users\...`, `/home/...`) or secrets in skill docs or scripts.
 4. **Bump Semantic Version**:
@@ -87,6 +92,8 @@ When `CREATE_NEW_SKILL` is selected:
    ```powershell
    npm run validate:skills --prefix mcp/sql-connector
    ```
+   If the prescribed validator or environment is unavailable, perform scoped checks of changed frontmatter, versions, reference targets and whitespace. Report these as manual validation, not an automated catalog audit; do not invent passing scanner results.
+   Validate actual reference links outside fenced examples; placeholder targets in Markdown templates are not missing skill assets.
 3. If any Python/JS/TS scripts were created or modified, verify low over-engineering risk (`score < 40`):
    ```powershell
    .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py check-overengineering --file <modified-script>
@@ -109,7 +116,7 @@ Use this mode when asked to audit, diagnose, or optimize an existing skill (or a
    - **Vague Trigger Descriptions**: Missing concrete `"Use when..."` scenarios or 5–8 quoted trigger phrases.
    - **Bloated / Noisy Instructions**: Modular `SKILL.md` routers exceeding ~65 lines, redundant prose, or unlinked orphan files in `references/` / `scripts/`.
    - **Import-heavy examples**: Search fenced code examples in all skill Markdown for imports and language equivalents (`from ... import`, `using`, `#include`). Length is a review signal, not a failure. Before removing an import, check whether the snippet uses its symbols. Keep imports for used framework APIs, annotations, types, and application classes even in excerpts; they show dependency provenance. Remove only verified unused imports, and never replace import blocks based on count alone. Verify copy-ready examples with the stated toolchain; label incomplete examples and describe missing setup. Do not change packaged source files based on import count alone.
-   - **Edge-Case Blind Spots**: Bare `python`/`py` calls instead of `.venv`, unsafe shell quoting, or missing platform caveats (Windows vs POSIX).
+   - **Edge-Case Blind Spots**: Bare `python`/`py` calls instead of local `.venv` or `~/.gemini/agent-venv`, unsafe shell quoting, or missing platform caveats (Windows vs POSIX).
    - **Missing Verification Steps**: Task skills with `scripts/` lacking expected output, exit-code, or post-edit validation commands (and run `check-overengineering` on scripts).
 3. **Propose & Apply Targeted Patches**:
    - Present or apply **minimal, localized diffs** (do not rewrite working sections from scratch), bump `version` in `SKILL.md` frontmatter, and re-run `audit-skills --skill <skill-name>` + `npm run validate:skills --prefix mcp/sql-connector` to verify zero errors.

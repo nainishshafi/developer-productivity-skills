@@ -1,10 +1,7 @@
 ---
 name: memory-analyzer
-description: >-
-  Language-independent static and dynamic memory risk analysis. Use when the user
-  asks to analyze code for memory issues, OOM (Out of Memory), stack overflow,
-  memory leaks, unbounded buffer/collection growth, or high peak memory usage
-  in any programming language.
+description: Analyze memory risks across languages. Use for OOM, stack overflow, memory leaks, unbounded collections or buffers, and high peak memory usage.
+version: 1.1.0
 ---
 
 # Memory Analyzer (Language-Independent)
@@ -56,6 +53,7 @@ Inspect for patterns that cause heap exhaustion or severe memory spikes:
 
 2. **Full-Payload Buffering Instead of Streaming**
    - Reading entire files, HTTP bodies, database query results, or IPC payloads into memory at once (`read_all`, `fetchall`, loading full history arrays).
+   - A bounded sample or final output does not bound upstream loading. Trace full-corpus queries, source-text payloads, intermediate copies and retained rows through the workflow before claiming memory depends only on sample size.
    - **Fix**: Stream in fixed-size chunks, paginate queries, or process line-by-line / record-by-record.
 
 3. **Unbounded Concurrency / Fan-Out**

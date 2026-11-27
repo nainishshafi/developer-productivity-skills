@@ -7,6 +7,10 @@
 !.mcp.sample.json
 !.github/
 !.github/**
+.github/skills/boomi-developer/
+.github/skills/boomi-developer/**
+.github/skills/sailpoint-developer/
+.github/skills/sailpoint-developer/**
 !.secrets.baseline
 
 # MCP Servers

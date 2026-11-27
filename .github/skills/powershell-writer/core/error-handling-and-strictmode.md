@@ -68,6 +68,11 @@ function Invoke-RestApiCall {
 
 ## 3. Native CLI Executables & `$LASTEXITCODE`
 
+- Check `$PSVersionTable.PSVersion` before choosing shell syntax. Windows PowerShell 5.1 rejects `&&` and `||` at parse time; those operators require PowerShell 7. Run independent checks separately, or gate dependent native commands with an explicit `$LASTEXITCODE` check.
+- A shell parser failure means the requested commands did not execute. Report it as an invocation failure and rerun with compatible syntax before reporting test or build results.
+- In Windows PowerShell 5.1, native argument passing can strip quotes inside inline source such as Python `-c`. Use a single-quoted here-string piped to the verified interpreter's stdin or an existing script file; check the exit code before treating the source as executed.
+- Keep approval-sensitive output and backup paths fixed across retries. A timestamp generated during every execution can change the destination after a sandbox approval and cause another denial. Reuse the approved absolute path; do not widen permissions or switch tools to bypass a restriction.
+
 PowerShell does **not** throw exceptions when native binaries (e.g. `git`, `npm`, `docker`, `kubectl`) exit with a non-zero exit code:
 - You must manually inspect `$LASTEXITCODE`!
 
@@ -105,4 +110,3 @@ In PowerShell 7.4+, you can also enable `$PSNativeCommandUseErrorActionPreferenc
 - Use **`Write-Error`**:
   - Inside cmdlet `process` blocks when an individual piped item fails, but remaining items can still be safely processed.
   - Always provide `-Category`, `-TargetObject`, and `-ErrorAction` parameters.
-

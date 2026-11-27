@@ -1,7 +1,7 @@
 ---
 name: git-committer
-description: Creates conventional Git commits and handles pre-commit outcomes. Use when asked to git commit, commit changes, or update the git-committer skill.
-version: 1.2.5
+description: Creates conventional Git commits, handles pre-commit outcomes, and assists with safe branching, rebasing, recovery, and PR workflows. Use when asked to git commit, commit changes, push to github, create branch, rebase, merge, stash, cherry-pick, resolve merge conflict, check git history, create pull request, or update the git-committer skill.
+version: 1.2.6
 ---
 
 # Git Committer

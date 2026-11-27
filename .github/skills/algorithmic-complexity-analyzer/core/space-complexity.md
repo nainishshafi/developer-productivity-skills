@@ -9,6 +9,7 @@ Analyze heap allocations, call stack frames, and auxiliary memory footprints acr
 - **Input Space**: The memory required to store the initial inputs given to the algorithm (e.g. an array of $n$ elements requires $O(n)$ input space).
 - **Auxiliary Space**: The **extra or temporary memory** allocated by the algorithm exclusively during its execution (e.g. hash tables, temporary buffers, recursion frames).
 - *Strict Rule*: When analyzing algorithmic space efficiency, evaluate **Auxiliary Space Complexity**.
+- Also report end-to-end peak memory when the workflow loads its own inputs. A query materialized with `SELECT *`/`fetchall` retains the corpus even if only a bounded sample is returned. Account for row payloads, source-text bytes and simultaneous copies; output size alone does not establish a memory bound.
 
 ---
 
@@ -93,4 +94,3 @@ for (const x of largeArray) {
   if (x % 2 === 0) result.push(x * 10);
 }
 ```
-

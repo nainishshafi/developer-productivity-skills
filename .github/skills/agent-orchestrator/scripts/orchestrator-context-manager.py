@@ -12,23 +12,19 @@ and in-the-loop over-engineering detection across the 7 SDLC stages:
 6. halucinationchecks
 7. securitychecks
 
-Usage:
-    .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py init --task "Feature name or description"
-    .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py status [--run-id <id>]
-    .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py handoff --stage <stage> [--run-id <id>]
-    .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py record --stage <stage> --status <PASSED|FAILED|BLOCKED|SKIPPED> --summary "Notes" [--run-id <id>]
-    .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py check-overengineering [--file <path> | --dir <dir> | --all] [--max-score <0-100>]
-    .\.venv\Scripts\python.exe .github/skills/agent-orchestrator/scripts/orchestrator-context-manager.py report [--run-id <id>]
+Use --help for commands and SKILL.md for workflow and evidence requirements.
 """
 
 import argparse
 import datetime
 import json
-import os
 import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from orchestrator_gates import check_sources, check_transition, scored_items, source_files
+from orchestrator_reporting import emit_handoff, emit_report
+from orchestrator_specs import STAGE_SKILLS_MAP
 
 STAGES = [
     "plan",
@@ -47,65 +43,6 @@ SLICE_LOOP_STAGES = [
     "architecturechecks",
     "halucinationchecks",
 ]
-
-STAGE_SKILLS_MAP = {
-    "plan": {
-        "primary_skill": "architectural-planning",
-        "supporting_skills": ["scan-repo-readme", "trace-code-context", "load-memory", "save-memory", "bdd-gherkin-tester", "researcher-poc-tester", "rag-pipeline", "llm-as-judge", "api-security", "caching-queues-reviewer", "sql-executor"],
-        "subagent_role": "Architecture & Planning Specialist",
-        "description": "BDD-first Gherkin feature specifications, system design, empirical PoC benchmarking, requirements breakdown, component boundaries, and contract definition.",
-        "memory_load": "load_memory(category='ledger') for architecture truths; load_memory(category='journal') for design traps.",
-        "memory_save": "save_memory(category='ledger') for ADRs/contracts; save_memory(category='journal') for plan learnings.",
-    },
-    "develop": {
-        "primary_skill": "python-developer / typescript-developer / react-developer / java-developer / csharp-developer / python-api-writer / powershell-writer",
-        "supporting_skills": ["bdd-gherkin-tester", "playwright-tester", "rag-pipeline", "detect-overengineering", "load-memory", "save-memory", "troubleshoot-and-fix", "site-reliability-engineer", "legacy-code-modernization", "test-data-creator", "sql-connector", "nodejs-executor", "skill-creator", "skill-doctor", "sync-github-forks"],
-        "subagent_role": "Core Implementation & Test Engineer",
-        "description": "Production code authoring, synthetic testbed seeding, automated unit/integration tests, legacy code modernization, and embedded over-engineering checks in the loop.",
-        "memory_load": "load_memory(category='ledger') for plan contracts; load_memory(category='sidecar') for active WIP; search_memory for domain traps.",
-        "memory_save": "save_memory(category='sidecar') for WIP state & touched files; save_memory(category='journal') for implementation lessons.",
-    },
-    "codereview": {
-        "primary_skill": "code-reviewer",
-        "supporting_skills": ["detect-overengineering", "python-linter", "design-pattern-detector", "caching-queues-reviewer", "react-developer", "load-memory", "save-memory"],
-        "subagent_role": "Senior Code Reviewer",
-        "description": "Code quality, readability, style conformance, idiomatic usage, error handling, and in-the-loop over-engineering detection.",
-        "memory_load": "load_memory(category='sidecar') for WIP context; search_memory for past review patterns and missed bugs.",
-        "memory_save": "save_memory(category='journal') for review findings and traps detected.",
-    },
-    "complexitychecks": {
-        "primary_skill": "algorithmic-complexity-analyzer",
-        "supporting_skills": ["memory-analyzer", "trace-code-context", "sql-executor", "sql-connector", "nodejs-executor", "researcher-poc-tester", "load-memory", "save-memory"],
-        "subagent_role": "Algorithmic Complexity & Performance Auditor",
-        "description": "Asymptotic Big-O time and space complexity analysis, language-independent OOM/stack-overflow/memory-leak audits, empirical doubling benchmarks, hidden quadratic loop detection, and SQL query execution plan audits.",
-        "memory_load": "search_memory for known performance bottlenecks, full table scans, or quadratic loop patterns.",
-        "memory_save": "save_memory(category='journal') for complexity fixes and asymptotic efficiency learnings.",
-    },
-    "architecturechecks": {
-        "primary_skill": "detect-overengineering",
-        "supporting_skills": ["detect-overengineering", "design-pattern-detector", "trace-code-context", "load-memory", "save-memory"],
-        "subagent_role": "Principal Architecture Auditor",
-        "description": "Structural analysis, detection of premature abstractions (YAGNI), layer bloat, anti-patterns, and dependency call-graphs.",
-        "memory_load": "load_memory(category='ledger') for architecture rules; search_memory for past over-engineering traps.",
-        "memory_save": "save_memory(category='ledger') for approved structural conventions; save_memory(category='journal') for YAGNI lessons.",
-    },
-    "halucinationchecks": {
-        "primary_skill": "scan-halucinated-tests",
-        "supporting_skills": ["trace-code-context", "playwright-tester", "bdd-gherkin-tester", "rag-pipeline", "llm-as-judge", "load-memory", "save-memory"],
-        "subagent_role": "Ground-Truth Verification Auditor",
-        "description": "Verification of test symbols, non-existent imports, E2E BDD Playwright flows, RAG 5-layer evaluation, and fabricated APIs against ground-truth source code.",
-        "memory_load": "load_memory(category='ledger') for verified API contracts; search_memory for mock drift lessons.",
-        "memory_save": "save_memory(category='journal') for hallucinated test corrections and ground-truth verification learnings.",
-    },
-    "securitychecks": {
-        "primary_skill": "github-security-scanner-hook",
-        "supporting_skills": ["semgrep", "detect-secrets", "api-security", "sql-connector", "load-memory", "save-memory"],
-        "subagent_role": "Application Security Auditor",
-        "description": "Secrets scanning, API key leakage detection, OWASP vulnerability audit (injections, traversal, shell execution), and secure defaults.",
-        "memory_load": "load_memory(category='ledger') for security invariants & token rules; search_memory for OWASP patterns.",
-        "memory_save": "save_memory(category='ledger') for permanent security rules; save_memory(category='journal') for vulnerabilities prevented.",
-    },
-}
 
 BASE_DIR = Path(".orchestrator")
 RUNS_DIR = BASE_DIR / "runs"
@@ -285,7 +222,7 @@ def cmd_handoff(args: argparse.Namespace) -> None:
 
     run_dir = get_run_dir(args.run_id)
     manifest = load_manifest(run_dir)
-    stage_idx = STAGES.index(stage)
+    check_transition(run_dir, manifest, STAGES, stage)
 
     is_major = bool(manifest.get("is_major_change") or len(manifest.get("bdd_slices", {}).get("items", [])) >= 2)
     if stage == "develop" and is_major and not manifest.get("judge_reviewed"):
@@ -295,63 +232,8 @@ def cmd_handoff(args: argparse.Namespace) -> None:
         )
         sys.exit(1)
 
-    # Collect previous stages context
-    previous_context: List[Dict[str, Any]] = []
-    for prev in STAGES[:stage_idx]:
-        prev_data = manifest["stages"].get(prev, {})
-        previous_context.append({
-            "stage": prev,
-            "status": prev_data.get("status"),
-            "summary": prev_data.get("summary"),
-            "artifacts": prev_data.get("artifacts", []),
-        })
-
-    stage_spec = STAGE_SKILLS_MAP[stage]
-
-    # Output context markdown suitable for passing directly into subagent prompt
-    print("# " + "=" * 60)
-    print(f"# SUBAGENT HANDOFF PAYLOAD: STAGE [{stage.upper()}]")
-    print("# " + "=" * 60)
-    print(f"**Target Stage:** `{stage}`")
-    print(f"**Assigned Sub-Agent Role:** `{stage_spec['subagent_role']}`")
-    print(f"**Primary Skill to Execute:** `{stage_spec['primary_skill']}`")
-    print(f"**Supporting Skills:** `{', '.join(stage_spec['supporting_skills'])}`")
-    print(f"**Goal:** {stage_spec['description']}")
-    print("\n## Task Objective")
-    print(f"{manifest['task']}")
-    if stage == "plan" and is_major:
-        print("\n## [MANDATORY GATE] Major Change -> `llm-as-judge` Arbitration Required")
-        print("- Run `llm-as-judge` 4-archetype evaluation (`Pessimist`, `Contrarian`, `Pragmatist`, `Specialist`) on the plan before coding.")
-        print("- Record completion with `--judge-verdict \"<verdict>\"` when marking `plan` as `PASSED`.")
-
-    active_slice = get_active_slice(manifest)
-    if active_slice and stage in SLICE_LOOP_STAGES:
-        print("\n## Active BDD Feature Slice")
-        print(f"- **Current Slice:** `[{active_slice['index'] + 1}/{active_slice['total']}]` `{active_slice['name']}`")
-        completed = [s["name"] for s in active_slice["items"] if s["status"] == "PASSED"]
-        remaining = [s["name"] for s in active_slice["items"][active_slice["index"] + 1:]]
-        if completed:
-            print(f"- **Completed Slices:** `{', '.join(completed)}`")
-        if remaining:
-            print(f"- **Remaining Slices:** `{', '.join(remaining)}`")
-        print("- **Scope Rule:** Implement, review, and verify only this slice; run full BDD regression on the final slice.")
-
-    print("\n## Upstream Pipeline Context & Findings")
-    if not previous_context:
-        print("_This is the first stage in the pipeline (no upstream stages)._")
-    else:
-        for prev in previous_context:
-            print(f"- **Stage `{prev['stage']}`** [{prev['status']}]: {prev['summary'] or 'No summary recorded.'}")
-            if prev["artifacts"]:
-                for art in prev["artifacts"]:
-                    print(f"    - Artifact: `{art}`")
-
-    print("\n## Stage Instructions for Sub-Agent")
-    print(f"1. Activate skill: `{stage_spec['primary_skill']}`.")
-    print("2. Focus strictly on this stage's scope. Do not regress upstream stage decisions.")
-    print("3. Write stage findings and generated files into the workspace.")
-    print(f"4. Record results with: python orchestrator-context-manager.py record --stage {stage} --status PASSED --summary \"<findings>\"")
-    print("# " + "=" * 60)
+    active = get_active_slice(manifest) if stage in SLICE_LOOP_STAGES else None
+    emit_handoff(stage, manifest, STAGES, STAGE_SKILLS_MAP, active)
 
 
 def cmd_record(args: argparse.Namespace) -> None:
@@ -371,6 +253,10 @@ def cmd_record(args: argparse.Namespace) -> None:
 
     is_major = bool(manifest.get("is_major_change") or len(manifest.get("bdd_slices", {}).get("items", [])) >= 2)
     judge_verdict = getattr(args, "judge_verdict", None)
+    if status == "PASSED":
+        manifest["status"] = "IN_PROGRESS"
+        check_transition(run_dir, manifest, STAGES, stage, args.summary, args.learnings,
+                         args.artifact, completing=True, source_files=args.source_file)
     if stage == "plan" and status == "PASSED" and is_major:
         if not judge_verdict or not judge_verdict.strip():
             print(
@@ -386,6 +272,7 @@ def cmd_record(args: argparse.Namespace) -> None:
     stage_data["status"] = status
     stage_data["completed_at"] = now_iso
     stage_data["summary"] = args.summary or ""
+    stage_data["learnings"] = args.learnings or ""
     if judge_verdict:
         stage_data["judge_verdict"] = judge_verdict.strip()
 
@@ -397,7 +284,7 @@ def cmd_record(args: argparse.Namespace) -> None:
     # Determine next stage (handling BDD feature-slice inner loop at halucinationchecks)
     stage_idx = STAGES.index(stage)
     active_slice = get_active_slice(manifest)
-    if status in ("PASSED", "SKIPPED"):
+    if status == "PASSED":
         if stage == "halucinationchecks" and active_slice:
             bdd = manifest["bdd_slices"]
             cur_idx = active_slice["index"]
@@ -434,8 +321,11 @@ def cmd_record(args: argparse.Namespace) -> None:
         else:
             manifest["current_stage"] = "COMPLETED"
             manifest["status"] = "PASSED"
-    elif status in ["FAILED", "BLOCKED"]:
+    elif status in ["FAILED", "BLOCKED", "SKIPPED"]:
         manifest["status"] = f"STOPPED_AT_{stage.upper()}"
+        manifest["current_stage"] = stage
+        for later in STAGES[stage_idx + 1:]:
+            manifest["stages"][later]["status"] = "PENDING"
 
     save_manifest(run_dir, manifest)
     print(f"Successfully recorded stage '{stage}' as {status}.")
@@ -443,29 +333,6 @@ def cmd_record(args: argparse.Namespace) -> None:
         print(f"Next stage in pipeline: {manifest['current_stage']}")
     else:
         print("All pipeline stages completed successfully!")
-
-
-def count_pending_learnings() -> Optional[int]:
-    db_path = Path(".project-memory/memory.db")
-    if not db_path.exists():
-        return None
-    import sqlite3
-    conn = sqlite3.connect(str(db_path))
-    try:
-        cols = {row[1] for row in conn.execute("PRAGMA table_info(memories)").fetchall()}
-        if not cols:
-            return 0
-        if "skill_status" in cols:
-            row = conn.execute(
-                "SELECT COUNT(*) FROM memories WHERE skill_status = 'pending' AND category IN ('journal', 'ledger')"
-            ).fetchone()
-        else:
-            row = conn.execute(
-                "SELECT COUNT(*) FROM memories WHERE category IN ('journal', 'ledger')"
-            ).fetchone()
-        return int(row[0]) if row else 0
-    finally:
-        conn.close()
 
 
 def cmd_skill_doctor(args: argparse.Namespace) -> None:
@@ -483,65 +350,19 @@ def cmd_report(args: argparse.Namespace) -> None:
     run_dir = get_run_dir(args.run_id)
     manifest = load_manifest(run_dir)
 
-    report_lines = [
-        f"# Agent Orchestrator Execution Report: {manifest['run_id']}",
-        f"\n**Task:** {manifest['task']}",
-        f"**Date:** {manifest.get('created_at', 'Unknown')}",
-        f"**Overall Status:** `{manifest.get('status', 'IN_PROGRESS')}`",
-        "\n---",
-        "\n## Stage Verification Summary\n",
-        "| Stage | Status | Assigned Skill | Sub-Agent Role | Summary |",
-        "|---|---|---|---|---|",
-    ]
-
-    for stage in STAGES:
-        s = manifest["stages"].get(stage, {})
-        status = s.get("status", "PENDING")
-        skill = s.get("assigned_skill", STAGE_SKILLS_MAP[stage]["primary_skill"])
-        role = s.get("subagent_role", STAGE_SKILLS_MAP[stage]["subagent_role"])
-        summary = (s.get("summary") or "").replace("\n", " ").strip()
-        report_lines.append(f"| `{stage}` | **{status}** | `{skill}` | {role} | {summary} |")
-
-    bdd = manifest.get("bdd_slices")
-    if bdd and bdd.get("items"):
-        report_lines.append("\n## BDD Feature Slices\n")
-        for i, item in enumerate(bdd["items"], start=1):
-            report_lines.append(f"{i}. `{item['name']}` — **{item['status']}**")
-
-    report_lines.append("\n## Stage Artifacts & Deliverables\n")
-    has_artifacts = False
-    for stage in STAGES:
-        s = manifest["stages"].get(stage, {})
-        artifacts = s.get("artifacts", [])
-        if artifacts:
-            has_artifacts = True
-            report_lines.append(f"### Stage: `{stage}`")
-            for art in artifacts:
-                report_lines.append(f"- `{art}`")
-    if not has_artifacts:
-        report_lines.append("_No discrete file artifacts registered in manifest._")
-
-    pending_learnings = count_pending_learnings()
-    if pending_learnings is not None:
-        report_lines.append("\n## Continuous Learning & Skill Doctor Status\n")
-        trigger_note = (
-            "Periodic threshold reached (>= 3) — run `skill-doctor` now."
-            if pending_learnings >= 3
-            else "Below periodic threshold (< 3); run `skill-doctor` if Phase 8 remediation occurred."
-        )
-        report_lines.append(f"- **Pending Unprocessed Learnings:** `{pending_learnings}` ({trigger_note})")
-
-    report_content = "\n".join(report_lines) + "\n"
-    report_file = run_dir / "summary-report.md"
-    with open(report_file, "w", encoding="utf-8") as f:
-        f.write(report_content)
-
-    print(report_content)
-    print(f"Report written to: {report_file}")
+    emit_report(run_dir, manifest, STAGES, STAGE_SKILLS_MAP)
 
 
 def cmd_check_overengineering(args: argparse.Namespace) -> None:
+    if sum(bool(value) for value in (args.file, args.dir, args.all)) != 1:
+        raise ValueError("Select exactly one of --file, --dir or --all")
+    if not 0 < args.max_score <= 100:
+        raise ValueError("--max-score must be in (0,100]")
+    selected = [Path(args.file)] if args.file else source_files(args.dir or ".")
+    check_sources(selected)
     extract_script = Path(".github/skills/detect-overengineering/scripts/extract-signals.py")
+    if not extract_script.exists():
+        extract_script = Path(__file__).resolve().parents[2] / "detect-overengineering/scripts/extract-signals.py"
     if not extract_script.exists():
         print(f"Error: extract-signals.py not found at {extract_script}", file=sys.stderr)
         sys.exit(1)
@@ -568,17 +389,13 @@ def cmd_check_overengineering(args: argparse.Namespace) -> None:
 
     try:
         data = json.loads(result.stdout)
-    except json.JSONDecodeError:
-        print(result.stdout)
-        return
+    except json.JSONDecodeError as error:
+        raise ValueError("Extractor returned invalid JSON") from error
 
     max_allowed = args.max_score
-    if isinstance(data, dict) and "files" in data:
-        items = data["files"]
-    elif isinstance(data, list):
-        items = data
-    else:
-        items = [data]
+    items = scored_items(data)
+    if {Path(item["source_path"]).resolve() for item in items} != {file.resolve() for file in selected}:
+        raise ValueError("Extractor must cover exactly the selected source files")
 
     failed = []
     print("=" * 70)
@@ -586,7 +403,7 @@ def cmd_check_overengineering(args: argparse.Namespace) -> None:
     print(f"Max Allowed Risk Score: {max_allowed}/100")
     print("=" * 70)
     for item in items:
-        score = item.get("overengineering_score", 0)
+        score = item["overengineering_score"]
         severity = item.get("severity", "clean")
         src = item.get("source_path", "unknown")
         smells = item.get("smells", [])
@@ -629,6 +446,8 @@ def main() -> None:
     p_record.add_argument("--stage", required=True, help="Stage completed")
     p_record.add_argument("--status", required=True, choices=["PASSED", "FAILED", "BLOCKED", "SKIPPED"])
     p_record.add_argument("--summary", help="Summary of findings or results")
+    p_record.add_argument("--learnings", help="Required nonempty learnings for PASSED")
+    p_record.add_argument("--source-file", action="append", help="Changed source file; repeat for develop/code/architecture gates")
     p_record.add_argument("--artifact", help="Path to primary artifact generated")
     p_record.add_argument("--judge-verdict", help="Required for major changes in 'plan' after llm-as-judge arbitration")
     p_record.add_argument("--run-id", help="Optional run ID (defaults to latest)")
@@ -656,24 +475,22 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    if args.subcommand == "init":
-        cmd_init(args)
-    elif args.subcommand == "status":
-        cmd_status(args)
-    elif args.subcommand == "handoff":
-        cmd_handoff(args)
-    elif args.subcommand == "record":
-        cmd_record(args)
-    elif args.subcommand == "slices":
-        cmd_slices(args)
-    elif args.subcommand == "check-overengineering":
-        cmd_check_overengineering(args)
-    elif args.subcommand == "report":
-        cmd_report(args)
-    elif args.subcommand == "skill-doctor":
-        cmd_skill_doctor(args)
+    handlers = {
+        "init": cmd_init,
+        "status": cmd_status,
+        "handoff": cmd_handoff,
+        "record": cmd_record,
+        "slices": cmd_slices,
+        "check-overengineering": cmd_check_overengineering,
+        "report": cmd_report,
+        "skill-doctor": cmd_skill_doctor,
+    }
+    handlers[args.subcommand](args)
 
 
 if __name__ == "__main__":
-    main()
-
+    try:
+        main()
+    except (ValueError, OSError, UnicodeError) as error:
+        print(f"Gate FAILED: {error}", file=sys.stderr)
+        sys.exit(1)

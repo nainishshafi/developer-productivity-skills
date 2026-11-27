@@ -1,7 +1,7 @@
 ---
 name: algorithmic-complexity-analyzer
 description: Rigorous, language-independent algorithmic complexity analysis (Big-O time and space complexity). Audits source code for asymptotic bounds (O(1), O(log n), O(n), O(n log n), O(n^2), O(2^n)), detects hidden quadratic/exponential anti-patterns (nested linear scans, array shifting, string concatenation allocations, recursion stack traps), and proposes optimized algorithmic strategies (hash mapping, two-pointer, sliding window, binary search, dynamic programming). Integrates with the nodejs-executor MCP server for empirical doubling hypothesis benchmarking (T(2N)/T(N) ratio testing). Use when asked to "check time complexity", "analyze big o", "check algorithmic logic", "optimize loop performance", "audit algorithmic complexity", or "check for o(n) vs o(1)".
-version: 1.2.0
+version: 1.3.0
 ---
 
 # Algorithmic Complexity Analyzer

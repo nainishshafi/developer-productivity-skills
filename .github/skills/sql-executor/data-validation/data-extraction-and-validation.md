@@ -75,6 +75,13 @@ WHERE unit_price < 0
 
 ## 3. Cross-Database Reconciliation Checksums
 
+### SQLite WAL preservation checks
+
+- Logical read-only behavior does not guarantee identical filesystem bytes: SELECT operations can update WAL shared-memory (`-shm`) reader bookkeeping.
+- Use an isolated fixture with controlled connections and checkpoint behavior. Compare stored rows, database integrity, database/WAL contents and SHM size when present; do not require every SHM byte to remain unchanged after a read.
+- Opening or closing connections can create, remove or checkpoint sidecars. Capture snapshots at equivalent lifecycle points and distinguish these effects from application writes.
+- Aggregate counts and sums below are reconciliation indicators, not collision-resistant proof of identical records. For exact preservation, compare the relevant rows and fields.
+
 When validating that data extracted matches the source or comparing data across replicas:
 
 ### PostgreSQL Checksum

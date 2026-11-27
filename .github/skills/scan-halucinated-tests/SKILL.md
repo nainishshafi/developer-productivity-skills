@@ -1,13 +1,7 @@
 ---
 name: scan-halucinated-tests
-description: Use when the user asks to "scan for hallucinated tests", "check if my
-  tests are hallucinated", "validate tests against source", "verify test accuracy",
-  "find fake test assertions", "audit tests for hallucinations", "test hallucination
-  scan", "verify tests match source code", "check java tests", "validate c# tests",
-  or "check javascript tests for hallucinations". Also use when the user wants to
-  cross-check a test file against real source code to detect phantom symbols,
-  wrong imports, bad mock targets, or fabricated constants — in any supported language.
-version: 1.3.0
+description: Validate tests against real source and dependency behavior. Use for hallucinated-test scans, test accuracy audits, or checking imports, mock targets and assertions across languages.
+version: 1.4.0
 ---
 
 # Scan Hallucinated Tests
@@ -18,7 +12,14 @@ Cross-validate a test file against the real source code it tests. Detects phanto
 
 **Analysis approach:** A multi-language parser (`parse-test-refs.py`) extracts every external reference the test file makes using AST for Python and structural regex for Java/C#/JS/TS. The `trace-code-context` skill's script provides the authoritative list of what *actually* exists in the source. The agent (or a delegated subagent) cross-references both to produce a scored hallucination report.
 
-## Prerequisites
+## Verification limits and dependency behavior
+
+- Symbol existence is one check, not proof that an assertion matches behavior. Inspect the actual dependency API, type declarations and runtime effects before accepting mocks or preservation assertions.
+- For TypeScript, verify affected tests are included in a compiler check. Transpilation-only runners and production configs that exclude tests can hide readonly assignments and other diagnostics; follow the TypeScript developer testing module.
+- SQLite SELECT operations can update WAL shared-memory reader bookkeeping. In isolated preservation tests, compare stored rows and integrity, database/WAL bytes under controlled connection lifetimes, and SHM size when present rather than demanding unchanged SHM bytes.
+- Record parser, compiler and runtime coverage separately. When extraction tooling is unavailable, label any source inspection as manual and report unverified items; do not claim an automated scan passed.
+
+## Tool prerequisites
 
 - Python 3.8+ available (`.venv` will be created automatically if missing)
 - The skill requires a `<test-file>` argument — relative or absolute path to the test file (`.py`, `.java`, `.cs`, `.js`, `.ts`, etc.)
@@ -70,7 +71,7 @@ The script prints a single JSON object to stdout:
 ```json
 {
   "stale": true,
-  "repo_root": "/home/user/myproject",
+  "repo_root": "<repo-root>",
   "output_path": ".code-context/src/auth.md",
   "source_path": "src/auth.py",
   "language": "python",
